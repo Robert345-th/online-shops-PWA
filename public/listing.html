@@ -323,7 +323,7 @@
       alert("That's your listing — you can't message yourself about your own listing.");
       return;
     }
-    window.location.href = `/chat.html?userId=${listing.seller_id}`;
+    window.location.href = `/chat-room.html?userId=${listing.seller_id}`;
   }
   async function handleShareMeetup() {
     const message = `I'm meeting ${listing.seller_name || "a seller"} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
