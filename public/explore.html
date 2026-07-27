@@ -74,6 +74,17 @@
     border-radius: 50%; animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid var(--border);
+    display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .nav-item { flex: 1; text-align: center; text-decoration: none; color: var(--subtext); font-size: 11px; padding: 4px 0; }
+  .nav-item.active { color: var(--orange); font-weight: 700; }
+  .nav-icon { font-size: 20px; margin-bottom: 2px; }
+  body { padding-bottom: 60px; }
 </style>
 </head>
 <body>
@@ -91,6 +102,12 @@
 <div class="chips-row" id="categoryRow"></div>
 
 <div id="feed"><div class="center-box"><div class="spinner"></div></div></div>
+
+<div class="bottom-nav">
+  <a href="/index.html" class="nav-item"><div class="nav-icon">🏠</div><div>Home</div></a>
+  <a href="/explore.html" class="nav-item active"><div class="nav-icon">🌐</div><div>Explore</div></a>
+  <a href="/my-shop.html" class="nav-item"><div class="nav-icon">🛍️</div><div>My Shop</div></a>
+</div>
 
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
