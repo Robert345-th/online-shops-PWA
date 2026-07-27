@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - My Shop</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A;
+    --thumb-bg: #E9E2D3; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar {
+    background: var(--black); padding: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
+  .sub-brand { color: #C9BFAF; font-size: 12px; margin-top: 2px; }
+  .countdown { color: var(--gold); font-size: 11px; margin-top: 2px; font-weight: 600; }
+  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
+
+  .action-row { display: flex; gap: 8px; padding: 12px; flex-wrap: wrap; }
+  .edit-profile-btn {
+    background: var(--card); border: 1.5px solid var(--black); padding: 12px 14px;
+    border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer;
+  }
+  .upgrade-btn { flex: 1; background: var(--black); color: var(--gold); border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .admin-btn { background: var(--card); border: 1.5px solid var(--black); padding: 12px 16px; border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer; }
+
+  .warning-banner { background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 12px; margin: 0 12px 8px; }
+  .warning-text { color: var(--warn-text); font-size: 12px; margin-bottom: 8px; }
+  .warning-btn { background: var(--orange); color: #fff; border: none; padding: 8px; width: 100%; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .gate-icon { font-size: 48px; margin-bottom: 12px; }
+  .gate-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .gate-text { font-size: 13px; color: var(--subtext); margin-bottom: 20px; line-height: 1.5; }
+  .reason-box { background: var(--warn-bg); border-radius: 10px; padding: 12px; margin-bottom: 16px; width: 100%; text-align: left; }
+  .reason-label { font-size: 10px; color: var(--warn-text); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .reason-text { font-size: 13px; color: var(--warn-text); }
+  .register-btn { background: #E01B27; color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .empty-text { color: var(--subtext); margin-bottom: 16px; }
+  .error-text { color: var(--price-red); }
+
+  .list { padding: 14px; }
+  .row { display: flex; align-items: center; background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 10px; margin-bottom: 10px; }
+  .row.disabled { opacity: 0.6; border-color: var(--price-red); }
+  .row-main { display: flex; flex: 1; align-items: center; cursor: pointer; }
+  .thumb { width: 60px; height: 60px; border-radius: 10px; background: var(--thumb-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 12px; position: relative; flex-shrink: 0; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .boost-badge { position: absolute; top: 2px; right: 2px; background: var(--orange); width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .row-info { flex: 1; min-width: 0; }
+  .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .status-badge { display: inline-block; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-top: 4px; }
+  .disabled-badge { display: inline-block; background: var(--price-red); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; margin-top: 4px; }
+  .boosted-badge { display: inline-block; background: var(--orange); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; margin-top: 4px; }
+  .manage-btn { width: 40px; height: 40px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-left: 8px; font-size: 20px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .modal-subtitle { font-size: 12px; color: var(--subtext); margin-bottom: 14px; }
+  .modal-row { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .modal-row.danger { color: var(--price-red); }
+  .picker-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin: 10px 0 8px; }
+  .contact-row { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; font-weight: 600; cursor: pointer; }
+  .phone-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .phone-send-btn { background: var(--black); color: var(--gold); border: none; padding: 0 18px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .skip-btn { display: block; width: 100%; padding: 14px; text-align: center; margin-top: 6px; background: none; border: none; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; }
+  .modal-cancel-btn { display: block; width: 100%; padding: 12px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="modal-overlay" id="manageModal">
+  <div class="modal-box">
+    <div class="modal-title" id="manageModalTitle"></div>
+    <button class="modal-row" id="editListingBtn">✏️ Edit Listing</button>
+    <button class="modal-row" id="boostListingBtn">🚀 Boost Listing</button>
+    <button class="modal-row danger" id="markSoldBtn">✅ Mark as Sold Out</button>
+    <button class="modal-cancel-btn" id="manageCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="buyerModal">
+  <div class="modal-box">
+    <div class="modal-title">Who bought this?</div>
+    <div class="modal-subtitle">Confirming with a real buyer helps build your trust badge once they confirm.</div>
+    <div id="contactsSection"></div>
+    <div class="picker-label">Or enter their phone number</div>
+    <div class="phone-row">
+      <input class="phone-input" id="buyerPhoneInput" placeholder="e.g. 0977123456" />
+      <button class="phone-send-btn" id="phoneSendBtn">Send</button>
+    </div>
+    <button class="skip-btn" id="skipConfirmBtn">Skip — just remove the listing</button>
+    <button class="modal-cancel-btn" id="buyerCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const app = document.getElementById("app");
+  const manageModal = document.getElementById("manageModal");
+  const buyerModal = document.getElementById("buyerModal");
+
+  let user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  let token = localStorage.getItem("zm_token");
+  let listings = [];
+  let subscription = null;
+  let paymentEnforced = false;
+  let shopAccountType = "individual";
+  let shopStatus = null;
+  let rejectionReason = null;
+  let manageItem = null;
+  let buyerPickerItem = null;
+  let contacts = [];
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function loadData() {
+    if (!user) { renderLoggedOut(); return; }
+
+    app.innerHTML = `<div class="center-box"><div>Loading…</div></div>`;
+
+    try {
+      const [listingsRes, subRes, statusRes, shopStatusRes] = await Promise.all([
+        fetch(`${API_URL}/listings/mine/all`, { headers: authHeaders() }),
+        fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
+        fetch(`${API_URL}/settings/payment-status`),
+        fetch(`${API_URL}/auth/shop-status`, { headers: authHeaders() }),
+      ]);
+
+      listings = await listingsRes.json();
+      subscription = await subRes.json();
+      const statusData = await statusRes.json();
+      const shopStatusData = await shopStatusRes.json();
+
+      paymentEnforced = statusData.enforced === true;
+      shopAccountType = shopStatusData.account_type || "individual";
+      shopStatus = shopStatusData.shop_status || null;
+      rejectionReason = shopStatusData.shop_rejection_reason || null;
+
+      render();
+    } catch (e) {
+      app.innerHTML = `<div class="topbar"><div class="brand">🛍️ My Shop</div></div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;
+    }
+  }
+
+  function renderLoggedOut() {
+    app.innerHTML = `
+      <div class="topbar"><div class="brand">🛍️ My Shop</div></div>
+      <div class="center-box">
+        <div class="empty-text">Log in to see your shop.</div>
+        <button class="login-btn" onclick="window.location.href='/index.html'">Log In</button>
+      </div>`;
+  }
+
+  function render() {
+    const isApprovedShop = shopAccountType === "shop" && shopStatus === "approved";
+    const isPendingShop = shopAccountType === "shop" && shopStatus === "pending";
+    const isRejectedShop = shopAccountType === "shop" && shopStatus === "rejected";
+    const isBuyerOnly = shopStatus === null || shopAccountType !== "shop";
+
+    if (isBuyerOnly || isPendingShop || isRejectedShop) {
+      let gateHtml = "";
+      if (isPendingShop) {
+        gateHtml = `
+          <div class="gate-icon">⏳</div>
+          <div class="gate-title">Shop Under Review</div>
+          <div class="gate-text">We're reviewing your NRC and photo. You'll be notified once approved and can start selling.</div>`;
+      } else if (isRejectedShop) {
+        gateHtml = `
+          <div class="gate-icon">❌</div>
+          <div class="gate-title">Registration Not Approved</div>
+          ${rejectionReason ? `<div class="reason-box"><div class="reason-label">Reason given:</div><div class="reason-text">${rejectionReason}</div></div>` : ""}
+          <div class="gate-text">You can fix the issue above and submit again.</div>
+          <button class="register-btn" onclick="window.location.href='/register-shop.html'">Try Again</button>`;
+      } else {
+        gateHtml = `
+          <div class="gate-icon">🏪</div>
+          <div class="gate-title">Register Your Shop to Sell</div>
+          <div class="gate-text">You can browse and buy freely on ZedMarket. To post and sell items, register your shop with your NRC and a photo — it only takes a minute.</div>
+          <button class="register-btn" onclick="window.location.href='/register-shop.html'">Register My Shop</button>`;
+      }
+
+      app.innerHTML = `
+        <div class="topbar">
+          <div>
+            <div class="brand">🛍️ My Shop</div>
+            <div class="sub-brand">${user.name}</div>
+          </div>
+        </div>
+        <div class="center-box">${gateHtml}</div>`;
+      return;
+    }
+
+    const isVerifiedShop = subscription?.payment_status === "active";
+    const isPending = subscription?.payment_status === "pending";
+    let daysLeft = null;
+    if (isVerifiedShop && subscription?.end_date) {
+      const end = new Date(subscription.end_date).getTime();
+      daysLeft = Math.max(0, Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24)));
+    }
+    const disabledCount = listings.filter(i => i.payment_disabled).length;
+
+    app.innerHTML = `
+      <div class="topbar">
+        <div>
+          <div class="brand">🛍️ My Shop</div>
+          <div class="sub-brand">${user.name} ${isVerifiedShop ? "· ✅ Verified Shop" : isPending ? "· ⏳ Pending" : ""}</div>
+          ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${daysLeft > 0 ? `⏳ Renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}` : "⚠️ Expires today"}</div>` : ""}
+        </div>
+        <button class="sell-btn" onclick="window.location.href='/post-listing.html'">+ Sell</button>
+      </div>
+
+      <div class="action-row">
+        <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">🖊️ Edit Shop Profile</button>
+        <button class="edit-profile-btn" onclick="window.location.href='/seller-profile/${user.id}.html'">👁️ View My Profile</button>
+        ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? "⏳ Upgrade Pending" : "🏆 Upgrade to Shop"}</button>` : ""}
+        ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">🔄 Renew Now</button>` : ""}
+        ${user.is_admin ? `<button class="admin-btn" onclick="window.location.href='/admin.html'">⚙️ Admin</button>` : ""}
+      </div>
+
+      ${disabledCount > 0 ? `
+        <div class="warning-banner">
+          <div class="warning-text">⚠️ ${disabledCount} listing${disabledCount === 1 ? " is" : "s are"} hidden from buyers because a subscription is needed. Subscribe to reactivate.</div>
+          <button class="warning-btn" onclick="window.location.href='/upgrade-shop.html'">Subscribe Now</button>
+        </div>` : ""}
+
+      ${listings.length === 0 ? `
+        <div class="center-box">
+          <div class="empty-text">You haven't posted anything yet.</div>
+          <button class="login-btn" onclick="window.location.href='/post-listing.html'">Post Your First Listing</button>
+        </div>` : `
+        <div class="list">${listings.map(renderRow).join("")}</div>`}
+    `;
+
+    listings.forEach(item => {
+      const rowMain = document.getElementById(`rowmain-${item.id}`);
+      if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing/${item.id}.html`);
+      const manageBtn = document.getElementById(`manage-${item.id}`);
+      if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
+    });
+  }
+
+  function renderRow(item) {
+    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    let badge = `<div class="status-badge">${item.status}</div>`;
+    if (item.payment_disabled) {
+      badge = `<div class="disabled-badge">🚫 Disabled — needs ${item.category} subscription</div>`;
+    } else if (item.is_boosted) {
+      badge = `<div class="boosted-badge">🚀 Boosted</div>`;
+    }
+    return `
+      <div class="row ${item.payment_disabled ? "disabled" : ""}">
+        <div class="row-main" id="rowmain-${item.id}">
+          <div class="thumb">
+            ${img ? `<img src="${img}" alt="${item.title}" />` : `<span style="font-size:24px;">🏷️</span>`}
+            ${item.is_boosted ? `<div class="boost-badge">🚀</div>` : ""}
+          </div>
+          <div class="row-info">
+            <div class="row-title">${item.title}</div>
+            <div class="row-price">K${item.price}</div>
+            ${badge}
+          </div>
+        </div>
+        <button class="manage-btn" id="manage-${item.id}">⋮</button>
+      </div>`;
+  }
+
+  function openManageModal(item) {
+    manageItem = item;
+    document.getElementById("manageModalTitle").textContent = item.title;
+    document.getElementById("boostListingBtn").style.display = item.is_boosted ? "none" : "block";
+    manageModal.classList.add("open");
+  }
+
+  document.getElementById("manageCancelBtn").addEventListener("click", () => { manageModal.classList.remove("open"); manageItem = null; });
+  document.getElementById("editListingBtn").addEventListener("click", () => { window.location.href = `/edit-listing/${manageItem.id}.html`; });
+  document.getElementById("boostListingBtn").addEventListener("click", () => { window.location.href = `/boost-listing/${manageItem.id}.html`; });
+  document.getElementById("markSoldBtn").addEventListener("click", () => { manageModal.classList.remove("open"); openBuyerPicker(manageItem); });
+
+  async function openBuyerPicker(item) {
+    buyerPickerItem = item;
+    document.getElementById("buyerPhoneInput").value = "";
+    document.getElementById("contactsSection").innerHTML = `<div style="text-align:center;padding:14px;">Loading…</div>`;
+    buyerModal.classList.add("open");
+    try {
+      const res = await fetch(`${API_URL}/sale-confirmations/recent-contacts`, { headers: authHeaders() });
+      contacts = await res.json();
+    } catch (e) {
+      contacts = [];
+    }
+    renderContacts();
+  }
+
+  function renderContacts() {
+    if (!contacts.length) {
+      document.getElementById("contactsSection").innerHTML = "";
+      return;
+    }
+    document.getElementById("contactsSection").innerHTML = `
+      <div class="picker-label">From your chats</div>
+      ${contacts.map(c => `<div class="contact-row" data-id="${c.id}">${c.name}</div>`).join("")}`;
+    document.querySelectorAll(".contact-row").forEach(el =>
+      el.addEventListener("click", () => confirmWithBuyerId(el.dataset.id))
+    );
+  }
+
+  async function confirmWithBuyerId(buyerId) {
+    buyerModal.classList.remove("open");
+    try {
+      const res = await fetch(`${API_URL}/sale-confirmations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ buyer_id: buyerId, listing_title: buyerPickerItem.title })
+      });
+      const data = await res.json();
+      alert(res.ok ? "Sent — we've asked the buyer to confirm." : (data.error || "Please try again."));
+    } catch (e) {}
+    await removeListing(buyerPickerItem.id);
+    buyerPickerItem = null;
+  }
+
+  document.getElementById("phoneSendBtn").addEventListener("click", async () => {
+    const phone = document.getElementById("buyerPhoneInput").value.trim();
+    if (!phone) { alert("Please enter the buyer's phone number."); return; }
+    try {
+      const res = await fetch(`${API_URL}/sale-confirmations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ buyer_phone: phone, listing_title: buyerPickerItem.title })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Please try again."); return; }
+      buyerModal.classList.remove("open");
+      alert("Sent — we've asked the buyer to confirm.");
+      await removeListing(buyerPickerItem.id);
+      buyerPickerItem = null;
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  });
+
+  document.getElementById("skipConfirmBtn").addEventListener("click", async () => {
+    buyerModal.classList.remove("open");
+    await removeListing(buyerPickerItem.id);
+    buyerPickerItem = null;
+  });
+  document.getElementById("buyerCancelBtn").addEventListener("click", () => { buyerModal.classList.remove("open"); buyerPickerItem = null; });
+
+  async function removeListing(id) {
+    try {
+      const res = await fetch(`${API_URL}/listings/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Could not remove listing.");
+        return;
+      }
+      listings = listings.filter(i => i.id !== id);
+      render();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  }
+
+  loadData();
+</script>
+</body>
+</html>
