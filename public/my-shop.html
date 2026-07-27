@@ -356,4 +356,47 @@
 
   document.getElementById("phoneSendBtn").addEventListener("click", async () => {
     const phone = document.getElementById("buyerPhoneInput").value.trim();
-    if (!phone) { alert("
+    if (!phone) { alert("Please enter the buyer's phone number."); return; }
+    try {
+      const res = await fetch(`${API_URL}/sale-confirmations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ buyer_phone: phone, listing_title: buyerPickerItem.title })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Please try again."); return; }
+      buyerModal.classList.remove("open");
+      alert("Sent — we've asked the buyer to confirm.");
+      await removeListing(buyerPickerItem.id);
+      buyerPickerItem = null;
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  });
+
+  document.getElementById("skipConfirmBtn").addEventListener("click", async () => {
+    buyerModal.classList.remove("open");
+    await removeListing(buyerPickerItem.id);
+    buyerPickerItem = null;
+  });
+  document.getElementById("buyerCancelBtn").addEventListener("click", () => { buyerModal.classList.remove("open"); buyerPickerItem = null; });
+
+  async function removeListing(id) {
+    try {
+      const res = await fetch(`${API_URL}/listings/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Could not remove listing.");
+        return;
+      }
+      listings = listings.filter(i => i.id !== id);
+      render();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  }
+
+  loadData();
+</script>
+</body>
+</html>
