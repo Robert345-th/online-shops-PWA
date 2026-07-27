@@ -137,7 +137,6 @@
   }
   .error { color: #8B3A2B; }
 
-  /* Modal */
   .modal-backdrop {
     display: none;
     position: fixed; inset: 0;
@@ -222,8 +221,11 @@
     <div id="signupOnlyFields" style="display:none;">
       <input type="text" id="fullName" placeholder="Full name" />
     </div>
-    <input type="text" id="identifier" placeholder="Phone or email" />
+    <input type="text" id="phone" placeholder="Phone number (e.g. 0977123456)" />
     <input type="password" id="password" placeholder="Password" />
+    <div id="confirmPasswordWrap" style="display:none;">
+      <input type="password" id="confirmPassword" placeholder="Confirm password" />
+    </div>
     <button class="primary-btn" id="submitAuth">Sign in</button>
     <div class="switch-link">
       <span id="switchText">New to ZedMarket? <a id="switchLink">Create an account</a></span>
@@ -233,7 +235,7 @@
 
 <script>
   const API_BASE = "https://online-shops-production.up.railway.app";
-  let mode = "login"; // or "signup"
+  let mode = "login";
 
   const feed = document.getElementById("feed");
   const authModal = document.getElementById("authModal");
@@ -289,7 +291,6 @@
       </div>`;
   }
 
-  // Auth modal
   authBtn.addEventListener("click", () => authModal.classList.add("open"));
   closeModal.addEventListener("click", () => authModal.classList.remove("open"));
   authModal.addEventListener("click", (e) => { if (e.target === authModal) authModal.classList.remove("open"); });
@@ -305,11 +306,13 @@
       modalTitle.textContent = "Sign in";
       submitAuth.textContent = "Sign in";
       signupOnlyFields.style.display = "none";
+      document.getElementById("confirmPasswordWrap").style.display = "none";
       switchText.innerHTML = `New to ZedMarket? <a id="switchLink">Create an account</a>`;
     } else {
       modalTitle.textContent = "Create account";
       submitAuth.textContent = "Create account";
       signupOnlyFields.style.display = "block";
+      document.getElementById("confirmPasswordWrap").style.display = "block";
       switchText.innerHTML = `Already have an account? <a id="switchLink">Sign in</a>`;
     }
     document.getElementById("switchLink").addEventListener("click", () => {
@@ -319,11 +322,17 @@
   }
 
   submitAuth.addEventListener("click", async () => {
-    const identifier = document.getElementById("identifier").value.trim();
+    const phone = document.getElementById("phone").value.trim();
     const password = document.getElementById("password").value;
-    const fullName = document.getElementById("fullName").value.trim();
+    const name = document.getElementById("fullName").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
-    if (!identifier || !password) {
+    if (!phone || !password) {
+      modalMsg.className = "modal-msg err";
+      modalMsg.textContent = "Please fill in all fields.";
+      return;
+    }
+    if (mode === "signup" && (!name || !confirmPassword)) {
       modalMsg.className = "modal-msg err";
       modalMsg.textContent = "Please fill in all fields.";
       return;
@@ -331,8 +340,8 @@
 
     const endpoint = mode === "login" ? "/auth/login" : "/auth/signup";
     const body = mode === "login"
-      ? { identifier, password }
-      : { identifier, password, fullName };
+      ? { phone, password }
+      : { name, phone, password, confirmPassword };
 
     submitAuth.disabled = true;
     modalMsg.className = "modal-msg";
@@ -347,10 +356,15 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || data.message || "Something went wrong");
 
-      if (data.token) localStorage.setItem("zm_token", data.token);
-      modalMsg.className = "modal-msg ok";
-      modalMsg.textContent = mode === "login" ? "Signed in!" : "Account created!";
-      setTimeout(() => authModal.classList.remove("open"), 700);
+      if (data.token) {
+        localStorage.setItem("zm_token", data.token);
+        modalMsg.className = "modal-msg ok";
+        modalMsg.textContent = "Signed in!";
+        setTimeout(() => authModal.classList.remove("open"), 700);
+      } else if (mode === "signup") {
+        modalMsg.className = "modal-msg ok";
+        modalMsg.textContent = data.message || "Account created! Check your phone for an OTP to verify.";
+      }
     } catch (e) {
       modalMsg.className = "modal-msg err";
       modalMsg.textContent = e.message;
@@ -359,7 +373,6 @@
     }
   });
 
-  // PWA service worker
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("/service-worker.js").catch(console.error);
