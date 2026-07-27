@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Verify Phone</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --price-red: #A3131C; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  .content { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 480px; margin: 0 auto; }
+  .title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: var(--subtext); margin-bottom: 28px; }
+  .otp-input {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 20px; font-size: 24px; text-align: center; letter-spacing: 8px;
+  }
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-bottom: 20px; }
+  .submit-btn:disabled { opacity: 0.7; }
+  .link { display: block; width: 100%; text-align: center; color: var(--price-red); font-size: 13px; background: none; border: none; cursor: pointer; }
+  .link:disabled { opacity: 0.6; cursor: default; }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="title">Verify Your Phone</div>
+  <div class="subtitle" id="subtitleText">Enter the 6-digit code sent to your phone</div>
+
+  <input class="otp-input" id="otpInput" placeholder="000000" maxlength="6" inputmode="numeric" />
+
+  <button class="submit-btn" id="verifyBtn">Verify</button>
+
+  <button class="link" id="resendBtn">Didn't get a code? Resend</button>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const params = new URLSearchParams(window.location.search);
+  const phone = params.get("phone") || "";
+
+  document.getElementById("subtitleText").textContent = `Enter the 6-digit code sent to ${phone}`;
+
+  const otpInput = document.getElementById("otpInput");
+  const verifyBtn = document.getElementById("verifyBtn");
+  const resendBtn = document.getElementById("resendBtn");
+
+  verifyBtn.addEventListener("click", async () => {
+    const otp = otpInput.value.trim();
+    if (!otp) {
+      alert("Please enter the code sent to your phone.");
+      return;
+    }
+
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = "Verifying…";
+
+    try {
+      const res = await fetch(`${API_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Something went wrong.");
+        return;
+      }
+
+      localStorage.setItem("zm_token", data.token);
+      localStorage.setItem("zm_user", JSON.stringify(data.user));
+      alert(`Verified! Welcome, ${data.user.name}`);
+      window.location.href = "/index.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = "Verify";
+    }
+  });
+
+  resendBtn.addEventListener("click", async () => {
+    resendBtn.disabled = true;
+    resendBtn.textContent = "Sending...";
+
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not resend code.");
+        return;
+      }
+
+      alert("Code Sent — a new code has been sent to your phone.");
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      resendBtn.disabled = false;
+      resendBtn.textContent = "Didn't get a code? Resend";
+    }
+  });
+</script>
+</body>
+</html>
