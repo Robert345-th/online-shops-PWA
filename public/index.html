@@ -89,6 +89,23 @@
   }
   .error { color: var(--price-red); }
 
+  .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
+  .loc-chip { flex: 1; text-align: center; }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid var(--border);
+    display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .nav-item {
+    flex: 1; text-align: center; text-decoration: none; color: var(--subtext);
+    font-size: 11px; padding: 4px 0;
+  }
+  .nav-item.active { color: var(--orange); font-weight: 700; }
+  .nav-icon { font-size: 20px; margin-bottom: 2px; }
+  body { padding-bottom: 60px; }
+
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
     z-index: 100; align-items: flex-end; justify-content: center;
@@ -143,10 +160,21 @@
   <input class="search-input" id="searchInput" placeholder="🔍 Search listings..." />
 </div>
 
+<div class="loc-row" id="locRow">
+  <div class="chip loc-chip active" id="locHome">📍 Home</div>
+  <div class="chip loc-chip" id="locCurrent">🎯 Use current location</div>
+</div>
+
 <div class="chips-row" id="sortRow"></div>
 <div class="chips-row" id="categoryRow"></div>
 
 <div id="feed" class="loading">Loading listings…</div>
+
+<div class="bottom-nav">
+  <a href="/index.html" class="nav-item active"><div class="nav-icon">🏠</div><div>Home</div></a>
+  <a href="/explore.html" class="nav-item"><div class="nav-icon">🌐</div><div>Explore</div></a>
+  <a href="/my-shop.html" class="nav-item"><div class="nav-icon">🛍️</div><div>My Shop</div></a>
+</div>
 
 <div class="modal-backdrop" id="authModal">
   <div class="modal">
@@ -171,7 +199,7 @@
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
-  const SORT_OPTIONS = ['Newest', 'Price: Low-High', 'Price: High-Low'];
+  const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
   const PAGE_SIZE = 20;
 
   let mode = "login";
@@ -269,6 +297,18 @@
   }
 
   searchInput.addEventListener("input", renderFeed);
+
+  document.getElementById("locHome").addEventListener("click", () => {
+    document.getElementById("locHome").classList.add("active");
+    document.getElementById("locCurrent").classList.remove("active");
+  });
+  document.getElementById("locCurrent").addEventListener("click", () => {
+    document.getElementById("locCurrent").classList.add("active");
+    document.getElementById("locHome").classList.remove("active");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(() => {}, () => {});
+    }
+  });
 
   authBtn.addEventListener("click", () => authModal.classList.add("open"));
   closeModal.addEventListener("click", () => authModal.classList.remove("open"));
