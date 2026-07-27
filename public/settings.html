@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Settings</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 16px; max-width: 560px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin: 20px 0 8px; }
+  .row {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer;
+  }
+  .row-title { font-size: 14px; font-weight: 600; }
+  .row-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .danger { color: var(--price-red); }
+  .logout-text { color: var(--red-btn); }
+
+  .switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 26px; transition: 0.2s; }
+  .slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider { background: var(--red-btn); }
+  input:checked + .slider::before { transform: translateX(18px); }
+
+  .version-text { text-align: center; color: var(--subtext); font-size: 11px; margin-top: 24px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--price-red); margin-bottom: 10px; }
+  .modal-warning { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
+  .modal-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 14px; text-transform: uppercase; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-cancel-btn { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 13px; border-radius: 12px; text-align: center; color: var(--subtext); font-weight: 600; cursor: pointer; }
+  .modal-delete-btn { flex: 1; background: var(--price-red); border: none; padding: 13px; border-radius: 12px; text-align: center; color: #fff; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">⚙️ Settings</div>
+</div>
+
+<div class="content">
+  <div class="section-label">Appearance</div>
+  <div class="row">
+    <div>
+      <div class="row-title">Dark Mode</div>
+      <div class="row-sub">Switch between light and dark theme</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="darkModeToggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="section-label">Rewards</div>
+  <div class="row" id="referralsRow">
+    <div class="row-title">🎁 Invite Friends</div>
+  </div>
+
+  <div class="section-label">Notifications</div>
+  <div class="row">
+    <div style="flex:1; margin-right:10px;">
+      <div class="row-title">Daily Digest</div>
+      <div class="row-sub">Get notified about new listings in categories you've favorited</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="digestToggle" checked />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="section-label">Safety</div>
+  <div class="row" id="reportUserRow">
+    <div class="row-title">🚩 Report a User</div>
+  </div>
+
+  <div class="section-label">Support</div>
+  <div class="row" id="contactSupportRow">
+    <div class="row-title">🛟 Contact Support</div>
+  </div>
+
+  <div class="section-label">Legal</div>
+  <div class="row" id="privacyRow">
+    <div class="row-title">📄 Privacy Policy</div>
+  </div>
+
+  <div class="section-label">Account</div>
+  <div class="row" id="deleteAccountRow">
+    <div class="row-title danger">🗑️ Delete My Account</div>
+  </div>
+  <div class="row" id="logoutRow">
+    <div class="row-title logout-text">Log Out</div>
+  </div>
+
+  <div class="version-text">ZedMarket v1.0.0</div>
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-title">Delete Your Account?</div>
+    <div class="modal-warning">This will permanently remove your name, phone number, and listings from ZedMarket. This cannot be undone.</div>
+    <div class="modal-warning">Type DELETE below to confirm.</div>
+    <input class="modal-input" id="confirmDeleteInput" placeholder="Type DELETE" />
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="deleteCancelBtn">Cancel</button>
+      <button class="modal-delete-btn" id="deleteConfirmBtn">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const PRIVACY_POLICY_URL = "https://idyllic-tiramisu-d043e4.netlify.app/privacy-policy.html";
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  const darkModeToggle = document.getElementById("darkModeToggle");
+  darkModeToggle.checked = localStorage.getItem("zm_dark_mode") === "true";
+  darkModeToggle.addEventListener("change", () => {
+    localStorage.setItem("zm_dark_mode", darkModeToggle.checked);
+  });
+
+  const digestToggle = document.getElementById("digestToggle");
+  async function loadDigestSetting() {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_URL}/auth/digest-settings`, { headers: authHeaders() });
+      const data = await res.json();
+      digestToggle.checked = data.digest_enabled !== false;
+    } catch (e) {}
+  }
+  digestToggle.addEventListener("change", async () => {
+    const value = digestToggle.checked;
+    try {
+      await fetch(`${API_URL}/auth/digest-settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ enabled: value })
+      });
+    } catch (e) {
+      digestToggle.checked = !value;
+      alert("Could not update your notification setting.");
+    }
+  });
+  loadDigestSetting();
+
+  document.getElementById("referralsRow").addEventListener("click", () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+    window.location.href = "/referrals.html";
+  });
+
+  document.getElementById("reportUserRow").addEventListener("click", () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+    window.location.href = "/report-user.html";
+  });
+
+  document.getElementById("contactSupportRow").addEventListener("click", async () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+    try {
+      const res = await fetch(`${API_URL}/admin/support-contact`);
+      if (res.ok) {
+        const data = await res.json();
+        window.location.href = `/chat-room.html?userId=${data.id}`;
+      }
+    } catch (e) {}
+  });
+
+  document.getElementById("privacyRow").addEventListener("click", () => {
+    window.open(PRIVACY_POLICY_URL, "_blank");
+  });
+
+  document.getElementById("logoutRow").addEventListener("click", () => {
+    if (confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem("zm_token");
+      localStorage.removeItem("zm_user");
+      window.location.href = "/index.html";
+    }
+  });
+
+  document.getElementById("deleteAccountRow").addEventListener("click", () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+    document.getElementById("confirmDeleteInput").value = "";
+    document.getElementById("deleteModal").classList.add("open");
+  });
+  document.getElementById("deleteCancelBtn").addEventListener("click", () => {
+    document.getElementById("deleteModal").classList.remove("open");
+  });
+  document.getElementById("deleteConfirmBtn").addEventListener("click", async () => {
+    const confirmText = document.getElementById("confirmDeleteInput").value.trim().toUpperCase();
+    if (confirmText !== "DELETE") {
+      alert("Please type DELETE exactly to confirm.");
+      return;
+    }
+    const btn = document.getElementById("deleteConfirmBtn");
+    btn.disabled = true;
+    btn.textContent = "Deleting…";
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) {
+        alert("Could not delete account.");
+        return;
+      }
+      localStorage.removeItem("zm_token");
+      localStorage.removeItem("zm_user");
+      document.getElementById("deleteModal").classList.remove("open");
+      alert("Account Deleted — your account has been permanently deleted.");
+      window.location.href = "/index.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Delete Forever";
+    }
+  });
+</script>
+</body>
+</html>
