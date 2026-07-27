@@ -1,0 +1,14 @@
+{
+  "name": "ZedMarket",
+  "short_name": "ZedMarket",
+  "description": "Buy and sell locally on ZedMarket",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F1EC",
+  "theme_color": "#16281F",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/assets/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
