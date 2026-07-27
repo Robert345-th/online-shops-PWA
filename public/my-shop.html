@@ -252,7 +252,7 @@
 
     listings.forEach(item => {
       const rowMain = document.getElementById(`rowmain-${item.id}`);
-      if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing/${item.id}.html`);
+      if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
       const manageBtn = document.getElementById(`manage-${item.id}`);
       if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
     });
