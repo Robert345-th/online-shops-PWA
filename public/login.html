@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Log In</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  .content { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 480px; margin: 0 auto; }
+  .title { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 32px; }
+  .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
+  .phone-row { display: flex; margin-bottom: 18px; gap: 8px; }
+  .phone-prefix { background: var(--black); border-radius: 10px; padding: 0 12px; display: flex; align-items: center; }
+  .phone-prefix span { color: var(--gold); font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 14px; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; cursor: pointer; }
+  .checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--subtext); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .checkbox.checked { background: var(--red-btn); border-color: var(--red-btn); }
+  .checkbox-label { font-size: 12px; color: var(--subtext); }
+  .forgot-link { display: block; text-align: right; color: var(--price-red); font-size: 12px; font-weight: 600; margin-bottom: 16px; text-decoration: none; }
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+  .submit-btn:disabled { opacity: 0.7; }
+  .link { display: block; text-align: center; color: var(--price-red); margin-top: 20px; font-size: 13px; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="title">Welcome Back</div>
+  <div class="subtitle">Log in to ZedMarket</div>
+
+  <div class="label">Phone Number</div>
+  <div class="phone-row">
+    <div class="phone-prefix"><span>🇿🇲 +260</span></div>
+    <input class="phone-input" id="phone" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" />
+  </div>
+
+  <div class="label">Password</div>
+  <input class="field-input" id="password" type="password" placeholder="Enter your password" />
+
+  <div class="checkbox-row" id="showPasswordRow">
+    <div class="checkbox" id="checkboxBox"></div>
+    <div class="checkbox-label">Show password</div>
+  </div>
+
+  <a class="forgot-link" href="/forgot-password.html">Forgot Password?</a>
+
+  <button class="submit-btn" id="loginBtn">Log In</button>
+
+  <a class="link" href="/signup.html">Don't have an account? Sign up</a>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const phoneInput = document.getElementById("phone");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
+  const showPasswordRow = document.getElementById("showPasswordRow");
+  const checkboxBox = document.getElementById("checkboxBox");
+
+  let showPassword = false;
+  showPasswordRow.addEventListener("click", () => {
+    showPassword = !showPassword;
+    checkboxBox.classList.toggle("checked", showPassword);
+    checkboxBox.textContent = showPassword ? "✓" : "";
+    passwordInput.type = showPassword ? "text" : "password";
+  });
+
+  function isValidZambianPhone(phone) {
+    return /^0(7|9)\d{8}$/.test(phone);
+  }
+
+  loginBtn.addEventListener("click", async () => {
+    const phone = phoneInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!phone || !password) {
+      alert("Please enter your phone and password.");
+      return;
+    }
+    if (!isValidZambianPhone(phone)) {
+      alert("Please enter a valid Zambian phone number (e.g. 0977123456).");
+      return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in…";
+
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Something went wrong.");
+        return;
+      }
+
+      localStorage.setItem("zm_token", data.token);
+      localStorage.setItem("zm_user", JSON.stringify(data.user));
+      alert(`Welcome back! Logged in as ${data.user.name}`);
+      window.location.href = "/index.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Log In";
+    }
+  });
+</script>
+</body>
+</html>
