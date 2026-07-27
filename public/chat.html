@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Chat</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .back-button, .menu-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px; flex-shrink: 0;
+  }
+  .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
+  .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
+  .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .header-name { color: var(--gold); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
+
+  .messages-list { flex: 1; overflow-y: auto; padding: 14px; }
+  .empty-text { text-align: center; color: var(--subtext); margin-top: 40px; }
+  .bubble-row { display: flex; margin-bottom: 8px; align-items: flex-end; gap: 4px; }
+  .bubble-row.mine { justify-content: flex-end; }
+  .bubble-row.theirs { justify-content: flex-start; }
+  .bubble { max-width: 78%; padding: 12px; border-radius: 16px; font-size: 14px; }
+  .bubble.mine { background: var(--black); color: var(--gold); border-bottom-right-radius: 4px; }
+  .bubble.theirs { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; }
+  .tick { font-size: 11px; color: var(--subtext); margin-bottom: 2px; }
+  .photo-bubble { max-width: 65%; border-radius: 16px; overflow: hidden; padding: 3px; cursor: pointer; }
+  .chat-photo { width: 180px; height: 180px; border-radius: 12px; object-fit: cover; background: var(--border); display: block; }
+  .audio-bubble { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; min-width: 150px; cursor: pointer; }
+  .audio-wave { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+  .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 4px; flex-shrink: 0; }
+  .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+
+  .input-row { display: flex; padding: 12px; gap: 8px; background: var(--bg); border-top: 1px solid var(--border); align-items: flex-end; flex-shrink: 0; }
+  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 20px; }
+  .msg-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; font-size: 14px; max-height: 100px; resize: none; }
+  .send-btn { background: var(--red-btn); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
+  .mic-btn { background: var(--orange); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
+
+  .recording-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .recording-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--red-btn); }
+  .recording-text { flex: 1; font-size: 13px; font-weight: 600; }
+  .cancel-record-btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; color: var(--subtext); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .stop-record-btn { background: var(--red-btn); padding: 8px 14px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
+
+  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; align-items: center; justify-content: center; }
+  .viewer-overlay.open { display: flex; }
+  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
+  .viewer-img { max-width: 100%; max-height: 100%; }
+
+  .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .menu-overlay.open { display: flex; }
+  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .menu-row { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .menu-row.danger { color: var(--price-red); }
+  .menu-cancel-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <button class="header-profile" id="headerProfileBtn">
+    <div class="header-avatar" id="headerAvatar">?</div>
+    <div class="header-name" id="headerName">Chat</div>
+  </button>
+  <button class="menu-button" id="menuBtn">⋮</button>
+</div>
+
+<div id="blockedBannerWrap"></div>
+
+<div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
+
+<div id="quickReplyWrap"></div>
+<div id="inputWrap"></div>
+
+<div class="viewer-overlay" id="viewerOverlay">
+  <button class="back-button viewer-back" id="viewerBackBtn">←</button>
+  <img class="viewer-img" id="viewerImg" />
+</div>
+
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-box">
+    <button class="menu-row" id="viewContactBtn">📞 View Contact Number</button>
+    <button class="menu-row" id="reportUserBtn">🚩 Report User</button>
+    <button class="menu-row danger" id="blockToggleBtn">🚫 Block User</button>
+    <button class="menu-cancel-btn" id="menuCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<div class="menu-overlay" id="messageActionsOverlay">
+  <div class="menu-box" id="messageActionsBox"></div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
+  const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
+  const UPLOAD_PRESET = "online_shops_uploads";
+  const POLL_INTERVAL = 3000;
+  const QUICK_REPLIES = ["✅ Still available", "💰 Price is negotiable", "❌ Sold, sorry", "📍 Where can we meet?"];
+
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("userId");
+  const token = localStorage.getItem("zm_token");
+  const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  let messages = [];
+  let otherUser = null;
+  let iBlockedThem = false;
+  let theyBlockedMe = false;
+  let pollTimer = null;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingSeconds = 0;
+  let recordingTimer = null;
+  let playingId = null;
+  let currentAudio = null;
+
+  const messagesList = document.getElementById("messagesList");
+
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function loadOtherUser() {
+    try {
+      const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
+      otherUser = await res.json();
+      renderHeader();
+    } catch (e) {}
+  }
+
+  function renderHeader() {
+    if (!otherUser) return;
+    document.getElementById("headerName").textContent = otherUser.display_name || "Chat";
+    const avatar = document.getElementById("headerAvatar");
+    if (otherUser.shop_photo_url) {
+      avatar.innerHTML = `<img src="${otherUser.shop_photo_url}" />`;
+    } else {
+      avatar.textContent = otherUser.display_name ? otherUser.display_name.charAt(0).toUpperCase() : "?";
+    }
+  }
+
+  document.getElementById("headerProfileBtn").addEventListener("click", () => {
+    if (otherUser && !otherUser.is_admin) {
+      window.location.href = `/seller-profile.html?id=${userId}`;
+    }
+  });
+
+  async function loadMessages(showSpinner) {
+    try {
+      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
+      const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
+      const data = await res.json();
+      messages = data.messages || [];
+      iBlockedThem = data.i_blocked_them || false;
+      theyBlockedMe = data.they_blocked_me || false;
+      renderBlockedBanner();
+      renderMessages();
+      renderComposer();
+    } catch (e) {}
+  }
+
+  function renderBlockedBanner() {
+    const wrap = document.getElementById("blockedBannerWrap");
+    if (theyBlockedMe) {
+      wrap.innerHTML = `<div class="blocked-banner">This user has blocked you.</div>`;
+    } else if (iBlockedThem) {
+      wrap.innerHTML = `<div class="blocked-banner">You have blocked this user.</div>`;
+    } else {
+      wrap.innerHTML = "";
+    }
+  }
+
+  function renderMessages() {
+    if (!messages.length) {
+      messagesList.innerHTML = `<div class="empty-text">Say hello 👋</div>`;
+      return;
+    }
+    messagesList.innerHTML = messages.map(renderBubble).join("");
+    messagesList.scrollTop = messagesList.scrollHeight;
+
+    messages.forEach(msg => {
+      const el = document.getElementById(`msg-${msg.id}`);
+      if (el) {
+        el.addEventListener("contextmenu", (e) => { e.preventDefault(); openMessageActions(msg.id); });
+        let pressTimer;
+        el.addEventListener("touchstart", () => { pressTimer = setTimeout(() => openMessageActions(msg.id), 500); });
+        el.addEventListener("touchend", () => clearTimeout(pressTimer));
+      }
+      const photoEl = document.getElementById(`photo-${msg.id}`);
+      if (photoEl) photoEl.addEventListener("click", () => openViewer(msg.photo_url));
+      const audioEl = document.getElementById(`audio-${msg.id}`);
+      if (audioEl) audioEl.addEventListener("click", () => handlePlayAudio(msg.id, msg.audio_url));
+    });
+  }
+
+  function renderBubble(msg) {
+    const isMine = currentUser && msg.sender_id === currentUser.id;
+    const rowClass = isMine ? "mine" : "theirs";
+
+    if (msg.deleted_for_everyone) {
+      return `<div class="bubble-row ${rowClass}"><div class="bubble deleted">🚫 This message was deleted</div></div>`;
+    }
+
+    let inner;
+    if (msg.photo_url) {
+      inner = `<div class="photo-bubble bubble ${isMine ? "mine" : "theirs"}" id="photo-${msg.id}" style="padding:3px;"><img class="chat-photo" src="${msg.photo_url}" /></div>`;
+    } else if (msg.audio_url) {
+      inner = `
+        <div class="audio-bubble bubble ${isMine ? "mine" : "theirs"}" id="audio-${msg.id}">
+          <span>${playingId === msg.id ? "⏸️" : "▶️"}</span>
+          <div class="audio-wave"></div>
+          <span>${formatDuration(msg.audio_duration || 0)}</span>
+        </div>`;
+    } else {
+      inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${msg.content}</div>`;
+    }
+
+    const tick = isMine ? `<div class="tick">${msg.read_at ? "✓✓" : "✓"}</div>` : "";
+    return `<div class="bubble-row ${rowClass}" id="msg-${msg.id}">${inner}${tick}</div>`;
+  }
+
+  function openViewer(url) {
+    document.getElementById("viewerImg").src = url;
+    document.getElementById("viewerOverlay").classList.add("open");
+  }
+  document.getElementById("viewerBackBtn").addEventListener("click", () => {
+    document.getElementById("viewerOverlay").classList.remove("open");
+  });
+
+  async function handlePlayAudio(messageId, audioUrl) {
+    if (playingId === messageId) {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      playingId = null;
+      renderMessages();
+      return;
+    }
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    currentAudio = new Audio(audioUrl);
+    playingId = messageId;
+    renderMessages();
+    currentAudio.play();
+    currentAudio.onended = () => { playingId = null; renderMessages(); };
+  }
+
+  function renderComposer() {
+    const isBlocked = iBlockedThem || theyBlockedMe;
+    const isSupportChat = otherUser?.is_admin === true;
+    const quickWrap = document.getElementById("quickReplyWrap");
+    const inputWrap = document.getElementById("inputWrap");
+
+    if (isBlocked) {
+      quickWrap.innerHTML = "";
+      inputWrap.innerHTML = "";
+      return;
+    }
+
+    if (!isSupportChat) {
+      quickWrap.innerHTML = `<div class="quick-reply-row">${QUICK_REPLIES.map(r => `<div class="quick-reply-chip" data-reply="${r}">${r}</div>`).join("")}</div>`;
+      quickWrap.querySelectorAll("[data-reply]").forEach(el =>
+        el.addEventListener("click", () => sendMessagePayload({ content: el.dataset.reply }))
+      );
+    } else {
+      quickWrap.innerHTML = "";
+    }
+
+    inputWrap.innerHTML = `
+      <div class="input-row">
+        <button class="photo-btn" id="photoBtn">📷</button>
+        <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+        <textarea class="msg-input" id="msgInput" placeholder="Type a message..." rows="1"></textarea>
+        <button class="mic-btn" id="composerActionBtn">🎤</button>
+      </div>`;
+
+    const msgInput = document.getElementById("msgInput");
+    const actionBtn = document.getElementById("composerActionBtn");
+
+    function updateActionBtn() {
+      if (msgInput.value.trim()) {
+        actionBtn.className = "send-btn";
+        actionBtn.textContent = "➤";
+      } else {
+        actionBtn.className = "mic-btn";
+        actionBtn.textContent = "🎤";
+      }
+    }
+    msgInput.addEventListener("input", updateActionBtn);
+
+    actionBtn.addEventListener("click", () => {
+      if (msgInput.value.trim()) {
+        const content = msgInput.value;
+        msgInput.value = "";
+        updateActionBtn();
+        sendMessagePayload({ content });
+      } else {
+        startRecording();
+      }
+    });
+
+    document.getElementById("photoBtn").addEventListener("click", () => document.getElementById("photoInput").click());
+    document.getElementById("photoInput").addEventListener("change", handlePickPhoto);
+  }
+
+  async function sendMessagePayload(payload) {
+    try {
+      const res = await fetch(`${API_URL}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ receiver_id: userId, ...payload })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not send message."); return; }
+      loadMessages(false);
+    } catch (e) {}
+  }
+
+  async function handlePickPhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+      const data = await res.json();
+      if (!data.secure_url) { alert("Could not upload the photo. Please try again."); return; }
+      await sendMessagePayload({ photo_url: data.secure_url });
+    } catch (e) {
+      alert("Could not upload the photo.");
+    }
+    e.target.value = "";
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      recordingSeconds = 0;
+
+      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+      mediaRecorder.start();
+
+      document.getElementById("quickReplyWrap").innerHTML = "";
+      document.getElementById("inputWrap").innerHTML = `
+        <div class="recording-row">
+          <div class="recording-dot"></div>
+          <div class="recording-text" id="recordingText">Recording... 0:00</div>
+          <button class="cancel-record-btn" id="cancelRecordBtn">Cancel</button>
+          <button class="stop-record-btn" id="stopRecordBtn">Send</button>
+        </div>`;
+
+      recordingTimer = setInterval(() => {
+        recordingSeconds++;
+        document.getElementById("recordingText").textContent = `Recording... ${formatDuration(recordingSeconds)}`;
+      }, 1000);
+
+      document.getElementById("cancelRecordBtn").addEventListener("click", cancelRecording);
+      document.getElementById("stopRecordBtn").addEventListener("click", stopRecording);
+    } catch (e) {
+      alert("We need microphone access to record a voice note.");
+    }
+  }
+
+  function cancelRecording() {
+    clearInterval(recordingTimer);
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+    mediaRecorder = null;
+    recordingSeconds = 0;
+    renderComposer();
+  }
+
+  function stopRecording() {
+    clearInterval(recordingTimer);
+    const duration = recordingSeconds;
+    if (!mediaRecorder) return;
+
+    mediaRecorder.onstop = async () => {
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      if (duration < 1) { renderComposer(); return; }
+
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      try {
+        const formData = new FormData();
+        formData.append("file", blob, `voice_${Date.now()}.webm`);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("resource_type", "video");
+
+        const res = await fetch(CLOUDINARY_AUDIO_URL, { method: "POST", body: formData });
+        const data = await res.json();
+        if (!data.secure_url) { alert("Could not upload the voice note. Please try again."); renderComposer(); return; }
+
+        await sendMessagePayload({ audio_url: data.secure_url, audio_duration: duration });
+      } catch (e) {
+        alert("Could not save the voice note.");
+      }
+      recordingSeconds = 0;
+      renderComposer();
+    };
+
+    mediaRecorder.stop();
+  }
+
+  function openMessageActions(messageId) {
+    const msg = messages.find(m => m.id === messageId);
+    const isMine = currentUser && msg?.sender_id === currentUser.id;
+    const canUnsend = isMine && msg && !msg.read_at;
+
+    const box = document.getElementById("messageActionsBox");
+    box.innerHTML = `
+      ${canUnsend ? `<button class="menu-row danger" id="unsendBtn">🗑️ Delete for Everyone</button>` : ""}
+      <button class="menu-row" id="deleteForMeBtn">🗑️ Delete for Me</button>
+      <button class="menu-cancel-btn" id="msgActionsCancelBtn">Cancel</button>
+    `;
+    document.getElementById("messageActionsOverlay").classList.add("open");
+
+    if (canUnsend) {
+      document.getElementById("unsendBtn").addEventListener("click", () => handleDeleteForEveryone(messageId));
+    }
+    document.getElementById("deleteForMeBtn").addEventListener("click", () => handleDeleteForMe(messageId));
+    document.getElementById("msgActionsCancelBtn").addEventListener("click", () => {
+      document.getElementById("messageActionsOverlay").classList.remove("open");
+    });
+  }
+  document.getElementById("messageActionsOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "messageActionsOverlay") e.target.classList.remove("open");
+  });
+
+  async function handleDeleteForMe(messageId) {
+    document.getElementById("messageActionsOverlay").classList.remove("open");
+    try {
+      await fetch(`${API_URL}/messages/${messageId}/delete-for-me`, { method: "PUT", headers: authHeaders() });
+      messages = messages.filter(m => m.id !== messageId);
+      renderMessages();
+    } catch (e) {
+      alert("Could not delete message.");
+    }
+  }
+
+  async function handleDeleteForEveryone(messageId) {
+    document.getElementById("messageActionsOverlay").classList.remove("open");
+    try {
+      const res = await fetch(`${API_URL}/messages/${messageId}/delete-for-everyone`, { method: "PUT", headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not unsend this message."); return; }
+      loadMessages(false);
+    } catch (e) {
+      alert("Could not unsend message.");
+    }
+  }
+
+  document.getElementById("menuBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.add("open"));
+  document.getElementById("menuCancelBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.remove("open"));
+  document.getElementById("menuOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "menuOverlay") e.target.classList.remove("open");
+  });
+
+  document.getElementById("viewContactBtn").addEventListener("click", () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    if (!otherUser?.phone) return;
+    if (confirm(`${otherUser.display_name}\n${otherUser.phone}\n\nTap OK to call.`)) {
+      window.location.href = `tel:${otherUser.phone}`;
+    }
+  });
+
+  document.getElementById("reportUserBtn").addEventListener("click", () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    window.location.href = "/report-user.html";
+  });
+
+  document.getElementById("blockToggleBtn").addEventListener("click", async () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    if (iBlockedThem) {
+      if (!confirm("Unblock this user? You will be able to message each other again.")) return;
+      try {
+        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "DELETE", headers: authHeaders() });
+        if (!res.ok) { alert("Could not unblock this user. Please try again."); return; }
+        iBlockedThem = false;
+        loadMessages(false);
+      } catch (e) {
+        alert("Could not connect to the server.");
+      }
+    } else {
+      if (!confirm("Block this user? They will no longer be able to message you.")) return;
+      try {
+        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "POST", headers: authHeaders() });
+        if (!res.ok) { alert("Could not block this user. Please try again."); return; }
+        iBlockedThem = true;
+        loadMessages(false);
+      } catch (e) {
+        alert("Could not connect to the server.");
+      }
+    }
+  });
+
+  function updateBlockButtonLabel() {
+    document.getElementById("blockToggleBtn").innerHTML = iBlockedThem ? "✅ Unblock User" : "🚫 Block User";
+  }
+
+  const originalRenderBlockedBanner = renderBlockedBanner;
+  renderBlockedBanner = function() {
+    originalRenderBlockedBanner();
+    updateBlockButtonLabel();
+  };
+
+  if (!currentUser) {
+    window.location.href = "/login.html";
+  } else {
+    loadOtherUser();
+    loadMessages(true);
+    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
+  }
+</script>
+</body>
+</html>
