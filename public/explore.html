@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Explore</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC;
+    --card: #FFFFFF;
+    --border: #E2E0DC;
+    --text: #211D1A;
+    --subtext: #5C5955;
+    --black: #111111;
+    --gold: #F5C518;
+    --price-red: #A3131C;
+    --orange: #FF7A1A;
+    --thumb-bg: #E9E2D3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar { background: var(--black); padding: 16px; }
+  .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
+  .auth-line { color: var(--gold); font-size: 12px; margin-top: 6px; background: none; border: none; cursor: pointer; padding: 0; }
+
+  .loc-row { display: flex; gap: 8px; padding: 12px; }
+  .loc-pill {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px; text-align: center; cursor: pointer;
+  }
+  .loc-pill.active { background: var(--black); border-color: var(--black); }
+  .loc-text { font-size: 12px; font-weight: 600; color: var(--subtext); }
+  .loc-text.active { color: var(--gold); }
+
+  .chips-row {
+    display: flex; gap: 8px; overflow-x: auto; padding: 0 16px 8px;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .chips-row::-webkit-scrollbar { display: none; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    padding: 7px 14px; font-size: 13px; white-space: nowrap; cursor: pointer; flex-shrink: 0;
+  }
+  .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; padding-bottom: 40px; }
+  .card {
+    width: calc(47% - 5px);
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden;
+  }
+  .thumb {
+    height: 90px; background: var(--thumb-bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-info { padding: 10px; }
+  .price { font-weight: 700; font-size: 14px; color: var(--price-red); }
+  .title { font-size: 12px; color: var(--text); margin: 3px 0; }
+  .loc { font-size: 10.5px; color: var(--subtext); }
+
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .error-text { color: var(--price-red); margin-bottom: 12px; }
+  .retry-btn { background: var(--black); color: var(--gold); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .empty-text { color: var(--subtext); }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Online Shops</div>
+  <button class="auth-line" id="authBtn">Login / Sign Up</button>
+</div>
+
+<div class="loc-row">
+  <div class="loc-pill active" id="locHome"><span class="loc-text active">📍 Home</span></div>
+  <div class="loc-pill" id="locCurrent"><span class="loc-text">🎯 Use current location</span></div>
+</div>
+
+<div class="chips-row" id="categoryRow"></div>
+
+<div id="feed"><div class="center-box"><div class="spinner"></div></div></div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
+  let activeCategory = "All";
+  let listings = [];
+
+  const feed = document.getElementById("feed");
+  const categoryRow = document.getElementById("categoryRow");
+  const authBtn = document.getElementById("authBtn");
+  const locHome = document.getElementById("locHome");
+  const locCurrent = document.getElementById("locCurrent");
+
+  function renderChips() {
+    categoryRow.innerHTML = CATEGORIES.map(c =>
+      `<div class="chip ${activeCategory === c ? "active" : ""}" data-cat="${c}">${c}</div>`
+    ).join("");
+    categoryRow.querySelectorAll("[data-cat]").forEach(el =>
+      el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); renderFeed(); })
+    );
+  }
+
+  locHome.addEventListener("click", () => {
+    locHome.classList.add("active"); locHome.querySelector(".loc-text").classList.add("active");
+    locCurrent.classList.remove("active"); locCurrent.querySelector(".loc-text").classList.remove("active");
+  });
+  locCurrent.addEventListener("click", () => {
+    locCurrent.classList.add("active"); locCurrent.querySelector(".loc-text").classList.add("active");
+    locHome.classList.remove("active"); locHome.querySelector(".loc-text").classList.remove("active");
+  });
+
+  async function fetchListings() {
+    feed.innerHTML = `<div class="center-box"><div class="spinner"></div></div>`;
+    try {
+      const res = await fetch(`${API_URL}/listings`);
+      listings = await res.json();
+      renderFeed();
+    } catch (e) {
+      feed.innerHTML = `
+        <div class="center-box">
+          <div class="error-text">Could not load listings. Check your internet connection.</div>
+          <button class="retry-btn" id="retryBtn">Try Again</button>
+        </div>`;
+      document.getElementById("retryBtn").addEventListener("click", fetchListings);
+    }
+  }
+
+  function renderFeed() {
+    const items = activeCategory === "All" ? listings : listings.filter(i => i.category === activeCategory);
+    if (!items.length) {
+      feed.innerHTML = `<div class="center-box"><div class="empty-text">No listings yet in this category.</div></div>`;
+      return;
+    }
+    feed.innerHTML = `<div class="grid">${items.map(renderCard).join("")}</div>`;
+  }
+
+  function renderCard(item) {
+    return `
+      <div class="card">
+        <div class="thumb"><span style="font-size:32px;">🏷️</span></div>
+        <div class="card-info">
+          <div class="price">K${item.price}</div>
+          <div class="title">${item.title}</div>
+          <div class="loc">📍 ${item.location_label || ""}</div>
+        </div>
+      </div>`;
+  }
+
+  authBtn.addEventListener("click", () => { window.location.href = "/login.html"; });
+
+  const savedUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+  if (savedUser) {
+    authBtn.textContent = `Hi, ${savedUser.name} · Logout`;
+    authBtn.addEventListener("click", () => {
+      localStorage.removeItem("zm_user");
+      localStorage.removeItem("zm_token");
+      location.reload();
+    });
+  }
+
+  renderChips();
+  fetchListings();
+</script>
+</body>
+</html>
