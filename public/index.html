@@ -105,41 +105,13 @@
   .nav-item.active { color: var(--orange); font-weight: 700; }
   .nav-icon { font-size: 20px; margin-bottom: 2px; }
   body { padding-bottom: 60px; }
-
-  .modal-backdrop {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 100; align-items: flex-end; justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--bg); width: 100%; max-width: 480px;
-    border-radius: 16px 16px 0 0; padding: 28px 24px 32px; position: relative;
-  }
-  .modal h2 { font-size: 1.2rem; margin-bottom: 16px; }
-  .modal input {
-    width: 100%; padding: 12px 14px; margin-bottom: 12px;
-    border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff;
-  }
-  .primary-btn {
-    width: 100%; background: var(--black); color: var(--gold); border: none;
-    padding: 13px; border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 6px;
-  }
-  .switch-link { text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--subtext); }
-  .switch-link a { color: var(--orange); font-weight: 600; text-decoration: none; }
-  .close-x {
-    position: absolute; top: 14px; right: 18px; background: none; border: none;
-    font-size: 1.3rem; color: var(--subtext); cursor: pointer;
-  }
-  .modal-msg { font-size: 0.8rem; margin-bottom: 10px; }
-  .modal-msg.err { color: var(--price-red); }
-  .modal-msg.ok { color: #1F4B3F; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-left">
-    <button class="gear">
+    <button class="gear" onclick="window.location.href='/settings.html'">
       <div class="icon">⚙️</div>
       <div class="label">Settings</div>
     </button>
@@ -176,33 +148,12 @@
   <a href="/my-shop.html" class="nav-item"><div class="nav-icon">🛍️</div><div>My Shop</div></a>
 </div>
 
-<div class="modal-backdrop" id="authModal">
-  <div class="modal">
-    <button class="close-x" id="closeModal">×</button>
-    <h2 id="modalTitle">Sign in</h2>
-    <div id="modalMsg"></div>
-    <div id="signupOnlyFields" style="display:none;">
-      <input type="text" id="fullName" placeholder="Full name" />
-    </div>
-    <input type="text" id="phone" placeholder="Phone number (e.g. 0977123456)" />
-    <input type="password" id="password" placeholder="Password" />
-    <div id="confirmPasswordWrap" style="display:none;">
-      <input type="password" id="confirmPassword" placeholder="Confirm password" />
-    </div>
-    <button class="primary-btn" id="submitAuth">Sign in</button>
-    <div class="switch-link">
-      <span id="switchText">New to ZedMarket? <a id="switchLink">Create an account</a></span>
-    </div>
-  </div>
-</div>
-
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
   const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
   const PAGE_SIZE = 20;
 
-  let mode = "login";
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
@@ -211,15 +162,7 @@
   const sortRow = document.getElementById("sortRow");
   const categoryRow = document.getElementById("categoryRow");
   const searchInput = document.getElementById("searchInput");
-  const authModal = document.getElementById("authModal");
   const authBtn = document.getElementById("authBtn");
-  const closeModal = document.getElementById("closeModal");
-  const submitAuth = document.getElementById("submitAuth");
-  const switchLink = document.getElementById("switchLink");
-  const switchText = document.getElementById("switchText");
-  const modalTitle = document.getElementById("modalTitle");
-  const modalMsg = document.getElementById("modalMsg");
-  const signupOnlyFields = document.getElementById("signupOnlyFields");
 
   function renderChips() {
     sortRow.innerHTML = SORT_OPTIONS.map(o =>
@@ -279,12 +222,17 @@
 
     feed.className = "grid";
     feed.innerHTML = items.map(renderCard).join("");
+
+    items.forEach(item => {
+      const card = document.getElementById(`card-${item.id}`);
+      if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
+    });
   }
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
     return `
-      <div class="card">
+      <div class="card" id="card-${item.id}">
         <div class="thumb">
           ${img ? `<img src="${img}" alt="${item.title}" loading="lazy" />` : `<span style="font-size:40px;">🏷️</span>`}
         </div>
@@ -310,84 +258,6 @@
     }
   });
 
-  authBtn.addEventListener("click", () => authModal.classList.add("open"));
-  closeModal.addEventListener("click", () => authModal.classList.remove("open"));
-  authModal.addEventListener("click", (e) => { if (e.target === authModal) authModal.classList.remove("open"); });
-
-  switchLink.addEventListener("click", () => { mode = mode === "login" ? "signup" : "login"; updateModalMode(); });
-
-  function updateModalMode() {
-    modalMsg.textContent = "";
-    if (mode === "login") {
-      modalTitle.textContent = "Sign in";
-      submitAuth.textContent = "Sign in";
-      signupOnlyFields.style.display = "none";
-      document.getElementById("confirmPasswordWrap").style.display = "none";
-      switchText.innerHTML = `New to ZedMarket? <a id="switchLink">Create an account</a>`;
-    } else {
-      modalTitle.textContent = "Create account";
-      submitAuth.textContent = "Create account";
-      signupOnlyFields.style.display = "block";
-      document.getElementById("confirmPasswordWrap").style.display = "block";
-      switchText.innerHTML = `Already have an account? <a id="switchLink">Sign in</a>`;
-    }
-    document.getElementById("switchLink").addEventListener("click", () => {
-      mode = mode === "login" ? "signup" : "login";
-      updateModalMode();
-    });
-  }
-
-  submitAuth.addEventListener("click", async () => {
-    const phone = document.getElementById("phone").value.trim();
-    const password = document.getElementById("password").value;
-    const name = document.getElementById("fullName").value.trim();
-    const confirmPassword = document.getElementById("confirmPassword").value;
-
-    if (!phone || !password) {
-      modalMsg.className = "modal-msg err";
-      modalMsg.textContent = "Please fill in all fields.";
-      return;
-    }
-    if (mode === "signup" && (!name || !confirmPassword)) {
-      modalMsg.className = "modal-msg err";
-      modalMsg.textContent = "Please fill in all fields.";
-      return;
-    }
-
-    const endpoint = mode === "login" ? "/auth/login" : "/auth/signup";
-    const body = mode === "login" ? { phone, password } : { name, phone, password, confirmPassword };
-
-    submitAuth.disabled = true;
-    modalMsg.className = "modal-msg";
-    modalMsg.textContent = "Working on it…";
-
-    try {
-      const res = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || "Something went wrong");
-
-      if (data.token) {
-        localStorage.setItem("zm_token", data.token);
-        localStorage.setItem("zm_user", JSON.stringify(data.user || {}));
-        modalMsg.className = "modal-msg ok";
-        modalMsg.textContent = "Signed in!";
-        setTimeout(() => { authModal.classList.remove("open"); location.reload(); }, 700);
-      } else if (mode === "signup") {
-        modalMsg.className = "modal-msg ok";
-        modalMsg.textContent = data.message || "Account created! Check your phone for an OTP to verify.";
-      }
-    } catch (e) {
-      modalMsg.className = "modal-msg err";
-      modalMsg.textContent = e.message;
-    } finally {
-      submitAuth.disabled = false;
-    }
-  });
-
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("/service-worker.js").catch(console.error);
@@ -397,6 +267,13 @@
   const savedUser = JSON.parse(localStorage.getItem("zm_user") || "null");
   if (savedUser) {
     authBtn.textContent = `Hi, ${savedUser.name}`;
+    authBtn.addEventListener("click", () => {
+      window.location.href = "/my-shop.html";
+    });
+  } else {
+    authBtn.addEventListener("click", () => {
+      window.location.href = "/login.html";
+    });
   }
 
   renderChips();
