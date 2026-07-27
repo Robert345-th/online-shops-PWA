@@ -181,7 +181,9 @@
       theyBlockedMe = data.they_blocked_me || false;
       renderBlockedBanner();
       renderMessages();
-      renderComposer();
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        renderComposer();
+      }
     } catch (e) {}
   }
 
