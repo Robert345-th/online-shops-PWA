@@ -126,6 +126,8 @@
   let otherUser = null;
   let iBlockedThem = false;
   let theyBlockedMe = false;
+  let composerRendered = false;
+  let lastBlockedState = null;
   let pollTimer = null;
   let mediaRecorder = null;
   let audioChunks = [];
@@ -151,6 +153,7 @@
       const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
       otherUser = await res.json();
       renderHeader();
+      composerRendered = false;
     } catch (e) {}
   }
 
@@ -181,8 +184,13 @@
       theyBlockedMe = data.they_blocked_me || false;
       renderBlockedBanner();
       renderMessages();
-      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+
+      const currentBlockedState = iBlockedThem || theyBlockedMe;
+      const recording = mediaRecorder && mediaRecorder.state !== "inactive";
+      if (!recording && (!composerRendered || currentBlockedState !== lastBlockedState)) {
         renderComposer();
+        composerRendered = true;
+        lastBlockedState = currentBlockedState;
       }
     } catch (e) {}
   }
