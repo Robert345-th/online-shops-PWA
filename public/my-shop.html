@@ -79,11 +79,28 @@
   .phone-send-btn { background: var(--black); color: var(--gold); border: none; padding: 0 18px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; }
   .skip-btn { display: block; width: 100%; padding: 14px; text-align: center; margin-top: 6px; background: none; border: none; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; }
   .modal-cancel-btn { display: block; width: 100%; padding: 12px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid var(--border);
+    display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .nav-item { flex: 1; text-align: center; text-decoration: none; color: var(--subtext); font-size: 11px; padding: 4px 0; }
+  .nav-item.active { color: var(--orange); font-weight: 700; }
+  .nav-icon { font-size: 20px; margin-bottom: 2px; }
+  body { padding-bottom: 60px; }
 </style>
 </head>
 <body>
 
 <div id="app"></div>
+
+<div class="bottom-nav">
+  <a href="/index.html" class="nav-item"><div class="nav-icon">🏠</div><div>Home</div></a>
+  <a href="/explore.html" class="nav-item"><div class="nav-icon">🌐</div><div>Explore</div></a>
+  <a href="/my-shop.html" class="nav-item active"><div class="nav-icon">🛍️</div><div>My Shop</div></a>
+</div>
 
 <div class="modal-overlay" id="manageModal">
   <div class="modal-box">
@@ -339,47 +356,4 @@
 
   document.getElementById("phoneSendBtn").addEventListener("click", async () => {
     const phone = document.getElementById("buyerPhoneInput").value.trim();
-    if (!phone) { alert("Please enter the buyer's phone number."); return; }
-    try {
-      const res = await fetch(`${API_URL}/sale-confirmations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ buyer_phone: phone, listing_title: buyerPickerItem.title })
-      });
-      const data = await res.json();
-      if (!res.ok) { alert(data.error || "Please try again."); return; }
-      buyerModal.classList.remove("open");
-      alert("Sent — we've asked the buyer to confirm.");
-      await removeListing(buyerPickerItem.id);
-      buyerPickerItem = null;
-    } catch (e) {
-      alert("Could not connect to the server.");
-    }
-  });
-
-  document.getElementById("skipConfirmBtn").addEventListener("click", async () => {
-    buyerModal.classList.remove("open");
-    await removeListing(buyerPickerItem.id);
-    buyerPickerItem = null;
-  });
-  document.getElementById("buyerCancelBtn").addEventListener("click", () => { buyerModal.classList.remove("open"); buyerPickerItem = null; });
-
-  async function removeListing(id) {
-    try {
-      const res = await fetch(`${API_URL}/listings/${id}`, { method: "DELETE", headers: authHeaders() });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || "Could not remove listing.");
-        return;
-      }
-      listings = listings.filter(i => i.id !== id);
-      render();
-    } catch (e) {
-      alert("Could not connect to the server.");
-    }
-  }
-
-  loadData();
-</script>
-</body>
-</html>
+    if (!phone) { alert("
