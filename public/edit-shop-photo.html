@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Edit Shop Logo</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .guideline-box { background: var(--warn-bg); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+  .guideline-item { font-size: 11px; color: var(--warn-text); margin-bottom: 3px; line-height: 1.3; }
+  .tap-hint { font-size: 11px; color: var(--subtext); margin-bottom: 10px; font-style: italic; }
+
+  .logo-box {
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px;
+    height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden; cursor: pointer;
+  }
+  .logo-box-text { color: var(--subtext); font-size: 13px; }
+  .logo-preview { width: 100%; height: 100%; object-fit: cover; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 300; }
+  .preview-overlay.open { display: flex; flex-direction: column; }
+  .preview-close-btn {
+    position: absolute; top: 50px; right: 20px; width: 40px; height: 40px; border-radius: 20px;
+    background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px; font-weight: 700; z-index: 10;
+  }
+  .preview-image { max-width: 100%; max-height: 65vh; object-fit: contain; }
+  .preview-actions { position: absolute; bottom: 50px; display: flex; gap: 10px; }
+  .change-btn { background: var(--black); padding: 14px 20px; border-radius: 12px; color: var(--gold); font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+  .remove-btn { background: var(--price-red); padding: 14px 20px; border-radius: 12px; color: #fff; font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">Edit Shop Logo</div>
+</div>
+
+<div class="content">
+  <div class="guideline-box">
+    <div class="guideline-item">✓ Use a logo or graphic — not a photo of a person</div>
+    <div class="guideline-item">✓ Faces AND full-body photos are automatically rejected</div>
+  </div>
+  <div class="tap-hint" id="tapHint">Tap below to upload a logo.</div>
+  <div class="logo-box" id="logoBox">
+    <div class="logo-box-text">📷 Tap to upload a logo</div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+</div>
+
+<div class="preview-overlay" id="previewOverlay">
+  <button class="preview-close-btn" id="previewCloseBtn">✕</button>
+  <img class="preview-image" id="previewImage" />
+  <div class="preview-actions">
+    <button class="change-btn" id="changeBtn">🔄 Change Photo</button>
+    <button class="remove-btn" id="removeBtn">🗑️ Remove Photo</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
+  const UPLOAD_PRESET = "online_shops_uploads";
+  const PERSON_COVERAGE_THRESHOLD = 0.15;
+  const token = localStorage.getItem("zm_token");
+
+  let shopPhotoUrl = "";
+  let faceDetection, selfieSegmentation;
+  let faceReady = false, bodyReady = false;
+
+  const logoBox = document.getElementById("logoBox");
+  const fileInput = document.getElementById("fileInput");
+  const tapHint = document.getElementById("tapHint");
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function loadProfile() {
+    try {
+      const res = await fetch(`${API_URL}/auth/shop-profile`, { headers: authHeaders() });
+      const data = await res.json();
+      shopPhotoUrl = data.shop_photo_url || "";
+      renderBox();
+    } catch (e) {
+      renderBox();
+    }
+  }
+
+  function renderBox() {
+    if (shopPhotoUrl) {
+      logoBox.innerHTML = `<img class="logo-preview" src="${shopPhotoUrl}" />`;
+      tapHint.textContent = "Tap the photo to view, change, or remove it.";
+    } else {
+      logoBox.innerHTML = `<div class="logo-box-text">📷 Tap to upload a logo</div>`;
+      tapHint.textContent = "Tap below to upload a logo.";
+    }
+  }
+
+  logoBox.addEventListener("click", () => {
+    if (shopPhotoUrl) {
+      openPreview();
+    } else {
+      fileInput.click();
+    }
+  });
+
+  function openPreview() {
+    document.getElementById("previewImage").src = shopPhotoUrl;
+    document.getElementById("previewOverlay").classList.add("open");
+  }
+  document.getElementById("previewCloseBtn").addEventListener("click", () => {
+    document.getElementById("previewOverlay").classList.remove("open");
+  });
+  document.getElementById("changeBtn").addEventListener("click", () => {
+    document.getElementById("previewOverlay").classList.remove("open");
+    fileInput.click();
+  });
+  document.getElementById("removeBtn").addEventListener("click", removeLogo);
+
+  fileInput.addEventListener("change", handleFileSelect);
+
+  async function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+
+    if (!faceReady || !bodyReady) {
+      alert("Still preparing the photo checkers, try again in a few seconds.");
+      return;
+    }
+
+    logoBox.innerHTML = `<div class="spinner"></div><div class="logo-box-text" style="margin-top:8px;">Checking photo...</div>`;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = async () => {
+      try {
+        const faceResults = await runFaceDetection(img);
+        if (faceResults.faceCount > 0) {
+          alert("Photo Not Allowed — please upload a logo or graphic for your shop, not a photo of a person.");
+          renderBox();
+          return;
+        }
+        const bodyResults = await runBodyDetection(img);
+        if (bodyResults.personCoverage > PERSON_COVERAGE_THRESHOLD) {
+          alert("Photo Not Allowed — please upload a logo or graphic for your shop, not a photo of a person.");
+          renderBox();
+          return;
+        }
+        await uploadLogo(file);
+      } catch (err) {
+        alert("Something went wrong checking the photo: " + err.message);
+        renderBox();
+      }
+    };
+    img.onerror = () => {
+      alert("Could not read the photo.");
+      renderBox();
+    };
+    img.src = URL.createObjectURL(file);
+  }
+
+  function runFaceDetection(img) {
+    return new Promise((resolve, reject) => {
+      faceDetection.onResults((results) => {
+        resolve({ faceCount: results.detections ? results.detections.length : 0 });
+      });
+      faceDetection.send({ image: img }).catch(reject);
+    });
+  }
+
+  function runBodyDetection(img) {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      selfieSegmentation.onResults((results) => {
+        try {
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let personPixels = 0;
+          const totalPixels = canvas.width * canvas.height;
+          for (let i = 0; i < imageData.data.length; i += 4) {
+            if (imageData.data[i] > 128) personPixels++;
+          }
+          resolve({ personCoverage: personPixels / totalPixels });
+        } catch (e) {
+          reject(e);
+        }
+      });
+      selfieSegmentation.send({ image: img }).catch(reject);
+    });
+  }
+
+  async function uploadLogo(file) {
+    let uploadedUrl = null;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const cloudinaryRes = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+      const cloudinaryData = await cloudinaryRes.json();
+
+      if (!cloudinaryData.secure_url) {
+        alert("Upload failed: " + JSON.stringify(cloudinaryData.error || cloudinaryData));
+        renderBox();
+        return;
+      }
+
+      uploadedUrl = cloudinaryData.secure_url;
+
+      const saveRes = await fetch(`${API_URL}/auth/shop-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ shop_photo_url: uploadedUrl })
+      });
+
+      if (!saveRes.ok) throw new Error("Save request did not succeed");
+
+      shopPhotoUrl = uploadedUrl;
+      renderBox();
+      alert("Saved — your shop logo has been updated.");
+    } catch (err) {
+      if (uploadedUrl) {
+        const actual = await verifyShopPhoto();
+        if (actual === uploadedUrl) {
+          shopPhotoUrl = uploadedUrl;
+          renderBox();
+          alert("Saved — your shop logo has been updated.");
+          return;
+        }
+      }
+      alert("Something went wrong: " + err.message);
+      renderBox();
+    }
+  }
+
+  async function verifyShopPhoto() {
+    try {
+      const res = await fetch(`${API_URL}/auth/shop-profile`, { headers: authHeaders() });
+      const data = await res.json();
+      return data.shop_photo_url || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function removeLogo() {
+    document.getElementById("previewOverlay").classList.remove("open");
+    logoBox.innerHTML = `<div class="spinner"></div><div class="logo-box-text" style="margin-top:8px;">Removing...</div>`;
+    try {
+      const res = await fetch(`${API_URL}/auth/shop-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ shop_photo_url: null })
+      });
+      if (!res.ok) throw new Error("Remove request did not succeed");
+      shopPhotoUrl = "";
+      renderBox();
+    } catch (err) {
+      const actual = await verifyShopPhoto();
+      if (!actual) {
+        shopPhotoUrl = "";
+      } else {
+        alert("Could not remove the logo: " + err.message);
+      }
+      renderBox();
+    }
+  }
+
+  function initModels() {
+    faceDetection = new FaceDetection({
+      locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/" + file
+    });
+    faceDetection.setOptions({ model: "short", minDetectionConfidence: 0.5 });
+    faceDetection.initialize().then(() => { faceReady = true; }).catch((e) => {
+      alert("Face model failed to load: " + e.message);
+    });
+
+    selfieSegmentation = new SelfieSegmentation({
+      locateFile: (file) => "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/" + file
+    });
+    selfieSegmentation.setOptions({ modelSelection: 0 });
+    selfieSegmentation.initialize().then(() => { bodyReady = true; }).catch((e) => {
+      alert("Body model failed to load: " + e.message);
+    });
+  }
+
+  if (!token) {
+    window.location.href = "/login.html";
+  } else {
+    initModels();
+    loadProfile();
+  }
+</script>
+</body>
+</html>
