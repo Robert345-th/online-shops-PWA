@@ -553,6 +553,14 @@
   if (!currentUser) {
     window.location.href = "/login.html";
   } else {
+    // Render the message box immediately using a safe default (assume not
+    // blocked) so it appears instantly instead of waiting on two network
+    // round-trips first. loadMessages() below will silently correct this
+    // afterward if the real blocked status turns out different.
+    renderComposer();
+    composerRendered = true;
+    lastBlockedState = false;
+
     loadOtherUser();
     loadMessages(true);
     pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
