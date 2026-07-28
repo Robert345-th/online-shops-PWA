@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Map View</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111; --gold: #F5C518; --price-red: #A3131C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .filter-row { display: flex; gap: 8px; padding: 12px; flex-shrink: 0; }
+  .search-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; }
+  .radius-box { display: flex; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; gap: 4px; }
+  .radius-input { width: 36px; font-size: 13px; text-align: center; border: none; background: none; }
+  .radius-label { font-size: 11px; color: var(--subtext); font-weight: 600; }
+
+  .no-location-text { font-size: 11px; color: var(--price-red); text-align: center; padding-bottom: 6px; padding: 0 12px 6px; flex-shrink: 0; }
+
+  .results-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 8px; flex-shrink: 0; }
+  .no-results-text { font-size: 12px; color: var(--subtext); padding: 8px; }
+  .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; width: 150px; flex-shrink: 0; cursor: pointer; }
+  .group-card-title { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .group-card-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .group-card-view { font-size: 11px; color: var(--price-red); font-weight: 700; margin-top: 4px; }
+
+  #map { flex: 1; width: 100%; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 400; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .item-row { display: flex; align-items: center; background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 10px; margin-bottom: 8px; gap: 10px; cursor: pointer; }
+  .item-thumb { width: 44px; height: 44px; border-radius: 8px; background: #E9E2D3; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-title { font-size: 13px; font-weight: 600; }
+  .item-price { font-size: 12px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .item-view-text { font-size: 11px; color: var(--price-red); font-weight: 700; }
+  .modal-close-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; cursor: pointer; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">🗺️ Map View</div>
+</div>
+
+<div class="filter-row">
+  <input class="search-input" id="searchInput" placeholder="🔍 Search listings..." />
+  <div class="radius-box">
+    <input class="radius-input" id="radiusInput" value="10" inputmode="numeric" />
+    <div class="radius-label">km</div>
+  </div>
+</div>
+
+<div class="no-location-text" id="noLocationText" style="display:none;">Enable location to filter by distance — showing all listings for now.</div>
+
+<div class="results-row" id="resultsRow" style="display:none;"></div>
+
+<div id="map"></div>
+
+<div class="modal-overlay" id="groupModal">
+  <div class="modal-box">
+    <div class="modal-title" id="groupModalTitle"></div>
+    <div id="itemsList"></div>
+    <button class="modal-close-btn" id="modalCloseBtn">Close</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  let allListings = [];
+  let myCoords = null;
+  let map, markersLayer;
+
+  function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  async function loadListings() {
+    try {
+      const res = await fetch(`${API_URL}/listings`);
+      const data = await res.json();
+      allListings = data.filter(item => item.latitude && item.longitude);
+      initMap();
+      renderAll();
+    } catch (e) {
+      initMap();
+    }
+  }
+
+  function loadLocation() {
+    if (!navigator.geolocation) {
+      document.getElementById("noLocationText").style.display = "block";
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        renderAll();
+      },
+      () => {
+        document.getElementById("noLocationText").style.display = "block";
+      }
+    );
+  }
+
+  function initMap() {
+    const center = myCoords || (allListings[0] ? { lat: parseFloat(allListings[0].latitude), lng: parseFloat(allListings[0].longitude) } : { lat: -15.3875, lng: 28.3228 });
+    map = L.map("map").setView([center.lat, center.lng], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+    markersLayer = L.layerGroup().addTo(map);
+  }
+
+  function getFiltered() {
+    const searchText = document.getElementById("searchInput").value.trim().toLowerCase();
+    const radius = parseFloat(document.getElementById("radiusInput").value) || 10;
+
+    let filtered = allListings.filter(item =>
+      searchText === "" ? true : item.title.toLowerCase().includes(searchText)
+    );
+
+    if (myCoords) {
+      filtered = filtered.filter(item => {
+        const dist = getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude));
+        return dist <= radius;
+      });
+    }
+    return { filtered, searchText };
+  }
+
+  function renderAll() {
+    const { filtered, searchText } = getFiltered();
+    renderMarkers(filtered);
+    renderResultsRow(filtered, searchText);
+  }
+
+  function renderMarkers(filtered) {
+    if (!map) return;
+    markersLayer.clearLayers();
+
+    if (myCoords) {
+      L.circleMarker([myCoords.lat, myCoords.lng], { radius: 8, color: "#111", fillColor: "#F5C518", fillOpacity: 1 })
+        .addTo(markersLayer).bindPopup("You are here");
+    }
+
+    filtered.forEach(item => {
+      const img = item.photos && item.photos.length > 0
+        ? `<img src="${item.photos[0]}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:4px;" />`
+        : "";
+      const popupHtml = `
+        <div style="width:150px">
+          ${img}
+          <div style="font-weight:700;color:#A3131C;font-size:13px;">K${item.price}</div>
+          <div style="font-size:11px;color:#211D1A;margin-bottom:4px;">${item.title}</div>
+          <button onclick="window.location.href='/listing.html?id=${item.id}'" style="background:#111;color:#F5C518;border:none;padding:5px 10px;border-radius:8px;font-size:11px;">View Listing</button>
+        </div>`;
+      L.marker([item.latitude, item.longitude]).addTo(markersLayer).bindPopup(popupHtml);
+    });
+  }
+
+  function renderResultsRow(filtered, searchText) {
+    const row = document.getElementById("resultsRow");
+    if (searchText === "") {
+      row.style.display = "none";
+      return;
+    }
+    row.style.display = "flex";
+
+    const groupsMap = {};
+    filtered.forEach(item => {
+      const key = item.shop_name || item.seller_name || "Unknown Seller";
+      if (!groupsMap[key]) groupsMap[key] = [];
+      groupsMap[key].push(item);
+    });
+    const groups = Object.entries(groupsMap).map(([sellerLabel, items]) => ({ sellerLabel, items }));
+
+    if (!groups.length) {
+      row.innerHTML = `<div class="no-results-text">No listings found.</div>`;
+      return;
+    }
+
+    row.innerHTML = groups.map((g, i) => `
+      <div class="group-card" id="group-${i}">
+        <div class="group-card-title">${g.sellerLabel}</div>
+        <div class="group-card-sub">${g.items.length} item${g.items.length === 1 ? "" : "s"} found</div>
+        <div class="group-card-view">View →</div>
+      </div>`).join("");
+
+    groups.forEach((g, i) => {
+      document.getElementById(`group-${i}`).addEventListener("click", () => openGroupModal(g));
+    });
+  }
+
+  function openGroupModal(group) {
+    document.getElementById("groupModalTitle").textContent = group.sellerLabel;
+    document.getElementById("itemsList").innerHTML = group.items.map(item => `
+      <div class="item-row" data-id="${item.id}">
+        <div class="item-thumb">
+          ${item.photos && item.photos.length > 0 ? `<img src="${item.photos[0]}" />` : `<span style="font-size:20px;">🏷️</span>`}
+        </div>
+        <div class="item-info">
+          <div class="item-title">${item.title}</div>
+          <div class="item-price">K${item.price}</div>
+        </div>
+        <div class="item-view-text">View →</div>
+      </div>`).join("");
+
+    document.querySelectorAll(".item-row").forEach(el => {
+      el.addEventListener("click", () => {
+        window.location.href = `/listing.html?id=${el.dataset.id}`;
+      });
+    });
+
+    document.getElementById("groupModal").classList.add("open");
+  }
+  document.getElementById("modalCloseBtn").addEventListener("click", () => {
+    document.getElementById("groupModal").classList.remove("open");
+  });
+
+  document.getElementById("searchInput").addEventListener("input", renderAll);
+  document.getElementById("radiusInput").addEventListener("input", renderAll);
+
+  loadListings();
+  loadLocation();
+</script>
+</body>
+</html>
