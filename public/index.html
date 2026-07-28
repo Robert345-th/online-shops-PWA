@@ -281,7 +281,21 @@
       await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
     } else {
-      alert('To install: tap the ⋮ menu (top right of your browser) → "Add to Home screen" or "Install app".');
+      // Browser doesn't support the native install prompt (e.g. Phoenix
+      // Browser, UC Browser, etc. on Android don't implement it at all,
+      // so deferredInstallPrompt is never set no matter what). Instead of
+      // showing an alert, jump straight into Chrome via an Android intent
+      // URL - Chrome will reopen this same page and the real install
+      // flow will work there.
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        const intentUrl = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+        window.location.href = intentUrl;
+      } else {
+        // Non-Android fallback (desktop, iOS) - Chrome intent URLs don't
+        // apply there, so this is the only remaining case that needs a message.
+        alert('To install: open this site in Chrome, then tap the ⋮ menu → "Add to Home screen" or "Install app".');
+      }
     }
   });
   window.addEventListener("appinstalled", () => {
