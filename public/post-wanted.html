@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Post What You Want</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --orange: #FF7A1A; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
+  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
+  textarea.field-input { height: 90px; resize: vertical; }
+
+  .cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .cat-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .cat-chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .submit-btn:disabled { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">Post What You Want</div>
+</div>
+
+<div class="content">
+  <div class="label">What are you looking for?</div>
+  <input class="field-input" id="titleInput" placeholder="e.g. Toyota Vitz, 2015 or newer" />
+
+  <div class="label">More details (optional)</div>
+  <textarea class="field-input" id="descInput" placeholder="Any specific requirements, condition, etc."></textarea>
+
+  <div class="label">Your Budget (optional)</div>
+  <input class="field-input" id="budgetInput" type="number" placeholder="e.g. 30000" />
+
+  <div class="label">Category (optional)</div>
+  <div class="cat-row" id="catRow"></div>
+
+  <div class="label">Preferred Area (optional)</div>
+  <input class="field-input" id="locationInput" placeholder="e.g. Lusaka, Kabulonga" />
+
+  <button class="submit-btn" id="submitBtn">Post to Wanted Board</button>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const CATEGORY_OPTIONS = [
+    { label: "Electronics", id: 1 },
+    { label: "Clothing", id: 2 },
+    { label: "Furniture", id: 3 },
+    { label: "Produce", id: 4 },
+    { label: "Cars", id: 5 },
+    { label: "Land", id: 6 },
+  ];
+
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  let categoryId = null;
+
+  function renderCatRow() {
+    const row = document.getElementById("catRow");
+    row.innerHTML = CATEGORY_OPTIONS.map(c =>
+      `<div class="cat-chip ${categoryId === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</div>`
+    ).join("");
+    row.querySelectorAll("[data-cat]").forEach(el =>
+      el.addEventListener("click", () => {
+        const id = parseInt(el.dataset.cat);
+        categoryId = categoryId === id ? null : id;
+        renderCatRow();
+      })
+    );
+  }
+  renderCatRow();
+
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+
+    const title = document.getElementById("titleInput").value.trim();
+    if (!title) {
+      alert("Please describe what you are looking for.");
+      return;
+    }
+
+    const description = document.getElementById("descInput").value.trim();
+    const budget = document.getElementById("budgetInput").value;
+    const locationLabel = document.getElementById("locationInput").value.trim();
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Posting…";
+
+    try {
+      const res = await fetch(`${API_URL}/wanted`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title,
+          description: description || null,
+          category_id: categoryId,
+          budget: budget ? parseFloat(budget) : null,
+          location_label: locationLabel || null
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not post.");
+        return;
+      }
+
+      alert("Posted! Your wanted post is now live on the board.");
+      window.location.href = "/wanted.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Post to Wanted Board";
+    }
+  });
+</script>
+</body>
+</html>
