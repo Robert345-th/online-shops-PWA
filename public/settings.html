@@ -64,6 +64,9 @@
 
 <div class="content">
   <div class="section-label">Appearance</div>
+  <div class="row" id="installRow" style="display:none;">
+    <div class="row-title">📲 Install App</div>
+  </div>
   <div class="row">
     <div>
       <div class="row-title">Dark Mode</div>
@@ -145,6 +148,26 @@
   darkModeToggle.checked = localStorage.getItem("zm_dark_mode") === "true";
   darkModeToggle.addEventListener("change", () => {
     localStorage.setItem("zm_dark_mode", darkModeToggle.checked);
+  });
+
+  let deferredInstallPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    document.getElementById("installRow").style.display = "flex";
+  });
+  document.getElementById("installRow").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) {
+      alert("Already installed, or this browser doesn't support installing yet. Try Chrome's menu (⋮) → Add to Home screen instead.");
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    document.getElementById("installRow").style.display = "none";
+  });
+  window.addEventListener("appinstalled", () => {
+    document.getElementById("installRow").style.display = "none";
   });
 
   const digestToggle = document.getElementById("digestToggle");
