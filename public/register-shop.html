@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Register Your Shop</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .step-row { display: flex; justify-content: center; gap: 8px; padding: 14px 0; }
+  .step-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--border); }
+  .step-dot.active { background: var(--red-btn); }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .step-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { font-size: 13px; color: var(--subtext); margin-bottom: 20px; line-height: 1.4; }
+  .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
+  .skip-hint { font-size: 11px; color: var(--subtext); margin-top: -12px; margin-bottom: 18px; font-style: italic; }
+  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; }
+
+  .guideline-box { background: var(--warn-bg); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+  .guideline-item { font-size: 11px; color: var(--warn-text); margin-bottom: 3px; line-height: 1.3; }
+  .tap-hint { font-size: 11px; color: var(--subtext); margin-bottom: 10px; font-style: italic; }
+
+  .side-row { display: flex; gap: 10px; margin-bottom: 18px; }
+  .side-col { flex: 1; }
+  .side-label { font-size: 11px; font-weight: 700; margin-bottom: 6px; text-align: center; }
+  .upload-box-small {
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px;
+    height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
+  }
+  .upload-box-large {
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px;
+    height: 320px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; margin-bottom: 18px;
+  }
+  .upload-text-small { color: var(--subtext); font-size: 12px; }
+  .upload-text { color: var(--subtext); font-size: 13px; }
+  .upload-preview { width: 100%; height: 100%; object-fit: cover; }
+  .spinner {
+    width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .next-btn { width: 100%; background: var(--black); border: none; border-radius: 12px; padding: 15px; color: var(--gold); font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+  .submit-btn:disabled { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" id="backBtn">←</button>
+  <div class="header-title">Register Your Shop</div>
+</div>
+
+<div class="step-row">
+  <div class="step-dot active" id="dot1"></div>
+  <div class="step-dot" id="dot2"></div>
+  <div class="step-dot" id="dot3"></div>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
+  const UPLOAD_PRESET = "online_shops_uploads";
+  const token = localStorage.getItem("zm_token");
+
+  let step = 1;
+  let shopName = "";
+  let nrcNumber = "";
+  let nrcFrontUrl = "";
+  let nrcBackUrl = "";
+  let selfiePhotoUrl = "";
+
+  const content = document.getElementById("content");
+
+  function updateDots() {
+    document.getElementById("dot1").classList.toggle("active", step >= 1);
+    document.getElementById("dot2").classList.toggle("active", step >= 2);
+    document.getElementById("dot3").classList.toggle("active", step >= 3);
+  }
+
+  document.getElementById("backBtn").addEventListener("click", () => {
+    if (step === 1) {
+      history.back();
+    } else {
+      step--;
+      render();
+    }
+  });
+
+  function render() {
+    updateDots();
+    if (step === 1) renderStep1();
+    else if (step === 2) renderStep2();
+    else renderStep3();
+  }
+
+  function renderStep1() {
+    content.innerHTML = `
+      <div class="step-title">Step 1: Shop Details</div>
+      <div class="subtitle">To start selling on ZedMarket, we need to verify your identity. This keeps buyers safe.</div>
+
+      <div class="label">Shop Name (optional)</div>
+      <input class="field-input" id="shopNameInput" placeholder="e.g. Robert's Electronics" value="${shopName}" />
+      <div class="skip-hint">Leave blank to just use your account name — you can add a shop name later anytime.</div>
+
+      <div class="label">NRC Number</div>
+      <input class="field-input" id="nrcNumberInput" placeholder="e.g. 123456/78/1" value="${nrcNumber}" />
+
+      <button class="next-btn" id="nextBtn">Next</button>
+    `;
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      shopName = document.getElementById("shopNameInput").value.trim();
+      nrcNumber = document.getElementById("nrcNumberInput").value.trim();
+      if (!nrcNumber) { alert("Please enter your NRC number."); return; }
+      step = 2;
+      render();
+    });
+  }
+
+  function renderStep2() {
+    content.innerHTML = `
+      <div class="step-title">Step 2: NRC Photos</div>
+      <div class="guideline-box">
+        <div class="guideline-item">✓ All four corners of the NRC visible</div>
+        <div class="guideline-item">✓ Text and photo clearly readable, no blur</div>
+        <div class="guideline-item">✓ No glare or shadows covering the details</div>
+        <div class="guideline-item">✓ Flat surface, good lighting</div>
+      </div>
+      <div class="tap-hint">Tap a photo once uploaded to view it full-size.</div>
+
+      <div class="side-row">
+        <div class="side-col">
+          <div class="side-label">Front</div>
+          <div class="upload-box-small" id="frontBox">
+            ${nrcFrontUrl ? `<img class="upload-preview" src="${nrcFrontUrl}" />` : `<div class="upload-text-small">📷 Front</div>`}
+          </div>
+          <input type="file" id="frontInput" accept="image/*" style="display:none;" />
+        </div>
+        <div class="side-col">
+          <div class="side-label">Back</div>
+          <div class="upload-box-small" id="backBox">
+            ${nrcBackUrl ? `<img class="upload-preview" src="${nrcBackUrl}" />` : `<div class="upload-text-small">📷 Back</div>`}
+          </div>
+          <input type="file" id="backInput" accept="image/*" style="display:none;" />
+        </div>
+      </div>
+
+      <button class="next-btn" id="nextBtn">Next</button>
+    `;
+
+    document.getElementById("frontBox").addEventListener("click", () => document.getElementById("frontInput").click());
+    document.getElementById("backBox").addEventListener("click", () => document.getElementById("backInput").click());
+    document.getElementById("frontInput").addEventListener("change", (e) => handleUpload(e, "front"));
+    document.getElementById("backInput").addEventListener("change", (e) => handleUpload(e, "back"));
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (!nrcFrontUrl) { alert("Please upload the front of your NRC."); return; }
+      if (!nrcBackUrl) { alert("Please upload the back of your NRC."); return; }
+      step = 3;
+      render();
+    });
+  }
+
+  function renderStep3() {
+    content.innerHTML = `
+      <div class="step-title">Step 3: Selfie</div>
+      <div class="guideline-box">
+        <div class="guideline-item">✓ Your face clearly visible, looking at the camera</div>
+        <div class="guideline-item">✓ No sunglasses, hats, or face coverings</div>
+        <div class="guideline-item">✓ Good lighting, no harsh shadows on your face</div>
+      </div>
+      <div class="tap-hint">Tap the photo once taken to view it full-size.</div>
+
+      <div class="upload-box-large" id="selfieBox">
+        ${selfiePhotoUrl ? `<img class="upload-preview" src="${selfiePhotoUrl}" />` : `<div class="upload-text">🤳 Tap to take a selfie</div>`}
+      </div>
+      <input type="file" id="selfieInput" accept="image/*" capture="user" style="display:none;" />
+
+      <button class="submit-btn" id="submitBtn">Submit for Review</button>
+    `;
+
+    document.getElementById("selfieBox").addEventListener("click", () => document.getElementById("selfieInput").click());
+    document.getElementById("selfieInput").addEventListener("change", (e) => handleUpload(e, "selfie"));
+
+    document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+  }
+
+  async function handleUpload(e, target) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const boxId = target === "front" ? "frontBox" : target === "back" ? "backBox" : "selfieBox";
+    const box = document.getElementById(boxId);
+    box.innerHTML = `<div class="spinner"></div>`;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (!data.secure_url) {
+        alert("Could not upload the photo. Please try again.");
+        render();
+        return;
+      }
+
+      if (target === "front") nrcFrontUrl = data.secure_url;
+      else if (target === "back") nrcBackUrl = data.secure_url;
+      else selfiePhotoUrl = data.secure_url;
+
+      render();
+    } catch (e) {
+      alert("Could not upload the photo. Please try again.");
+      render();
+    }
+  }
+
+  async function handleSubmit() {
+    if (!selfiePhotoUrl) { alert("Please take a selfie."); return; }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+
+    try {
+      const res = await fetch(`${API_URL}/auth/register-shop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          shop_name: shopName || null,
+          nrc_number: nrcNumber,
+          nrc_photo_url: nrcFrontUrl,
+          nrc_back_photo_url: nrcBackUrl,
+          selfie_photo_url: selfiePhotoUrl
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not submit registration.");
+        return;
+      }
+
+      alert("Submitted — your shop registration is under review. You will be notified once approved.");
+      window.location.href = "/my-shop.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Submit for Review";
+    }
+  }
+
+  if (!token) {
+    window.location.href = "/login.html";
+  } else {
+    render();
+  }
+</script>
+</body>
+</html>
