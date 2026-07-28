@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Upgrade to Shop</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 24px; text-align: center; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pending-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .pending-text { font-size: 13px; color: var(--subtext); margin-bottom: 20px; }
+  .back-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+  .top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px; background: var(--black);
+    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: var(--gold); font-size: 18px;
+  }
+  .header-title { font-size: 20px; font-weight: 700; }
+
+  .step-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+  .step-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--border); }
+  .step-dot.active { background: var(--red-btn); }
+
+  .label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-bottom: 8px; text-transform: uppercase; }
+  .plan-card { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; }
+  .plan-card.active { border-color: var(--orange); }
+  .plan-name { font-size: 15px; font-weight: 700; }
+  .plan-desc { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .plan-price { font-size: 14px; font-weight: 700; color: var(--price-red); margin-top: 6px; }
+
+  .next-btn { width: 100%; background: var(--black); border: none; border-radius: 12px; padding: 15px; color: var(--gold); font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+
+  .selected-plan-box { background: var(--card); border: 1.5px solid var(--orange); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .selected-plan-label { font-size: 10px; color: var(--subtext); text-transform: uppercase; font-weight: 600; }
+  .selected-plan-name { font-size: 15px; font-weight: 700; margin-top: 4px; }
+
+  .instructions-box { background: var(--black); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .instructions-title { color: var(--gold); font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .instructions-text { color: #C9BFAF; font-size: 12px; margin-bottom: 4px; }
+  .phone-number { color: #fff; font-size: 18px; font-weight: 700; }
+  .instructions-sub { color: #C9BFAF; font-size: 12px; margin-bottom: 8px; }
+
+  .field-textarea { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; font-size: 14px; min-height: 100px; resize: vertical; }
+  .warning-box { background: var(--warn-bg); border-radius: 10px; padding: 10px; margin-bottom: 16px; }
+  .warning-text { font-size: 11px; color: var(--warn-text); line-height: 1.3; }
+
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .submit-btn:disabled { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div id="app"><div class="center-box"><div class="spinner"></div></div></div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const token = localStorage.getItem("zm_token");
+  const app = document.getElementById("app");
+
+  const PLAN_DESCRIPTIONS = {
+    General: "For general sellers",
+    Cars: "For car dealers",
+    Land: "For land/property sellers",
+  };
+
+  let step = "plan";
+  let plans = [];
+  let selectedPlan = null;
+  let mySubscription = null;
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  function maskBalance(text) {
+    return text.replace(/(bal\s*is\s*(?:ZMW)?\s*)([\d,.]+)/i, (full, prefix, amount) => {
+      return prefix + "█".repeat(amount.length);
+    });
+  }
+
+  async function init() {
+    try {
+      const [subRes, pricesRes] = await Promise.all([
+        fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
+        fetch(`${API_URL}/settings/plan-prices`)
+      ]);
+      mySubscription = await subRes.json();
+      const prices = await pricesRes.json();
+      plans = ["General", "Cars", "Land"].map(category => ({
+        category, price: prices[category], desc: PLAN_DESCRIPTIONS[category]
+      }));
+      selectedPlan = plans[0];
+      render();
+    } catch (e) {
+      app.innerHTML = `<div class="center-box">Could not load. Please try again.</div>`;
+    }
+  }
+
+  function render() {
+    if (mySubscription?.payment_status === "pending") {
+      app.innerHTML = `
+        <div class="center-box">
+          <div class="pending-title">⏳ Pending Review</div>
+          <div class="pending-text">Your ${mySubscription.category} shop request is being reviewed. We'll notify you once approved.</div>
+          <button class="back-btn" onclick="history.back()">Go Back</button>
+        </div>`;
+      return;
+    }
+    if (mySubscription?.payment_status === "active") {
+      app.innerHTML = `
+        <div class="center-box">
+          <div class="pending-title">✅ Verified Shop</div>
+          <div class="pending-text">You already have an active ${mySubscription.category} shop subscription.</div>
+          <button class="back-btn" onclick="history.back()">Go Back</button>
+        </div>`;
+      return;
+    }
+
+    if (step === "plan") {
+      app.innerHTML = `
+        <div class="content">
+          <div class="top-row">
+            <button class="back-button" id="backBtn">←</button>
+            <div class="header-title">Upgrade to Shop</div>
+          </div>
+          <div class="step-row"><div class="step-dot active"></div><div class="step-dot"></div></div>
+
+          <div class="label">Choose a Plan</div>
+          <div id="planList"></div>
+
+          <button class="next-btn" id="nextBtn">Next</button>
+        </div>`;
+
+      renderPlanList();
+      document.getElementById("backBtn").addEventListener("click", () => history.back());
+      document.getElementById("nextBtn").addEventListener("click", () => { step = "payment"; render(); });
+    } else {
+      app.innerHTML = `
+        <div class="content">
+          <div class="top-row">
+            <button class="back-button" id="backBtn">←</button>
+            <div class="header-title">Upgrade to Shop</div>
+          </div>
+          <div class="step-row"><div class="step-dot active"></div><div class="step-dot active"></div></div>
+
+          <div class="selected-plan-box">
+            <div class="selected-plan-label">Selected Plan</div>
+            <div class="selected-plan-name">${selectedPlan.category} — K${selectedPlan.price}/month</div>
+          </div>
+
+          <div class="instructions-box">
+            <div class="instructions-title">How to Pay</div>
+            <div class="instructions-text">1. Send K${selectedPlan.price} via MTN MoMo or Airtel Money to:</div>
+            <div class="phone-number">0778727201</div>
+            <div class="instructions-sub">Name: Robert Zulu</div>
+            <div class="instructions-text">2. Copy the transaction reference from your confirmation SMS</div>
+            <div class="instructions-text">3. Paste it below and submit</div>
+          </div>
+
+          <div class="label">Transaction Reference</div>
+          <textarea class="field-textarea" id="transactionRefInput" placeholder="Paste your confirmation SMS here"></textarea>
+          <div class="warning-box">
+            <div class="warning-text">⚠️ Submitting a fake or altered transaction reference is not allowed and may result in your account being blocked.</div>
+          </div>
+
+          <button class="submit-btn" id="submitBtn">Submit for Review</button>
+        </div>`;
+
+      document.getElementById("backBtn").addEventListener("click", () => { step = "plan"; render(); });
+      document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+      document.getElementById("transactionRefInput").addEventListener("input", (e) => {
+        const masked = maskBalance(e.target.value);
+        if (masked !== e.target.value) e.target.value = masked;
+      });
+    }
+  }
+
+  function renderPlanList() {
+    const list = document.getElementById("planList");
+    list.innerHTML = plans.map(p => `
+      <div class="plan-card ${selectedPlan.category === p.category ? "active" : ""}" data-cat="${p.category}">
+        <div class="plan-name">${p.category}</div>
+        <div class="plan-desc">${p.desc}</div>
+        <div class="plan-price">K${p.price} / month</div>
+      </div>`).join("");
+    list.querySelectorAll("[data-cat]").forEach(el =>
+      el.addEventListener("click", () => {
+        selectedPlan = plans.find(p => p.category === el.dataset.cat);
+        renderPlanList();
+      })
+    );
+  }
+
+  async function handleSubmit() {
+    const transactionRef = document.getElementById("transactionRefInput").value.trim();
+    if (!transactionRef) {
+      alert("Please enter your MoMo/Airtel transaction reference.");
+      return;
+    }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+
+    try {
+      const res = await fetch(`${API_URL}/subscriptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ category: selectedPlan.category, transaction_ref: transactionRef })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Something went wrong.");
+        return;
+      }
+
+      alert("Request Submitted — your payment is being reviewed. You will be upgraded once confirmed.");
+      window.location.href = "/my-shop.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Submit for Review";
+    }
+  }
+
+  if (!token) {
+    window.location.href = "/login.html";
+  } else {
+    init();
+  }
+</script>
+</body>
+</html>
