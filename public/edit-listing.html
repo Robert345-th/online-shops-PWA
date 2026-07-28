@@ -3,170 +3,161 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ZedMarket - Edit Listing</title>
+<title>ZedMarket - Chats</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/assets/icon.png" />
+<link rel="icon" href="/icon-192.png" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
-    --text: #111111; --subtext: #5C5955; --black: #111111;
-    --gold: #F5C518; --orange: #FF7A1A; --red-btn: #E01B27;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
-  .center-box { display: flex; align-items: center; justify-content: center; padding: 100px 24px; }
-  .spinner {
-    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: #A3131C;
-    border-radius: 50%; animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
   .back-button {
-    width: 36px; height: 36px; border-radius: 18px; background: var(--black);
-    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: var(--gold); font-size: 18px;
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
   }
-  .title { font-size: 20px; font-weight: 700; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
 
-  .label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
-  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
-  textarea.field-input { height: 80px; resize: vertical; }
+  .support-banner {
+    background: #2F4F3E; padding: 12px; text-align: center;
+    color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: none; width: 100%;
+  }
 
-  .cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .cat-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-  .cat-chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .empty-text { color: var(--subtext); margin-bottom: 16px; }
+  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
 
-  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
-  .submit-btn:disabled { opacity: 0.7; }
+  .list { padding: 12px; }
+  .row {
+    display: flex; align-items: center; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 8px; gap: 12px; cursor: pointer;
+  }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 22px; background: #E01B27;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .row-info { flex: 1; min-width: 0; }
+  .row-name { font-size: 14px; font-weight: 700; }
+  .row-preview { font-size: 12px; color: var(--subtext); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .row-time { font-size: 10px; color: var(--subtext); }
+  .unread-badge {
+    background: #E01B27; border-radius: 10px; min-width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-top: 4px;
+    color: #fff; font-size: 10px; font-weight: 700;
+  }
 </style>
 </head>
 <body>
 
-<div id="app"><div class="center-box"><div class="spinner"></div></div></div>
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">💬 Chats</div>
+</div>
+
+<button class="support-banner" id="supportBtn">🛟 Contact Support</button>
+
+<div id="content"><div class="center-box">Loading…</div></div>
 
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const CATEGORY_OPTIONS = [
-    { label: "Electronics", id: 1 },
-    { label: "Clothing", id: 2 },
-    { label: "Furniture", id: 3 },
-    { label: "Produce", id: 4 },
-    { label: "Cars", id: 5 },
-    { label: "Land", id: 6 },
-  ];
-
-  const params = new URLSearchParams(window.location.search);
-  const listingId = params.get("id");
+  const content = document.getElementById("content");
   const token = localStorage.getItem("zm_token");
-  const app = document.getElementById("app");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
 
-  let categoryId = CATEGORY_OPTIONS[0].id;
-  let photos = [];
+  function prefetchChatRoom(userId) {
+    if (!userId) return;
+    const url = `/chat-room.html?userId=${userId}`;
+    if (document.querySelector(`link[rel="prefetch"][href="${url}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.href = url;
+    link.as = "document";
+    document.head.appendChild(link);
+  }
 
-  async function loadListing() {
-    try {
-      const res = await fetch(`${API_URL}/listings/${listingId}`);
-      const data = await res.json();
-      categoryId = data.category_id || CATEGORY_OPTIONS[0].id;
-      photos = data.photos || [];
-      render(data);
-    } catch (e) {
-      alert("Could not load listing.");
+  function formatTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
 
-  function render(data) {
-    app.innerHTML = `
-      <div class="content">
-        <div class="top-row">
-          <button class="back-button" onclick="history.back()">←</button>
-          <div class="title">Edit Listing</div>
-        </div>
-
-        <div class="label">Title</div>
-        <input class="field-input" id="titleInput" value="${data.title || ""}" />
-
-        <div class="label">Price (ZMW)</div>
-        <input class="field-input" id="priceInput" type="number" value="${data.price || ""}" />
-
-        <div class="label">Category</div>
-        <div class="cat-row" id="catRow"></div>
-
-        <div class="label">Description</div>
-        <textarea class="field-input" id="descInput">${data.description || ""}</textarea>
-
-        <button class="submit-btn" id="saveBtn">Save Changes</button>
-      </div>`;
-
-    renderCatRow();
-    document.getElementById("saveBtn").addEventListener("click", handleSave);
-  }
-
-  function renderCatRow() {
-    const row = document.getElementById("catRow");
-    row.innerHTML = CATEGORY_OPTIONS.map(c =>
-      `<div class="cat-chip ${categoryId === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</div>`
-    ).join("");
-    row.querySelectorAll("[data-cat]").forEach(el =>
-      el.addEventListener("click", () => {
-        categoryId = parseInt(el.dataset.cat);
-        renderCatRow();
-      })
-    );
-  }
-
-  async function handleSave() {
-    const title = document.getElementById("titleInput").value.trim();
-    const price = document.getElementById("priceInput").value;
-    const description = document.getElementById("descInput").value.trim();
-
-    if (!title || !price) {
-      alert("Title and price are required.");
+  async function loadConversations() {
+    if (!user) {
+      content.innerHTML = `
+        <div class="center-box">
+          <div class="empty-text">Log in to see your chats.</div>
+          <button class="login-btn" onclick="window.location.href='/login.html'">Log In</button>
+        </div>`;
       return;
     }
 
-    const btn = document.getElementById("saveBtn");
-    btn.disabled = true;
-    btn.textContent = "Saving…";
-
     try {
-      const res = await fetch(`${API_URL}/listings/${listingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title, description,
-          price: parseFloat(price),
-          category_id: categoryId,
-          photos
-        })
+      const res = await fetch(`${API_URL}/messages/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await res.json();
+      const conversations = await res.json();
 
-      if (!res.ok) {
-        alert(data.error || "Something went wrong.");
+      if (!conversations.length) {
+        content.innerHTML = `<div class="center-box"><div class="empty-text">No conversations yet.</div></div>`;
         return;
       }
 
-      alert("Updated! Your listing has been updated.");
-      window.location.href = "/my-shop.html";
+      content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
+
+      conversations.forEach(conv => {
+        const row = document.getElementById(`convrow-${conv.other_user_id}`);
+        if (row) row.addEventListener("click", () => {
+          window.location.href = `/chat-room.html?userId=${conv.other_user_id}`;
+        });
+        prefetchChatRoom(conv.other_user_id);
+      });
     } catch (e) {
-      alert("Could not connect to the server.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Save Changes";
+      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
     }
   }
 
-  if (!listingId) {
-    app.innerHTML = `<div class="center-box">No listing specified.</div>`;
-  } else if (!token) {
-    window.location.href = "/login.html";
-  } else {
-    loadListing();
+  function renderRow(conv) {
+    const isMine = conv.sender_id === user.id;
+    let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
+    if (conv.last_photo_url) preview = "📷 Photo";
+    if (conv.last_audio_url) preview = "🎤 Voice note";
+
+    return `
+      <div class="row" id="convrow-${conv.other_user_id}">
+        <div class="avatar">${conv.other_user_name ? conv.other_user_name.charAt(0).toUpperCase() : "?"}</div>
+        <div class="row-info">
+          <div class="row-name">${conv.other_user_name}</div>
+          <div class="row-preview">${preview}</div>
+        </div>
+        <div class="row-side">
+          <div class="row-time">${formatTime(conv.last_sent_at)}</div>
+          ${parseInt(conv.unread_count) > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ""}
+        </div>
+      </div>`;
   }
+
+  document.getElementById("supportBtn").addEventListener("click", async () => {
+    try {
+      const res = await fetch(`${API_URL}/admin/support-contact`);
+      if (res.ok) {
+        const data = await res.json();
+        window.location.href = `/chat-room.html?userId=${data.id}`;
+      }
+    } catch (e) {}
+  });
+
+  loadConversations();
 </script>
 </body>
 </html>
