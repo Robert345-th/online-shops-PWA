@@ -64,7 +64,7 @@
 
 <div class="content">
   <div class="section-label">Appearance</div>
-  <div class="row" id="installRow" style="display:none;">
+  <div class="row" id="installRow">
     <div class="row-title">📲 Install App</div>
   </div>
   <div class="row">
@@ -154,20 +154,15 @@
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    document.getElementById("installRow").style.display = "flex";
   });
   document.getElementById("installRow").addEventListener("click", async () => {
-    if (!deferredInstallPrompt) {
-      alert("Already installed, or this browser doesn't support installing yet. Try Chrome's menu (⋮) → Add to Home screen instead.");
-      return;
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+    } else {
+      alert('To install: tap the ⋮ menu (top right of your browser) → "Add to Home screen" or "Install app".');
     }
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    document.getElementById("installRow").style.display = "none";
-  });
-  window.addEventListener("appinstalled", () => {
-    document.getElementById("installRow").style.display = "none";
   });
 
   const digestToggle = document.getElementById("digestToggle");
