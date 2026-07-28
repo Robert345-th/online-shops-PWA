@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Report a User</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 8px; text-transform: uppercase; }
+
+  .role-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .role-btn { flex: 1; background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .role-btn.active { border-color: var(--red-btn); background: var(--red-btn); color: #fff; }
+
+  .phone-row { display: flex; margin-bottom: 20px; gap: 8px; }
+  .phone-prefix { background: var(--black); border-radius: 10px; padding: 0 12px; display: flex; align-items: center; }
+  .phone-prefix span { color: var(--gold); font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+
+  .text-area { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 100px; font-size: 14px; margin-bottom: 20px; resize: vertical; }
+
+  .submit-btn { width: 100%; background: var(--price-red); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .submit-btn:disabled { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">Report a User</div>
+</div>
+
+<div class="content">
+  <div class="label">Who are you reporting?</div>
+  <div class="role-row" id="roleRow">
+    <div class="role-btn" data-role="seller">Seller</div>
+    <div class="role-btn" data-role="buyer">Buyer</div>
+  </div>
+
+  <div class="label">Their Phone Number</div>
+  <div class="phone-row">
+    <div class="phone-prefix"><span>🇿🇲 +260</span></div>
+    <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" />
+  </div>
+
+  <div class="label">What happened?</div>
+  <textarea class="text-area" id="reasonInput" placeholder="Describe the issue in detail..."></textarea>
+
+  <button class="submit-btn" id="submitBtn">Submit Report</button>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const token = localStorage.getItem("zm_token");
+  let role = "";
+
+  function isValidZambianPhone(phone) {
+    return /^0(7|9)\d{8}$/.test(phone);
+  }
+
+  document.querySelectorAll("[data-role]").forEach(el => {
+    el.addEventListener("click", () => {
+      role = el.dataset.role;
+      document.querySelectorAll("[data-role]").forEach(x => x.classList.remove("active"));
+      el.classList.add("active");
+    });
+  });
+
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const phone = document.getElementById("phoneInput").value.trim();
+    const reason = document.getElementById("reasonInput").value.trim();
+
+    if (!role) {
+      alert("Please select whether this is a seller or buyer.");
+      return;
+    }
+    if (!isValidZambianPhone(phone)) {
+      alert("Please enter a valid Zambian phone number (e.g. 0977123456).");
+      return;
+    }
+    if (!reason) {
+      alert("Please describe what happened.");
+      return;
+    }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+
+    try {
+      const res = await fetch(`${API_URL}/user-reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reported_phone: phone, reported_role: role, reason })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not submit report.");
+        return;
+      }
+
+      alert("Reported — thank you. Our team will review this report.");
+      history.back();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Submit Report";
+    }
+  });
+
+  if (!token) {
+    window.location.href = "/login.html";
+  }
+</script>
+</body>
+</html>
