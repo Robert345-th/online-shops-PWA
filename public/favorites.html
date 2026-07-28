@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Favorites</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --thumb-bg: #E9E2D3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .brand { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .empty-text { color: var(--subtext); margin-bottom: 16px; }
+  .error-text { color: var(--price-red); text-align: center; }
+  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .grid { display: flex; flex-wrap: wrap; padding: 12px; gap: 10px; }
+  .card { width: calc(47% - 5px); background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+  .thumb { height: 130px; background: var(--thumb-bg); display: flex; align-items: center; justify-content: center; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .info { padding: 10px; }
+  .price { font-weight: 700; font-size: 14px; color: var(--price-red); }
+  .title { font-size: 12px; color: var(--text); margin: 3px 0; }
+  .loc { font-size: 10.5px; color: var(--subtext); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="brand">❤️ Favorites</div>
+</div>
+
+<div id="content"><div class="center-box"><div class="spinner"></div></div></div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const content = document.getElementById("content");
+
+  async function loadFavorites() {
+    if (!user) {
+      content.innerHTML = `
+        <div class="center-box">
+          <div class="empty-text">Log in to see your saved items.</div>
+          <button class="login-btn" onclick="window.location.href='/login.html'">Log In</button>
+        </div>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const favorites = await res.json();
+
+      if (!favorites.length) {
+        content.innerHTML = `<div class="center-box"><div class="empty-text">No saved listings yet.</div></div>`;
+        return;
+      }
+
+      content.innerHTML = `<div class="grid">${favorites.map(renderCard).join("")}</div>`;
+
+      favorites.forEach(item => {
+        const card = document.getElementById(`fav-${item.id}`);
+        if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
+      });
+    } catch (e) {
+      content.innerHTML = `<div class="center-box"><div class="error-text">Could not load favorites.</div></div>`;
+    }
+  }
+
+  function renderCard(item) {
+    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    return `
+      <div class="card" id="fav-${item.id}">
+        <div class="thumb">
+          ${img ? `<img src="${img}" alt="${item.title}" />` : `<span style="font-size:32px;">🏷️</span>`}
+        </div>
+        <div class="info">
+          <div class="price">K${item.price}</div>
+          <div class="title">${item.title}</div>
+          <div class="loc">📍 ${item.location_label || ""}</div>
+        </div>
+      </div>`;
+  }
+
+  loadFavorites();
+</script>
+</body>
+</html>
