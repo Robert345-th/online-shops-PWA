@@ -1,47 +1,24 @@
-const CACHE_NAME = "zedmarket-v2";
-
-self.addEventListener("install", (event) => {
+// Minimal service worker - copied from the working Trade Tracker pattern.
+// No page caching/precaching step, on purpose: that was found to cause a
+// real regression (a stale cached version of a page could get stuck and
+// keep being served indefinitely, even after redeploying a fix). Simplicity
+// and reliability win here over a marginal repeat-visit speed gain.
+//
+// The activate handler also actively deletes any caches left behind by the
+// previous version of this file, so anyone who already picked up the
+// caching version gets cleaned up automatically and stops seeing stale pages.
+self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
-    ).then(() => self.clients.claim())
+    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Stale-while-revalidate: on every GET request, immediately return
-// whatever is already cached (so a repeat visit to a page - like tapping
-// back into a chat - loads instantly, same as the browser's own
-// back/forward cache does), while at the same time fetching a fresh copy
-// in the background and saving it for next time. This makes ANY repeat
-// navigation feel instant, not just the browser back button, without ever
-// showing permanently stale content - each visit always kicks off an
-// update for the visit after it.
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-
-  // Don't cache API calls to Railway - chat messages, listings, etc. must
-  // always be fetched live, never served stale from cache.
-  if (event.request.url.includes("railway.app")) return;
-
-  event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(event.request);
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      // Return the cached version immediately if we have one; otherwise
-      // wait for the network (first-ever visit to a page has no cache yet).
-      return cached || networkFetch;
-    })
-  );
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request));
 });
