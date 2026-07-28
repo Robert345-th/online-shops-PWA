@@ -428,4 +428,129 @@
       try {
         const formData = new FormData();
         formData.append("file", blob, `voice_${Date.now()}.webm`);
-        formData.append("upload_pr
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("resource_type", "video");
+
+        const res = await fetch(CLOUDINARY_AUDIO_URL, { method: "POST", body: formData });
+        const data = await res.json();
+        if (!data.secure_url) { alert("Could not upload the voice note. Please try again."); restoreComposerAfterRecording(); return; }
+
+        await sendMessagePayload({ audio_url: data.secure_url, audio_duration: duration });
+      } catch (e) {
+        alert("Could not save the voice note.");
+      }
+      recordingSeconds = 0;
+      restoreComposerAfterRecording();
+    };
+
+    mediaRecorder.stop();
+  }
+
+  function openMessageActions(messageId) {
+    const msg = messages.find(m => m.id === messageId);
+    const isMine = currentUser && msg?.sender_id === currentUser.id;
+    const canUnsend = isMine && msg && !msg.read_at;
+
+    const box = document.getElementById("messageActionsBox");
+    box.innerHTML = `
+      ${canUnsend ? `<button class="menu-row danger" id="unsendBtn">🗑️ Delete for Everyone</button>` : ""}
+      <button class="menu-row" id="deleteForMeBtn">🗑️ Delete for Me</button>
+      <button class="menu-cancel-btn" id="msgActionsCancelBtn">Cancel</button>
+    `;
+    document.getElementById("messageActionsOverlay").classList.add("open");
+
+    if (canUnsend) {
+      document.getElementById("unsendBtn").addEventListener("click", () => handleDeleteForEveryone(messageId));
+    }
+    document.getElementById("deleteForMeBtn").addEventListener("click", () => handleDeleteForMe(messageId));
+    document.getElementById("msgActionsCancelBtn").addEventListener("click", () => {
+      document.getElementById("messageActionsOverlay").classList.remove("open");
+    });
+  }
+  document.getElementById("messageActionsOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "messageActionsOverlay") e.target.classList.remove("open");
+  });
+
+  async function handleDeleteForMe(messageId) {
+    document.getElementById("messageActionsOverlay").classList.remove("open");
+    try {
+      await fetch(`${API_URL}/messages/${messageId}/delete-for-me`, { method: "PUT", headers: authHeaders() });
+      messages = messages.filter(m => m.id !== messageId);
+      renderMessages();
+    } catch (e) {
+      alert("Could not delete message.");
+    }
+  }
+
+  async function handleDeleteForEveryone(messageId) {
+    document.getElementById("messageActionsOverlay").classList.remove("open");
+    try {
+      const res = await fetch(`${API_URL}/messages/${messageId}/delete-for-everyone`, { method: "PUT", headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not unsend this message."); return; }
+      loadMessages(false);
+    } catch (e) {
+      alert("Could not unsend message.");
+    }
+  }
+
+  document.getElementById("menuBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.add("open"));
+  document.getElementById("menuCancelBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.remove("open"));
+  document.getElementById("menuOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "menuOverlay") e.target.classList.remove("open");
+  });
+
+  document.getElementById("viewContactBtn").addEventListener("click", () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    if (!otherUser?.phone) return;
+    if (confirm(`${otherUser.display_name}\n${otherUser.phone}\n\nTap OK to call.`)) {
+      window.location.href = `tel:${otherUser.phone}`;
+    }
+  });
+
+  document.getElementById("reportUserBtn").addEventListener("click", () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    window.location.href = "/report-user.html";
+  });
+
+  document.getElementById("blockToggleBtn").addEventListener("click", async () => {
+    document.getElementById("menuOverlay").classList.remove("open");
+    if (iBlockedThem) {
+      if (!confirm("Unblock this user? You will be able to message each other again.")) return;
+      try {
+        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "DELETE", headers: authHeaders() });
+        if (!res.ok) { alert("Could not unblock this user. Please try again."); return; }
+        iBlockedThem = false;
+        loadMessages(false);
+      } catch (e) {
+        alert("Could not connect to the server.");
+      }
+    } else {
+      if (!confirm("Block this user? They will no longer be able to message you.")) return;
+      try {
+        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "POST", headers: authHeaders() });
+        if (!res.ok) { alert("Could not block this user. Please try again."); return; }
+        iBlockedThem = true;
+        loadMessages(false);
+      } catch (e) {
+        alert("Could not connect to the server.");
+      }
+    }
+  });
+
+  function updateBlockButtonLabel() {
+    document.getElementById("blockToggleBtn").innerHTML = iBlockedThem ? "✅ Unblock User" : "🚫 Block User";
+  }
+
+  if (!currentUser) {
+    window.location.href = "/login.html";
+  } else {
+    buildComposerOnce();
+    updateComposerVisibility();
+    loadOtherUser();
+    loadMessages(true);
+    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
+  }
+</script>
+</body>
+</html>
