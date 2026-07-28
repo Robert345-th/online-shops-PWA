@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Edit Shop Profile</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .menu-row {
+    display: flex; align-items: center; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px; gap: 12px; cursor: pointer;
+  }
+  .menu-icon { font-size: 24px; }
+  .menu-info { flex: 1; }
+  .menu-title { font-size: 15px; font-weight: 700; }
+  .menu-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .menu-arrow { font-size: 18px; color: var(--price-red); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">Edit Shop Profile</div>
+</div>
+
+<div class="content">
+  <div class="menu-row" onclick="window.location.href='/edit-shop-photo.html'">
+    <div class="menu-icon">📷</div>
+    <div class="menu-info">
+      <div class="menu-title">Edit Shop Logo</div>
+      <div class="menu-sub">Upload a logo or graphic for your shop</div>
+    </div>
+    <div class="menu-arrow">→</div>
+  </div>
+
+  <div class="menu-row" onclick="window.location.href='/edit-shop-bio.html'">
+    <div class="menu-icon">📝</div>
+    <div class="menu-info">
+      <div class="menu-title">Edit Shop Bio</div>
+      <div class="menu-sub">Tell buyers about your shop</div>
+    </div>
+    <div class="menu-arrow">→</div>
+  </div>
+
+  <div class="menu-row" onclick="window.location.href='/edit-shop-name.html'">
+    <div class="menu-icon">🖊️</div>
+    <div class="menu-info">
+      <div class="menu-title">Request Name Change</div>
+      <div class="menu-sub">Requires admin approval</div>
+    </div>
+    <div class="menu-arrow">→</div>
+  </div>
+</div>
+
+</body>
+</html>
