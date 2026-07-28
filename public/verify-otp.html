@@ -6,7 +6,7 @@
 <title>ZedMarket - Verify Phone</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/assets/icon.png" />
+<link rel="icon" href="/icon-192.png" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
@@ -25,6 +25,28 @@
   .submit-btn:disabled { opacity: 0.7; }
   .link { display: block; width: 100%; text-align: center; color: var(--price-red); font-size: 13px; background: none; border: none; cursor: pointer; }
   .link:disabled { opacity: 0.6; cursor: default; }
+
+  /* Styled inline banners, replacing the browser's native alert() popups */
+  .form-banner {
+    display: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+  .form-banner.error {
+    background: #FBE7E8;
+    color: var(--price-red);
+    border: 1px solid #F0C1C4;
+  }
+  .form-banner.success {
+    background: #E7F5EC;
+    color: #1F7A43;
+    border: 1px solid #BFE5CE;
+  }
+  .form-banner.show { display: block; }
 </style>
 </head>
 <body>
@@ -32,6 +54,9 @@
 <div class="content">
   <div class="title">Verify Your Phone</div>
   <div class="subtitle" id="subtitleText">Enter the 6-digit code sent to your phone</div>
+
+  <div class="form-banner error" id="errorBanner"></div>
+  <div class="form-banner success" id="successBanner"></div>
 
   <input class="otp-input" id="otpInput" placeholder="000000" maxlength="6" inputmode="numeric" />
 
@@ -50,11 +75,33 @@
   const otpInput = document.getElementById("otpInput");
   const verifyBtn = document.getElementById("verifyBtn");
   const resendBtn = document.getElementById("resendBtn");
+  const errorBanner = document.getElementById("errorBanner");
+  const successBanner = document.getElementById("successBanner");
+
+  // Replaces alert() - shows a styled banner above the form instead of the
+  // browser's native popup, and scrolls it into view so it's never missed.
+  function showError(message) {
+    successBanner.classList.remove("show");
+    errorBanner.textContent = message;
+    errorBanner.classList.add("show");
+    errorBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function showSuccess(message) {
+    errorBanner.classList.remove("show");
+    successBanner.textContent = message;
+    successBanner.classList.add("show");
+    successBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function clearBanners() {
+    errorBanner.classList.remove("show");
+    successBanner.classList.remove("show");
+  }
 
   verifyBtn.addEventListener("click", async () => {
+    clearBanners();
     const otp = otpInput.value.trim();
     if (!otp) {
-      alert("Please enter the code sent to your phone.");
+      showError("Please enter the code sent to your phone.");
       return;
     }
 
@@ -70,16 +117,16 @@
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Something went wrong.");
+        showError(data.error || "Something went wrong.");
         return;
       }
 
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
-      alert(`Verified! Welcome, ${data.user.name}`);
-      window.location.href = "/index.html";
+      showSuccess(`Verified! Welcome, ${data.user.name}`);
+      setTimeout(() => { window.location.href = "/index.html"; }, 700);
     } catch (e) {
-      alert("Could not connect to the server.");
+      showError("Could not connect to the server.");
     } finally {
       verifyBtn.disabled = false;
       verifyBtn.textContent = "Verify";
@@ -87,6 +134,7 @@
   });
 
   resendBtn.addEventListener("click", async () => {
+    clearBanners();
     resendBtn.disabled = true;
     resendBtn.textContent = "Sending...";
 
@@ -99,13 +147,13 @@
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Could not resend code.");
+        showError(data.error || "Could not resend code.");
         return;
       }
 
-      alert("Code Sent — a new code has been sent to your phone.");
+      showSuccess("Code sent — a new code has been sent to your phone.");
     } catch (e) {
-      alert("Could not connect to the server.");
+      showError("Could not connect to the server.");
     } finally {
       resendBtn.disabled = false;
       resendBtn.textContent = "Didn't get a code? Resend";
