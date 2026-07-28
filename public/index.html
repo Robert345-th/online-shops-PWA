@@ -7,6 +7,10 @@
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ZedMarket" />
 <style>
   :root {
     --bg: #F4F1EC;
@@ -148,6 +152,24 @@
 
 <div id="feed" class="loading">Loading listings…</div>
 
+<div id="iosInstallModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:flex-end; justify-content:center;">
+  <div style="background:var(--bg); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:24px 20px calc(24px + env(safe-area-inset-bottom));">
+    <div style="font-size:17px; font-weight:700; margin-bottom:8px; color: var(--text);">Install ZedMarket</div>
+    <div style="font-size:13px; color: var(--subtext); margin-bottom:18px; line-height:1.5;">
+      iPhone doesn't allow apps to install automatically from the browser — but it only takes two taps:
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:var(--black); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0;">1</div>
+      <div style="font-size:14px; color: var(--text);">Tap the <strong>Share</strong> icon <span style="font-size:16px;">⬆️</span> at the bottom of Safari</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:var(--black); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0;">2</div>
+      <div style="font-size:14px; color: var(--text);">Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+    </div>
+    <button onclick="document.getElementById('iosInstallModal').style.display='none';" style="width:100%; background:var(--black); color:var(--gold); border:none; padding:13px; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer;">Got it</button>
+  </div>
+</div>
+
 <div class="bottom-nav">
   <a href="/index.html" class="nav-item active"><div class="nav-icon">🏠</div><div>Home</div></a>
   <a href="/explore.html" class="nav-item"><div class="nav-icon">🌐</div><div>Explore</div></a>
@@ -281,23 +303,37 @@
       await deferredInstallPrompt.userChoice;
       deferredInstallPrompt = null;
     } else {
-      // Browser doesn't support the native install prompt (e.g. Phoenix
-      // Browser, UC Browser, etc. on Android don't implement it at all,
-      // so deferredInstallPrompt is never set no matter what). Instead of
-      // showing an alert, jump straight into Chrome via an Android intent
-      // URL - Chrome will reopen this same page and the real install
-      // flow will work there.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       const isAndroid = /Android/i.test(navigator.userAgent);
-      if (isAndroid) {
+      if (isIOS) {
+        // iOS Safari has no install API at all - Apple never added one.
+        // The only path is the manual Share -> Add to Home Screen gesture,
+        // so show clear in-app instructions instead of a plain alert.
+        document.getElementById("iosInstallModal").style.display = "flex";
+      } else if (isAndroid) {
+        // Browser doesn't support the native install prompt (e.g. Phoenix
+        // Browser, UC Browser, etc. on Android don't implement it at all,
+        // so deferredInstallPrompt is never set no matter what). Instead of
+        // showing an alert, jump straight into Chrome via an Android intent
+        // URL - Chrome will reopen this same page and the real install
+        // flow will work there.
         const intentUrl = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
         window.location.href = intentUrl;
       } else {
-        // Non-Android fallback (desktop, iOS) - Chrome intent URLs don't
-        // apply there, so this is the only remaining case that needs a message.
+        // Desktop fallback
         alert('To install: open this site in Chrome, then tap the ⋮ menu → "Add to Home screen" or "Install app".');
       }
     }
   });
+
+  // If already running as an installed PWA (standalone mode on iOS, or
+  // display-mode: standalone elsewhere), hide the Install button entirely -
+  // there's nothing to install.
+  const isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (isStandalone) {
+    document.getElementById("installBtn").style.display = "none";
+  }
   window.addEventListener("appinstalled", () => {
     document.getElementById("installBtn").style.display = "none";
   });
