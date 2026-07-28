@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Wanted Board</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .explainer-box { background: var(--warn-bg); padding: 12px; margin: 14px 14px 0; border-radius: 10px; }
+  .explainer-text { font-size: 12px; color: var(--warn-text); line-height: 1.4; }
+
+  .center-box { display: flex; align-items: center; justify-content: center; padding: 60px 24px; }
+  .empty-text { color: var(--subtext); text-align: center; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .list { padding: 14px; max-width: 560px; margin: 0 auto; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-title { font-size: 15px; font-weight: 700; flex: 1; }
+  .card-budget { font-size: 14px; font-weight: 700; color: var(--price-red); margin-left: 8px; }
+  .card-desc { font-size: 12px; color: var(--subtext); margin-top: 6px; line-height: 1.4; }
+  .card-meta-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { background: var(--black); color: var(--gold); padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .card-meta { font-size: 11px; color: var(--subtext); }
+  .card-poster { font-size: 11px; color: var(--subtext); margin-top: 8px; font-style: italic; }
+  .respond-btn { background: var(--red-btn); border: none; border-radius: 10px; padding: 12px; text-align: center; color: #fff; font-weight: 700; font-size: 13px; width: 100%; margin-top: 12px; cursor: pointer; }
+  .close-btn { background: #2F4F3E; border: none; border-radius: 10px; padding: 12px; text-align: center; color: #fff; font-weight: 700; font-size: 13px; width: 100%; margin-top: 12px; cursor: pointer; }
+  .close-btn:disabled { opacity: 0.7; }
+
+  .fab {
+    position: fixed; bottom: 24px; left: 20px; right: 20px; max-width: 520px; margin: 0 auto;
+    background: var(--black); border: none; border-radius: 30px; padding: 16px; text-align: center;
+    color: var(--gold); font-weight: 700; font-size: 14px; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">🔍 Wanted Board</div>
+</div>
+
+<div class="explainer-box">
+  <div class="explainer-text">Post what you're looking for, and sellers who have it can message you directly.</div>
+</div>
+
+<div id="content"><div class="center-box"><div class="spinner"></div></div></div>
+
+<button class="fab" onclick="window.location.href='/post-wanted.html'">+ Post What You Want</button>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const content = document.getElementById("content");
+  let posts = [];
+
+  async function loadPosts() {
+    try {
+      const res = await fetch(`${API_URL}/wanted`);
+      posts = await res.json();
+      render();
+    } catch (e) {
+      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load the board.</div></div>`;
+    }
+  }
+
+  function render() {
+    if (!posts.length) {
+      content.innerHTML = `<div class="center-box"><div class="empty-text">Nothing posted yet. Be the first!</div></div>`;
+      return;
+    }
+    content.innerHTML = `<div class="list">${posts.map(renderCard).join("")}</div>`;
+
+    posts.forEach(post => {
+      const isMine = user && post.user_id === user.id;
+      const btn = document.getElementById(`action-${post.id}`);
+      if (btn) {
+        btn.addEventListener("click", () => isMine ? handleClosePost(post.id) : handleRespond(post));
+      }
+    });
+  }
+
+  function renderCard(post) {
+    const isMine = user && post.user_id === user.id;
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${post.title}</div>
+          ${post.budget ? `<div class="card-budget">K${post.budget}</div>` : ""}
+        </div>
+        ${post.description ? `<div class="card-desc">${post.description}</div>` : ""}
+        <div class="card-meta-row">
+          ${post.category ? `<div class="badge">${post.category}</div>` : ""}
+          ${post.location_label ? `<div class="card-meta">📍 ${post.location_label}</div>` : ""}
+        </div>
+        <div class="card-poster">Posted by ${post.poster_name}</div>
+        ${isMine
+          ? `<button class="close-btn" id="action-${post.id}">✅ Mark as Found</button>`
+          : `<button class="respond-btn" id="action-${post.id}">💬 I Have This</button>`}
+      </div>`;
+  }
+
+  function handleRespond(post) {
+    if (!user) { window.location.href = "/login.html"; return; }
+    if (post.user_id === user.id) { alert("This is your own wanted post."); return; }
+    window.location.href = `/chat-room.html?userId=${post.user_id}`;
+  }
+
+  async function handleClosePost(postId) {
+    if (!confirm("Mark as Found? This removes it from the public board.")) return;
+    const btn = document.getElementById(`action-${postId}`);
+    btn.disabled = true;
+    btn.textContent = "Updating…";
+    try {
+      await fetch(`${API_URL}/wanted/${postId}/close`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      posts = posts.filter(p => p.id !== postId);
+      render();
+    } catch (e) {
+      alert("Could not update post.");
+      btn.disabled = false;
+      btn.textContent = "✅ Mark as Found";
+    }
+  }
+
+  loadPosts();
+</script>
+</body>
+</html>
