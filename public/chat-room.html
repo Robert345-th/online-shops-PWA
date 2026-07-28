@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ZedMarket - Chat</title>
+<title>ZedMarket - Chats</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" href="/icon-192.png" />
@@ -15,7 +15,14 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Room mode locks the page to a fixed-height flex column (chat layout).
+     List mode is normal, scrollable, default document flow. Only one of
+     #listScreen / #roomScreen is visible at a time - switching between
+     them is a JS/CSS toggle, never a real page navigation, which is what
+     makes this feel instant instead of a fresh page load every time. */
+  body.room-mode { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
   .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .back-button, .menu-button {
@@ -23,6 +30,38 @@
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; color: #fff; font-size: 18px; flex-shrink: 0;
   }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .support-banner {
+    background: #2F4F3E; padding: 12px; text-align: center;
+    color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: none; width: 100%;
+  }
+
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .empty-text { color: var(--subtext); margin-bottom: 16px; }
+  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+  .list { padding: 12px; }
+  .row {
+    display: flex; align-items: center; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 8px; gap: 12px; cursor: pointer;
+  }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 22px; background: #E01B27;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .row-info { flex: 1; min-width: 0; }
+  .row-name { font-size: 14px; font-weight: 700; }
+  .row-preview { font-size: 12px; color: var(--subtext); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .row-time { font-size: 10px; color: var(--subtext); }
+  .unread-badge {
+    background: #E01B27; border-radius: 10px; min-width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-top: 4px;
+    color: #fff; font-size: 10px; font-weight: 700;
+  }
+
+  /* ---- Room view ---- */
   .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
   .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
   .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -30,12 +69,7 @@
 
   .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
 
-  /* min-height: 0 is required here - without it, a flex item defaults to
-     min-height: auto, which lets its content force the item taller than
-     the space actually available. That was pushing the quick-reply chips
-     and the message input box below the visible viewport entirely. */
   .messages-list { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; }
-  .empty-text { text-align: center; color: var(--subtext); margin-top: 40px; }
   .bubble-row { display: flex; margin-bottom: 8px; align-items: flex-end; gap: 4px; }
   .bubble-row.mine { justify-content: flex-end; }
   .bubble-row.theirs { justify-content: flex-start; }
@@ -49,11 +83,7 @@
   .audio-bubble { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; min-width: 150px; cursor: pointer; }
   .audio-wave { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; }
 
-  /* These wrapper divs sit between the scrollable messages-list and the
-     end of the flex column - explicitly pinning them to flex-shrink: 0
-     keeps them fully visible and never compressed/pushed out. */
   #quickReplyWrap, #inputWrap { flex-shrink: 0; }
-
   .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 4px; flex-shrink: 0; }
   .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
 
@@ -84,21 +114,32 @@
 </head>
 <body>
 
-<div class="topbar">
-  <button class="back-button" onclick="history.back()">←</button>
-  <button class="header-profile" id="headerProfileBtn">
-    <div class="header-avatar" id="headerAvatar">?</div>
-    <div class="header-name" id="headerName">Chat</div>
-  </button>
-  <button class="menu-button" id="menuBtn">⋮</button>
+<!-- ===================== LIST SCREEN ===================== -->
+<div id="listScreen">
+  <div class="topbar">
+    <button class="back-button" onclick="history.back()">←</button>
+    <div class="header-title">💬 Chats</div>
+  </div>
+  <button class="support-banner" id="supportBtn">🛟 Contact Support</button>
+  <div id="content"><div class="center-box">Loading…</div></div>
 </div>
 
-<div id="blockedBannerWrap"></div>
+<!-- ===================== ROOM SCREEN ===================== -->
+<div id="roomScreen" style="display:none;">
+  <div class="topbar">
+    <button class="back-button" id="roomBackBtn">←</button>
+    <button class="header-profile" id="headerProfileBtn">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <div class="header-name" id="headerName">Chat</div>
+    </button>
+    <button class="menu-button" id="menuBtn">⋮</button>
+  </div>
 
-<div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
-
-<div id="quickReplyWrap"></div>
-<div id="inputWrap"></div>
+  <div id="blockedBannerWrap"></div>
+  <div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
+  <div id="quickReplyWrap"></div>
+  <div id="inputWrap"></div>
+</div>
 
 <div class="viewer-overlay" id="viewerOverlay">
   <button class="back-button viewer-back" id="viewerBackBtn">←</button>
@@ -126,11 +167,120 @@
   const POLL_INTERVAL = 3000;
   const QUICK_REPLIES = ["✅ Still available", "💰 Price is negotiable", "❌ Sold, sorry", "📍 Where can we meet?"];
 
-  const params = new URLSearchParams(window.location.search);
-  const userId = params.get("userId");
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
 
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  /* ========================================================================
+     ROUTER - swaps between the list screen and the room screen using the
+     History API instead of a real page navigation. This is the actual
+     fix for the "instant" request: no full reload happens between chats
+     anymore, only between this page and somewhere else entirely.
+     Both /chat-list.html and /chat-room.html?userId=X serve this exact
+     same file, so whichever one someone lands on first works correctly,
+     and once they're inside, all further chat navigation stays client-side.
+  ======================================================================== */
+  function showListScreen(push) {
+    stopRoomPolling();
+    document.body.classList.remove("room-mode");
+    document.getElementById("roomScreen").style.display = "none";
+    document.getElementById("listScreen").style.display = "block";
+    if (push) history.pushState({ view: "list" }, "", "/chat-list.html");
+    loadConversations();
+  }
+
+  function showRoomScreen(userId, push) {
+    document.body.classList.add("room-mode");
+    document.getElementById("listScreen").style.display = "none";
+    document.getElementById("roomScreen").style.display = "flex";
+    if (push) history.pushState({ view: "room", userId }, "", `/chat-room.html?userId=${userId}`);
+    initRoom(userId);
+  }
+
+  window.addEventListener("popstate", () => {
+    const params = new URLSearchParams(location.search);
+    const uid = params.get("userId");
+    if (uid) showRoomScreen(uid, false);
+    else showListScreen(false);
+  });
+
+  /* ========================================================================
+     LIST SCREEN
+  ======================================================================== */
+  const content = document.getElementById("content");
+
+  function formatTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+
+  async function loadConversations() {
+    if (!currentUser) {
+      content.innerHTML = `
+        <div class="center-box">
+          <div class="empty-text">Log in to see your chats.</div>
+          <button class="login-btn" onclick="window.location.href='/login.html'">Log In</button>
+        </div>`;
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/messages/conversations`, { headers: authHeaders() });
+      const conversations = await res.json();
+
+      if (!conversations.length) {
+        content.innerHTML = `<div class="center-box"><div class="empty-text">No conversations yet.</div></div>`;
+        return;
+      }
+
+      content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
+      conversations.forEach(conv => {
+        const row = document.getElementById(`convrow-${conv.other_user_id}`);
+        if (row) row.addEventListener("click", () => showRoomScreen(conv.other_user_id, true));
+      });
+    } catch (e) {
+      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
+    }
+  }
+
+  function renderRow(conv) {
+    const isMine = conv.sender_id === currentUser.id;
+    let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
+    if (conv.last_photo_url) preview = "📷 Photo";
+    if (conv.last_audio_url) preview = "🎤 Voice note";
+    return `
+      <div class="row" id="convrow-${conv.other_user_id}">
+        <div class="avatar">${conv.other_user_name ? conv.other_user_name.charAt(0).toUpperCase() : "?"}</div>
+        <div class="row-info">
+          <div class="row-name">${conv.other_user_name}</div>
+          <div class="row-preview">${preview}</div>
+        </div>
+        <div class="row-side">
+          <div class="row-time">${formatTime(conv.last_sent_at)}</div>
+          ${parseInt(conv.unread_count) > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  document.getElementById("supportBtn").addEventListener("click", async () => {
+    try {
+      const res = await fetch(`${API_URL}/admin/support-contact`);
+      if (res.ok) {
+        const data = await res.json();
+        showRoomScreen(data.id, true);
+      }
+    } catch (e) {}
+  });
+
+  /* ========================================================================
+     ROOM SCREEN
+  ======================================================================== */
+  let roomUserId = null;
   let messages = [];
   let otherUser = null;
   let iBlockedThem = false;
@@ -142,6 +292,7 @@
   let recordingTimer = null;
   let playingId = null;
   let currentAudio = null;
+  let composerBuilt = false;
 
   const messagesList = document.getElementById("messagesList");
 
@@ -151,13 +302,42 @@
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
-  function authHeaders() {
-    return { Authorization: `Bearer ${token}` };
+  function stopRoomPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    playingId = null;
+  }
+
+  // Called every time a room is opened - including switching from one
+  // conversation straight into another without ever leaving this page.
+  function initRoom(userId) {
+    if (!currentUser) { window.location.href = "/login.html"; return; }
+    stopRoomPolling();
+    roomUserId = userId;
+    messages = [];
+    otherUser = null;
+    iBlockedThem = false;
+    theyBlockedMe = false;
+
+    document.getElementById("headerName").textContent = "Chat";
+    document.getElementById("headerAvatar").textContent = "?";
+    document.getElementById("blockedBannerWrap").innerHTML = "";
+    messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
+
+    if (!composerBuilt) {
+      buildComposerOnce();
+      composerBuilt = true;
+    }
+    updateComposerVisibility();
+
+    loadOtherUser();
+    loadMessages(true);
+    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
   }
 
   async function loadOtherUser() {
     try {
-      const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
+      const res = await fetch(`${API_URL}/auth/user-info/${roomUserId}`, { headers: authHeaders() });
       otherUser = await res.json();
       renderHeader();
       updateComposerVisibility();
@@ -177,21 +357,22 @@
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
     if (otherUser && !otherUser.is_admin) {
-      window.location.href = `/seller-profile.html?id=${userId}`;
+      window.location.href = `/seller-profile.html?id=${roomUserId}`;
     }
   });
+
+  document.getElementById("roomBackBtn").addEventListener("click", () => history.back());
 
   async function loadMessages(showSpinner) {
     try {
       if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
-      const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
+      const res = await fetch(`${API_URL}/messages/conversation/${roomUserId}`, { headers: authHeaders() });
       const data = await res.json();
       messages = data.messages || [];
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
       renderBlockedBanner();
       renderMessages();
-
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
       if (!recording) updateComposerVisibility();
     } catch (e) {}
@@ -206,6 +387,7 @@
     } else {
       wrap.innerHTML = "";
     }
+    updateBlockButtonLabel();
   }
 
   function renderMessages() {
@@ -280,11 +462,6 @@
     currentAudio.onended = () => { playingId = null; renderMessages(); };
   }
 
-  // Builds the quick-reply chips and the input box into the page exactly
-  // once, with all event listeners attached a single time. After this,
-  // nothing ever tears down or rebuilds these elements again - only their
-  // visibility (display: none/flex) gets toggled. This removes every
-  // timing window where the input box could be missing mid-rebuild.
   function buildComposerOnce() {
     const quickWrap = document.getElementById("quickReplyWrap");
     quickWrap.innerHTML = `<div class="quick-reply-row" id="quickReplyRow">${QUICK_REPLIES.map(r => `<div class="quick-reply-chip" data-reply="${r}">${r}</div>`).join("")}</div>`;
@@ -338,8 +515,6 @@
     document.getElementById("stopRecordBtn").addEventListener("click", stopRecording);
   }
 
-  // Only ever shows/hides the already-built elements - never touches
-  // innerHTML, so there is no window where the input box can disappear.
   function updateComposerVisibility() {
     const isBlocked = iBlockedThem || theyBlockedMe;
     const isSupportChat = otherUser?.is_admin === true;
@@ -367,7 +542,7 @@
       const res = await fetch(`${API_URL}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ receiver_id: userId, ...payload })
+        body: JSON.stringify({ receiver_id: roomUserId, ...payload })
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Could not send message."); return; }
@@ -533,7 +708,7 @@
     if (iBlockedThem) {
       if (!confirm("Unblock this user? You will be able to message each other again.")) return;
       try {
-        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "DELETE", headers: authHeaders() });
+        const res = await fetch(`${API_URL}/messages/block/${roomUserId}`, { method: "DELETE", headers: authHeaders() });
         if (!res.ok) { alert("Could not unblock this user. Please try again."); return; }
         iBlockedThem = false;
         loadMessages(false);
@@ -543,7 +718,7 @@
     } else {
       if (!confirm("Block this user? They will no longer be able to message you.")) return;
       try {
-        const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "POST", headers: authHeaders() });
+        const res = await fetch(`${API_URL}/messages/block/${roomUserId}`, { method: "POST", headers: authHeaders() });
         if (!res.ok) { alert("Could not block this user. Please try again."); return; }
         iBlockedThem = true;
         loadMessages(false);
@@ -557,25 +732,17 @@
     document.getElementById("blockToggleBtn").innerHTML = iBlockedThem ? "✅ Unblock User" : "🚫 Block User";
   }
 
-  const originalRenderBlockedBanner = renderBlockedBanner;
-  renderBlockedBanner = function() {
-    originalRenderBlockedBanner();
-    updateBlockButtonLabel();
-  };
-
-  if (!currentUser) {
-    window.location.href = "/login.html";
+  /* ========================================================================
+     STARTUP - decide which screen to show based on the URL we were
+     actually opened with, then hand off to the router for everything
+     after that.
+  ======================================================================== */
+  const startParams = new URLSearchParams(location.search);
+  const startUserId = startParams.get("userId");
+  if (startUserId) {
+    showRoomScreen(startUserId, false);
   } else {
-    // Build the input box into the page exactly once and show it right
-    // away, before any network call has even started. loadOtherUser() and
-    // loadMessages() below will only ever toggle its visibility after
-    // this - never rebuild it - so it can never end up missing.
-    buildComposerOnce();
-    updateComposerVisibility();
-
-    loadOtherUser();
-    loadMessages(true);
-    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
+    showListScreen(false);
   }
 </script>
 </body>
