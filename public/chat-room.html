@@ -135,8 +135,6 @@
   let otherUser = null;
   let iBlockedThem = false;
   let theyBlockedMe = false;
-  let composerRendered = false;
-  let lastBlockedState = null;
   let pollTimer = null;
   let mediaRecorder = null;
   let audioChunks = [];
@@ -162,7 +160,7 @@
       const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
       otherUser = await res.json();
       renderHeader();
-      composerRendered = false;
+      updateComposerVisibility();
     } catch (e) {}
   }
 
@@ -194,13 +192,8 @@
       renderBlockedBanner();
       renderMessages();
 
-      const currentBlockedState = iBlockedThem || theyBlockedMe;
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
-      if (!recording && (!composerRendered || currentBlockedState !== lastBlockedState)) {
-        renderComposer();
-        composerRendered = true;
-        lastBlockedState = currentBlockedState;
-      }
+      if (!recording) updateComposerVisibility();
     } catch (e) {}
   }
 
@@ -287,33 +280,31 @@
     currentAudio.onended = () => { playingId = null; renderMessages(); };
   }
 
-  function renderComposer() {
-    const isBlocked = iBlockedThem || theyBlockedMe;
-    const isSupportChat = otherUser?.is_admin === true;
+  // Builds the quick-reply chips and the input box into the page exactly
+  // once, with all event listeners attached a single time. After this,
+  // nothing ever tears down or rebuilds these elements again - only their
+  // visibility (display: none/flex) gets toggled. This removes every
+  // timing window where the input box could be missing mid-rebuild.
+  function buildComposerOnce() {
     const quickWrap = document.getElementById("quickReplyWrap");
+    quickWrap.innerHTML = `<div class="quick-reply-row" id="quickReplyRow">${QUICK_REPLIES.map(r => `<div class="quick-reply-chip" data-reply="${r}">${r}</div>`).join("")}</div>`;
+    quickWrap.querySelectorAll("[data-reply]").forEach(el =>
+      el.addEventListener("click", () => sendMessagePayload({ content: el.dataset.reply }))
+    );
+
     const inputWrap = document.getElementById("inputWrap");
-
-    if (isBlocked) {
-      quickWrap.innerHTML = "";
-      inputWrap.innerHTML = "";
-      return;
-    }
-
-    if (!isSupportChat) {
-      quickWrap.innerHTML = `<div class="quick-reply-row">${QUICK_REPLIES.map(r => `<div class="quick-reply-chip" data-reply="${r}">${r}</div>`).join("")}</div>`;
-      quickWrap.querySelectorAll("[data-reply]").forEach(el =>
-        el.addEventListener("click", () => sendMessagePayload({ content: el.dataset.reply }))
-      );
-    } else {
-      quickWrap.innerHTML = "";
-    }
-
     inputWrap.innerHTML = `
-      <div class="input-row">
+      <div class="input-row" id="inputRow">
         <button class="photo-btn" id="photoBtn">📷</button>
         <input type="file" id="photoInput" accept="image/*" style="display:none;" />
         <textarea class="msg-input" id="msgInput" placeholder="Type a message..." rows="1"></textarea>
         <button class="mic-btn" id="composerActionBtn">🎤</button>
+      </div>
+      <div class="recording-row" id="recordingRow" style="display:none;">
+        <div class="recording-dot"></div>
+        <div class="recording-text" id="recordingText">Recording... 0:00</div>
+        <button class="cancel-record-btn" id="cancelRecordBtn">Cancel</button>
+        <button class="stop-record-btn" id="stopRecordBtn">Send</button>
       </div>`;
 
     const msgInput = document.getElementById("msgInput");
@@ -343,6 +334,32 @@
 
     document.getElementById("photoBtn").addEventListener("click", () => document.getElementById("photoInput").click());
     document.getElementById("photoInput").addEventListener("change", handlePickPhoto);
+    document.getElementById("cancelRecordBtn").addEventListener("click", cancelRecording);
+    document.getElementById("stopRecordBtn").addEventListener("click", stopRecording);
+  }
+
+  // Only ever shows/hides the already-built elements - never touches
+  // innerHTML, so there is no window where the input box can disappear.
+  function updateComposerVisibility() {
+    const isBlocked = iBlockedThem || theyBlockedMe;
+    const isSupportChat = otherUser?.is_admin === true;
+    const quickRow = document.getElementById("quickReplyRow");
+    const inputRow = document.getElementById("inputRow");
+    if (!quickRow || !inputRow) return;
+
+    if (isBlocked) {
+      quickRow.style.display = "none";
+      inputRow.style.display = "none";
+      return;
+    }
+    quickRow.style.display = isSupportChat ? "none" : "flex";
+    inputRow.style.display = "flex";
+  }
+
+  function restoreComposerAfterRecording() {
+    const recordingRow = document.getElementById("recordingRow");
+    if (recordingRow) recordingRow.style.display = "none";
+    updateComposerVisibility();
   }
 
   async function sendMessagePayload(payload) {
@@ -385,22 +402,18 @@
       mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
       mediaRecorder.start();
 
-      document.getElementById("quickReplyWrap").innerHTML = "";
-      document.getElementById("inputWrap").innerHTML = `
-        <div class="recording-row">
-          <div class="recording-dot"></div>
-          <div class="recording-text" id="recordingText">Recording... 0:00</div>
-          <button class="cancel-record-btn" id="cancelRecordBtn">Cancel</button>
-          <button class="stop-record-btn" id="stopRecordBtn">Send</button>
-        </div>`;
+      const quickRow = document.getElementById("quickReplyRow");
+      const inputRow = document.getElementById("inputRow");
+      const recordingRow = document.getElementById("recordingRow");
+      if (quickRow) quickRow.style.display = "none";
+      if (inputRow) inputRow.style.display = "none";
+      recordingRow.style.display = "flex";
+      document.getElementById("recordingText").textContent = "Recording... 0:00";
 
       recordingTimer = setInterval(() => {
         recordingSeconds++;
         document.getElementById("recordingText").textContent = `Recording... ${formatDuration(recordingSeconds)}`;
       }, 1000);
-
-      document.getElementById("cancelRecordBtn").addEventListener("click", cancelRecording);
-      document.getElementById("stopRecordBtn").addEventListener("click", stopRecording);
     } catch (e) {
       alert("We need microphone access to record a voice note.");
     }
@@ -414,7 +427,7 @@
     }
     mediaRecorder = null;
     recordingSeconds = 0;
-    renderComposer();
+    restoreComposerAfterRecording();
   }
 
   function stopRecording() {
@@ -424,7 +437,7 @@
 
     mediaRecorder.onstop = async () => {
       mediaRecorder.stream.getTracks().forEach(t => t.stop());
-      if (duration < 1) { renderComposer(); return; }
+      if (duration < 1) { restoreComposerAfterRecording(); return; }
 
       const blob = new Blob(audioChunks, { type: "audio/webm" });
       try {
@@ -435,14 +448,14 @@
 
         const res = await fetch(CLOUDINARY_AUDIO_URL, { method: "POST", body: formData });
         const data = await res.json();
-        if (!data.secure_url) { alert("Could not upload the voice note. Please try again."); renderComposer(); return; }
+        if (!data.secure_url) { alert("Could not upload the voice note. Please try again."); restoreComposerAfterRecording(); return; }
 
         await sendMessagePayload({ audio_url: data.secure_url, audio_duration: duration });
       } catch (e) {
         alert("Could not save the voice note.");
       }
       recordingSeconds = 0;
-      renderComposer();
+      restoreComposerAfterRecording();
     };
 
     mediaRecorder.stop();
@@ -553,13 +566,12 @@
   if (!currentUser) {
     window.location.href = "/login.html";
   } else {
-    // Render the message box immediately using a safe default (assume not
-    // blocked) so it appears instantly instead of waiting on two network
-    // round-trips first. loadMessages() below will silently correct this
-    // afterward if the real blocked status turns out different.
-    renderComposer();
-    composerRendered = true;
-    lastBlockedState = false;
+    // Build the input box into the page exactly once and show it right
+    // away, before any network call has even started. loadOtherUser() and
+    // loadMessages() below will only ever toggle its visibility after
+    // this - never rebuild it - so it can never end up missing.
+    buildComposerOnce();
+    updateComposerVisibility();
 
     loadOtherUser();
     loadMessages(true);
