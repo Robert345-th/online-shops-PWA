@@ -6,7 +6,7 @@
 <title>ZedMarket - Chats</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/assets/icon.png" />
+<link rel="icon" href="/icon-192.png" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
@@ -71,6 +71,24 @@
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
 
+  // Hints the browser to start downloading a chat-room.html page in the
+  // background, before the person has even tapped it. By the time they
+  // do tap a conversation, most (sometimes all) of the page-load work is
+  // already done, so opening it feels close to instant. This is a
+  // one-time browser-native hint (not a cache override), so unlike the
+  // service-worker caching approach, it can never get stuck serving a
+  // stale version - each prefetch is fresh, every time this list loads.
+  function prefetchChatRoom(userId) {
+    if (!userId) return;
+    const url = `/chat-room.html?userId=${userId}`;
+    if (document.querySelector(`link[rel="prefetch"][href="${url}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.href = url;
+    link.as = "document";
+    document.head.appendChild(link);
+  }
+
   function formatTime(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -109,6 +127,9 @@
         if (row) row.addEventListener("click", () => {
           window.location.href = `/chat-room.html?userId=${conv.other_user_id}`;
         });
+        // Prefetch every visible conversation's chat page right away -
+        // there are usually only a handful in this list, so the cost is small.
+        prefetchChatRoom(conv.other_user_id);
       });
     } catch (e) {
       content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
