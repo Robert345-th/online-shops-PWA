@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Admin</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" href="/assets/icon.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --green-btn: #2F4F3E; --thumb-bg: #E9E2D3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; color: #fff; font-size: 18px;
+  }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .center-box { display: flex; align-items: center; justify-content: center; padding: 100px 24px; text-align: center; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-text { color: var(--price-red); }
+
+  .tab-scroll { overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+  .tab-row { display: flex; padding: 12px; gap: 6px; }
+  .tab-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--subtext); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+  .tab-btn.active { background: var(--black); border-color: var(--black); color: var(--gold); }
+
+  .search-box { padding: 4px 14px 8px; }
+  .search-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+
+  .list { padding: 14px; max-width: 640px; margin: 0 auto; }
+  .empty-text { text-align: center; color: var(--subtext); }
+  .section-note { font-size: 11px; color: var(--subtext); margin-bottom: 10px; font-style: italic; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .card-name { font-size: 14px; font-weight: 700; }
+  .card-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .card-detail { font-size: 12px; margin-top: 4px; }
+  .doc-image { width: 100%; height: 180px; border-radius: 10px; margin-top: 4px; background: var(--thumb-bg); object-fit: cover; display: block; }
+  .view-link { margin-top: 6px; display: inline-block; font-size: 12px; color: var(--price-red); font-weight: 600; cursor: pointer; background: none; border: none; }
+
+  .card-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .approve-btn { flex: 1; background: var(--green-btn); border: none; padding: 10px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .reject-btn { flex: 1; background: var(--price-red); border: none; padding: 10px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .approve-btn:disabled, .reject-btn:disabled { opacity: 0.7; }
+
+  .price-edit-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .price-edit-prefix { font-size: 14px; font-weight: 700; }
+  .price-edit-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 14px; }
+  .price-save-btn { background: var(--black); padding: 10px 16px; border-radius: 10px; color: var(--gold); font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+
+  .input-label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-top: 12px; margin-bottom: 6px; text-transform: uppercase; }
+  .broadcast-title-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; }
+  .broadcast-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 100px; font-size: 13px; resize: vertical; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .modal-subtitle { font-size: 12px; color: var(--subtext); margin-bottom: 14px; }
+  .modal-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 100px; margin-bottom: 14px; font-size: 13px; resize: vertical; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-cancel-btn { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 13px; border-radius: 12px; text-align: center; color: var(--subtext); font-weight: 600; cursor: pointer; }
+  .modal-submit-btn { flex: 1; background: var(--price-red); border: none; padding: 13px; border-radius: 12px; text-align: center; color: #fff; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-button" onclick="history.back()">←</button>
+  <div class="header-title">⚙️ Admin</div>
+</div>
+
+<div id="app"><div class="center-box"><div class="spinner"></div></div></div>
+
+<div class="modal-overlay" id="announceModal">
+  <div class="modal-box">
+    <div class="modal-title">Announce Payment Requirement</div>
+    <div class="modal-subtitle">This message will be sent as a push notification to every user right now, and starts a 7-day countdown.</div>
+    <textarea class="modal-input" id="announceMessageInput"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="announceCancelBtn">Cancel</button>
+      <button class="modal-submit-btn" id="announceSubmitBtn">Send Now</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-box">
+    <div class="modal-title">Reject Shop Application</div>
+    <div class="modal-subtitle">This reason will be shown to the seller so they know what to fix before trying again.</div>
+    <textarea class="modal-input" id="rejectReasonInput" placeholder="e.g. NRC photo is blurry, please retake"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="rejectCancelBtn">Cancel</button>
+      <button class="modal-submit-btn" id="rejectSubmitBtn">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const app = document.getElementById("app");
+
+  let tab = "subscriptions";
+  let pending = [], users = [], reports = [], userReports = [], shopApps = [], nameRequests = [], boostRequests = [], planPrices = [];
+  let editedPrices = {};
+  let userSearchText = "";
+  let paymentStatus = null;
+  let broadcastTitle = "📢 ZedMarket";
+  let rejectTargetId = null;
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  async function loadAll() {
+    await Promise.all([
+      loadPending(), loadUsers(), loadReports(), loadUserReports(),
+      loadShopApps(), loadNameRequests(), loadBoostRequests(), loadPlanPrices(), loadPaymentStatus()
+    ]);
+    render();
+  }
+
+  async function loadPending() {
+    try {
+      const res = await fetch(`${API_URL}/subscriptions/pending`, { headers: authHeaders() });
+      pending = await res.json();
+    } catch (e) {}
+  }
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API_URL}/admin/users`, { headers: authHeaders() });
+      users = await res.json();
+    } catch (e) {}
+  }
+  async function loadReports() {
+    try {
+      const res = await fetch(`${API_URL}/listings/reports/pending`, { headers: authHeaders() });
+      reports = await res.json();
+    } catch (e) {}
+  }
+  async function loadUserReports() {
+    try {
+      const res = await fetch(`${API_URL}/user-reports/pending`, { headers: authHeaders() });
+      userReports = await res.json();
+    } catch (e) {}
+  }
+  async function loadShopApps() {
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-applications/pending`, { headers: authHeaders() });
+      shopApps = await res.json();
+    } catch (e) {}
+  }
+  async function loadNameRequests() {
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-name-requests/pending`, { headers: authHeaders() });
+      nameRequests = await res.json();
+    } catch (e) {}
+  }
+  async function loadBoostRequests() {
+    try {
+      const res = await fetch(`${API_URL}/boost/pending`, { headers: authHeaders() });
+      boostRequests = await res.json();
+    } catch (e) {}
+  }
+  async function loadPlanPrices() {
+    try {
+      const res = await fetch(`${API_URL}/admin/plan-prices`, { headers: authHeaders() });
+      planPrices = await res.json();
+      planPrices.forEach(p => { editedPrices[p.category] = String(p.price); });
+    } catch (e) {}
+  }
+  async function loadPaymentStatus() {
+    try {
+      const res = await fetch(`${API_URL}/settings/payment-status`);
+      paymentStatus = await res.json();
+    } catch (e) {}
+  }
+
+  function render() {
+    const tabs = [
+      { key: "subscriptions", label: `Pending (${pending.length})` },
+      { key: "users", label: `Users (${users.length})` },
+      { key: "reports", label: `🚩 Listing Reports (${reports.length})` },
+      { key: "userReports", label: `👤 User Reports (${userReports.length})` },
+      { key: "shopApps", label: `🏪 Shop Applications (${shopApps.length})` },
+      { key: "nameRequests", label: `🖊️ Name Requests (${nameRequests.length})` },
+      { key: "boostRequests", label: `🚀 Boost Requests (${boostRequests.length})` },
+      { key: "planPrices", label: `💵 Plan Prices` },
+      { key: "payment", label: `💰 Payment` },
+      { key: "broadcast", label: `📣 Broadcast` },
+    ];
+
+    app.innerHTML = `
+      <div class="tab-scroll"><div class="tab-row" id="tabRow">
+        ${tabs.map(t => `<div class="tab-btn ${tab === t.key ? "active" : ""}" data-tab="${t.key}">${t.label}</div>`).join("")}
+      </div></div>
+      <div id="tabContent"></div>
+    `;
+
+    document.querySelectorAll("[data-tab]").forEach(el =>
+      el.addEventListener("click", () => { tab = el.dataset.tab; render(); })
+    );
+
+    renderTabContent();
+  }
+
+  function renderTabContent() {
+    const content = document.getElementById("tabContent");
+
+    if (tab === "subscriptions") {
+      content.innerHTML = `<div class="list">${
+        pending.length === 0 ? `<div class="empty-text">No pending requests.</div>` :
+        pending.map(sub => `
+          <div class="card">
+            <div class="card-name">${sub.user_name}</div>
+            <div class="card-sub">${sub.user_phone}</div>
+            <div class="card-detail">Plan: ${sub.category} · K${sub.price}</div>
+            <div class="card-detail">Ref: ${sub.transaction_ref}</div>
+            <div class="card-actions">
+              <button class="approve-btn" data-approve-sub="${sub.id}">Approve</button>
+              <button class="reject-btn" data-reject-sub="${sub.id}">Reject</button>
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-approve-sub]").forEach(el => el.addEventListener("click", () => approveSubscription(el.dataset.approveSub)));
+      content.querySelectorAll("[data-reject-sub]").forEach(el => el.addEventListener("click", () => rejectSubscription(el.dataset.rejectSub)));
+
+    } else if (tab === "users") {
+      const filtered = users.filter(u => {
+        if (!userSearchText.trim()) return true;
+        const q = userSearchText.toLowerCase();
+        return u.name.toLowerCase().includes(q) || u.phone.includes(q);
+      });
+      content.innerHTML = `
+        <div class="search-box"><input class="search-input" id="userSearchInput" placeholder="🔍 Search by name or phone..." value="${userSearchText}" /></div>
+        <div class="list">${
+          filtered.length === 0 ? `<div class="empty-text">No users match your search.</div>` :
+          filtered.map(u => `
+            <div class="card">
+              <div class="card-name">${u.name}</div>
+              <div class="card-sub">${u.phone} · ${u.account_type}</div>
+              <button class="${u.is_suspended ? "approve-btn" : "reject-btn"}" style="margin-top:10px; width:100%;" data-toggle-suspend="${u.id}" data-suspended="${u.is_suspended}">
+                ${u.is_suspended ? "Unsuspend" : "Suspend"}
+              </button>
+            </div>`).join("")
+        }</div>`;
+      document.getElementById("userSearchInput").addEventListener("input", (e) => { userSearchText = e.target.value; renderTabContent(); });
+      content.querySelectorAll("[data-toggle-suspend]").forEach(el =>
+        el.addEventListener("click", () => toggleSuspend(el.dataset.toggleSuspend, el.dataset.suspended === "true"))
+      );
+
+    } else if (tab === "reports") {
+      content.innerHTML = `<div class="list">${
+        reports.length === 0 ? `<div class="empty-text">No reports.</div>` :
+        reports.map(r => `
+          <div class="card">
+            <div class="card-name">${r.title}</div>
+            <div class="card-sub">Reported by ${r.reporter_name}</div>
+            <div class="card-detail">Reason: ${r.reason}</div>
+            <button class="view-link" data-view-listing="${r.listing_id}">View Listing →</button>
+            <div class="card-actions">
+              <button class="approve-btn" data-dismiss-report="${r.id}">Dismiss</button>
+              <button class="reject-btn" data-remove-listing="${r.id}" data-listing-id="${r.listing_id}">Remove Listing</button>
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-view-listing]").forEach(el => el.addEventListener("click", () => window.location.href = `/listing.html?id=${el.dataset.viewListing}`));
+      content.querySelectorAll("[data-dismiss-report]").forEach(el => el.addEventListener("click", () => dismissReport(el.dataset.dismissReport)));
+      content.querySelectorAll("[data-remove-listing]").forEach(el => el.addEventListener("click", () => deleteReportedListing(el.dataset.removeListing, el.dataset.listingId)));
+
+    } else if (tab === "userReports") {
+      content.innerHTML = `<div class="list">${
+        userReports.length === 0 ? `<div class="empty-text">No user reports.</div>` :
+        userReports.map(r => `
+          <div class="card">
+            <div class="card-name">${r.reported_role === "seller" ? "🏪 Seller" : "🛒 Buyer"}: ${r.reported_phone}</div>
+            <div class="card-sub">Reported by ${r.reporter_name || "Unknown"}</div>
+            <div class="card-detail">Reason: ${r.reason}</div>
+            ${r.matched_user_id
+              ? `<div class="card-detail">Account status: ${r.matched_user_suspended ? "🔴 Already Suspended" : "🟢 Active"}</div>`
+              : `<div class="card-detail">⚠️ No matching account found for this number</div>`}
+            <div class="card-actions">
+              <button class="approve-btn" data-dismiss-ureport="${r.id}">Dismiss</button>
+              ${r.matched_user_id && !r.matched_user_suspended
+                ? `<button class="reject-btn" data-suspend-reported="${r.id}" data-matched-id="${r.matched_user_id}">Suspend Account</button>`
+                : ""}
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-dismiss-ureport]").forEach(el => el.addEventListener("click", () => dismissUserReport(el.dataset.dismissUreport)));
+      content.querySelectorAll("[data-suspend-reported]").forEach(el => el.addEventListener("click", () => suspendReportedUser(el.dataset.suspendReported, el.dataset.matchedId)));
+
+    } else if (tab === "shopApps") {
+      content.innerHTML = `<div class="list">${
+        shopApps.length === 0 ? `<div class="empty-text">No pending shop applications.</div>` :
+        shopApps.map(s => `
+          <div class="card">
+            <div class="card-name">${s.shop_name || s.name}</div>
+            <div class="card-sub">${s.name} · ${s.phone}</div>
+            <div class="card-detail">NRC Number: ${s.nrc_number}</div>
+            <div class="card-detail" style="margin-top:8px;font-weight:700;">NRC Front</div>
+            <img class="doc-image" src="${s.nrc_photo_url}" />
+            <div class="card-detail" style="margin-top:8px;font-weight:700;">NRC Back</div>
+            <img class="doc-image" src="${s.nrc_back_photo_url}" />
+            <div class="card-detail" style="margin-top:8px;font-weight:700;">Selfie</div>
+            <img class="doc-image" src="${s.selfie_photo_url}" />
+            <div class="card-actions">
+              <button class="approve-btn" data-approve-shop="${s.id}">Approve</button>
+              <button class="reject-btn" data-reject-shop="${s.id}">Reject</button>
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-approve-shop]").forEach(el => el.addEventListener("click", () => approveShopApp(el.dataset.approveShop)));
+      content.querySelectorAll("[data-reject-shop]").forEach(el => el.addEventListener("click", () => openRejectModal(el.dataset.rejectShop)));
+
+    } else if (tab === "nameRequests") {
+      content.innerHTML = `<div class="list">${
+        nameRequests.length === 0 ? `<div class="empty-text">No pending shop name changes.</div>` :
+        nameRequests.map(n => `
+          <div class="card">
+            <div class="card-name">${n.name}</div>
+            <div class="card-sub">${n.phone}</div>
+            <div class="card-detail">Current: ${n.shop_name || "(none)"}</div>
+            <div class="card-detail">Requested: ${n.pending_shop_name}</div>
+            <div class="card-actions">
+              <button class="approve-btn" data-approve-name="${n.id}">Approve</button>
+              <button class="reject-btn" data-reject-name="${n.id}">Reject</button>
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-approve-name]").forEach(el => el.addEventListener("click", () => approveNameRequest(el.dataset.approveName)));
+      content.querySelectorAll("[data-reject-name]").forEach(el => el.addEventListener("click", () => rejectNameRequest(el.dataset.rejectName)));
+
+    } else if (tab === "boostRequests") {
+      content.innerHTML = `<div class="list">${
+        boostRequests.length === 0 ? `<div class="empty-text">No boost requests.</div>` :
+        boostRequests.map(b => `
+          <div class="card">
+            <div class="card-name">${b.title}</div>
+            <div class="card-sub">${b.user_name} · ${b.user_phone}</div>
+            <div class="card-detail">Payment ref: ${b.transaction_ref || "None (free during launch)"}</div>
+            <button class="view-link" data-view-listing="${b.listing_id}">View Listing →</button>
+            <div class="card-actions">
+              <button class="approve-btn" data-approve-boost="${b.id}">Approve Boost</button>
+              <button class="reject-btn" data-reject-boost="${b.id}">Reject</button>
+            </div>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-view-listing]").forEach(el => el.addEventListener("click", () => window.location.href = `/listing.html?id=${el.dataset.viewListing}`));
+      content.querySelectorAll("[data-approve-boost]").forEach(el => el.addEventListener("click", () => approveBoost(el.dataset.approveBoost)));
+      content.querySelectorAll("[data-reject-boost]").forEach(el => el.addEventListener("click", () => rejectBoost(el.dataset.rejectBoost)));
+
+    } else if (tab === "planPrices") {
+      content.innerHTML = `<div class="list">
+        <div class="section-note">Changes apply immediately to anyone opening "Upgrade to Shop" after saving.</div>
+        ${planPrices.length === 0 ? `<div class="empty-text">Could not load plan prices. Refresh or check your connection.</div>` : ""}
+        ${planPrices.map(plan => `
+          <div class="card">
+            <div class="card-name">${plan.category}</div>
+            <div class="card-sub">Current: K${plan.price}</div>
+            <div class="price-edit-row">
+              <div class="price-edit-prefix">K</div>
+              <input class="price-edit-input" id="price-${plan.category}" value="${editedPrices[plan.category] || ""}" />
+              <button class="price-save-btn" data-save-price="${plan.category}">Save</button>
+            </div>
+          </div>`).join("")}
+      </div>`;
+      content.querySelectorAll("[id^='price-']").forEach(el => {
+        el.addEventListener("input", (e) => { editedPrices[el.id.replace("price-", "")] = e.target.value; });
+      });
+      content.querySelectorAll("[data-save-price]").forEach(el => el.addEventListener("click", () => savePlanPrice(el.dataset.savePrice)));
+
+    } else if (tab === "payment") {
+      content.innerHTML = `<div class="list">
+        <div class="card">
+          <div class="card-name">Payment Enforcement</div>
+          ${paymentStatus?.enforced ? `
+            <div class="card-detail">Status: ${paymentStatus.grace_period_passed ? "🔴 Enforced (grace period ended)" : "🟡 Grace period active"}</div>
+            <div class="card-detail">Grace period ends: ${new Date(paymentStatus.grace_period_end).toLocaleString()}</div>
+            <div class="card-detail">Message sent: "${paymentStatus.warning_message}"</div>
+            <button class="approve-btn" style="margin-top:14px;width:100%;" id="extendBtn">⏳ Extend by 3 Days</button>
+            <button class="reject-btn" style="margin-top:8px;width:100%;" id="undoBtn">↩️ Undo (Reset to Free)</button>
+          ` : `
+            <div class="card-detail">Status: 🟢 Not announced yet — app is free for everyone.</div>
+            <button class="reject-btn" style="margin-top:14px;width:100%;" id="announceOpenBtn">📢 Announce Payment Requirement</button>
+          `}
+        </div>
+      </div>`;
+      const extendBtn = document.getElementById("extendBtn");
+      if (extendBtn) extendBtn.addEventListener("click", handleExtend);
+      const undoBtn = document.getElementById("undoBtn");
+      if (undoBtn) undoBtn.addEventListener("click", handleUndo);
+      const announceOpenBtn = document.getElementById("announceOpenBtn");
+      if (announceOpenBtn) announceOpenBtn.addEventListener("click", () => {
+        document.getElementById("announceMessageInput").value = "Heads up! Starting next week, keeping your listings live on ZedMarket will require an active subscription. Please subscribe soon to avoid your listings being disabled.";
+        document.getElementById("announceModal").classList.add("open");
+      });
+
+    } else {
+      content.innerHTML = `<div class="list">
+        <div class="card">
+          <div class="card-name">Send a Message to Everyone</div>
+          <div class="card-sub">This sends a push notification to every user who has the app, right now.</div>
+          <div class="input-label">Title (optional)</div>
+          <input class="broadcast-title-input" id="broadcastTitleInput" value="${broadcastTitle}" />
+          <div class="input-label">Message</div>
+          <textarea class="broadcast-input" id="broadcastMessageInput" placeholder="Type your message..."></textarea>
+          <button class="reject-btn" style="margin-top:14px;width:100%;" id="sendBroadcastBtn">📣 Send to Everyone</button>
+        </div>
+      </div>`;
+      document.getElementById("sendBroadcastBtn").addEventListener("click", handleSendBroadcast);
+    }
+  }
+
+  async function approveSubscription(id) {
+    try {
+      await fetch(`${API_URL}/subscriptions/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      pending = pending.filter(s => s.id != id);
+      renderTabContent();
+    } catch (e) { alert("Could not approve."); }
+  }
+  async function rejectSubscription(id) {
+    try {
+      await fetch(`${API_URL}/subscriptions/${id}/reject`, { method: "PUT", headers: authHeaders() });
+      pending = pending.filter(s => s.id != id);
+      renderTabContent();
+    } catch (e) { alert("Could not reject."); }
+  }
+  async function toggleSuspend(userId, currentlySuspended) {
+    try {
+      const endpoint = currentlySuspended ? "unsuspend" : "suspend";
+      await fetch(`${API_URL}/admin/users/${userId}/${endpoint}`, { method: "PUT", headers: authHeaders() });
+      users = users.map(u => u.id == userId ? { ...u, is_suspended: !currentlySuspended } : u);
+      renderTabContent();
+    } catch (e) { alert("Could not update user."); }
+  }
+  function viewReportedListing(id) { window.location.href = `/listing.html?id=${id}`; }
+  async function dismissReport(reportId) {
+    try {
+      await fetch(`${API_URL}/listings/reports/${reportId}/dismiss`, { method: "PUT", headers: authHeaders() });
+      reports = reports.filter(r => r.id != reportId);
+      renderTabContent();
+    } catch (e) { alert("Could not dismiss report."); }
+  }
+  async function deleteReportedListing(reportId, listingId) {
+    try {
+      await fetch(`${API_URL}/listings/${listingId}`, { method: "DELETE", headers: authHeaders() });
+      await fetch(`${API_URL}/listings/reports/${reportId}/dismiss`, { method: "PUT", headers: authHeaders() });
+      reports = reports.filter(r => r.id != reportId);
+      renderTabContent();
+      alert("Removed — the listing has been removed.");
+    } catch (e) { alert("Could not remove listing."); }
+  }
+  async function dismissUserReport(reportId) {
+    try {
+      await fetch(`${API_URL}/user-reports/${reportId}/dismiss`, { method: "PUT", headers: authHeaders() });
+      userReports = userReports.filter(r => r.id != reportId);
+      renderTabContent();
+    } catch (e) { alert("Could not dismiss report."); }
+  }
+  async function suspendReportedUser(reportId, matchedUserId) {
+    try {
+      await fetch(`${API_URL}/admin/users/${matchedUserId}/suspend`, { method: "PUT", headers: authHeaders() });
+      await fetch(`${API_URL}/user-reports/${reportId}/dismiss`, { method: "PUT", headers: authHeaders() });
+      userReports = userReports.filter(r => r.id != reportId);
+      renderTabContent();
+      alert("Suspended — that account has been suspended.");
+      loadUsers();
+    } catch (e) { alert("Could not suspend user."); }
+  }
+  async function approveShopApp(id) {
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-applications/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not approve shop."); return; }
+      shopApps = shopApps.filter(s => s.id != id);
+      renderTabContent();
+      alert("Approved — this shop can now post listings.");
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  function openRejectModal(id) {
+    rejectTargetId = id;
+    document.getElementById("rejectReasonInput").value = "";
+    document.getElementById("rejectModal").classList.add("open");
+  }
+  document.getElementById("rejectCancelBtn").addEventListener("click", () => {
+    document.getElementById("rejectModal").classList.remove("open");
+    rejectTargetId = null;
+  });
+  document.getElementById("rejectSubmitBtn").addEventListener("click", async () => {
+    if (!rejectTargetId) return;
+    const reason = document.getElementById("rejectReasonInput").value.trim();
+    const btn = document.getElementById("rejectSubmitBtn");
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-applications/${rejectTargetId}/reject`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ reason: reason || null })
+      });
+      if (!res.ok) { alert("Could not reject shop."); return; }
+      shopApps = shopApps.filter(s => s.id != rejectTargetId);
+      document.getElementById("rejectModal").classList.remove("open");
+      rejectTargetId = null;
+      renderTabContent();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  async function approveNameRequest(id) {
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-name-requests/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not approve name change."); return; }
+      nameRequests = nameRequests.filter(n => n.id != id);
+      renderTabContent();
+      alert("Approved — shop name updated.");
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function rejectNameRequest(id) {
+    try {
+      const res = await fetch(`${API_URL}/admin/shop-name-requests/${id}/reject`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not reject name change."); return; }
+      nameRequests = nameRequests.filter(n => n.id != id);
+      renderTabContent();
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function approveBoost(id) {
+    try {
+      const res = await fetch(`${API_URL}/boost/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not approve boost."); return; }
+      boostRequests = boostRequests.filter(b => b.id != id);
+      renderTabContent();
+      alert("Boosted — that listing is now at the top of the feed for 24 hours.");
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function rejectBoost(id) {
+    try {
+      const res = await fetch(`${API_URL}/boost/${id}/reject`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not reject boost."); return; }
+      boostRequests = boostRequests.filter(b => b.id != id);
+      renderTabContent();
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function savePlanPrice(category) {
+    const newPrice = editedPrices[category];
+    if (!newPrice || isNaN(parseFloat(newPrice)) || parseFloat(newPrice) <= 0) {
+      alert("Invalid price — please enter a valid number.");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/admin/plan-prices/${category}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ price: newPrice })
+      });
+      if (!res.ok) { alert("Could not update price."); return; }
+      alert(`Saved — ${category} price updated to K${newPrice}.`);
+      await loadPlanPrices();
+      renderTabContent();
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+
+  document.getElementById("announceCancelBtn").addEventListener("click", () => {
+    document.getElementById("announceModal").classList.remove("open");
+  });
+  document.getElementById("announceSubmitBtn").addEventListener("click", async () => {
+    const message = document.getElementById("announceMessageInput").value.trim();
+    if (!message) { alert("Please type a warning message."); return; }
+    if (!confirm("This will notify every user and start a 1-week countdown before unpaid listings get disabled. Continue?")) return;
+
+    const btn = document.getElementById("announceSubmitBtn");
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_URL}/admin/announce-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ message })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not send announcement."); return; }
+      alert(`Sent — notified ${data.notified} users. Grace period ends in 7 days.`);
+      document.getElementById("announceModal").classList.remove("open");
+      await loadPaymentStatus();
+      renderTabContent();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function handleExtend() {
+    if (!confirm("Add 3 more days to the current deadline?")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/extend-grace-period`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ days: 3 })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not extend."); return; }
+      alert("Extended — grace period extended by 3 days.");
+      await loadPaymentStatus();
+      renderTabContent();
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function handleUndo() {
+    if (!confirm("This resets everything back to free-for-all (no enforcement, no countdown). Use this for testing. Continue?")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/undo-announcement`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not undo."); return; }
+      alert("Reset — announcement undone. App is free for everyone again.");
+      await loadPaymentStatus();
+      renderTabContent();
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+  async function handleSendBroadcast() {
+    const title = document.getElementById("broadcastTitleInput").value;
+    const message = document.getElementById("broadcastMessageInput").value.trim();
+    if (!message) { alert("Please type a message."); return; }
+    if (!confirm("This will send a push notification to every user right now. Continue?")) return;
+
+    const btn = document.getElementById("sendBroadcastBtn");
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_URL}/admin/broadcast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ title, message })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not send broadcast."); return; }
+      alert(`Sent — notified ${data.notified} users.`);
+      document.getElementById("broadcastMessageInput").value = "";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  if (!user?.is_admin) {
+    app.innerHTML = `<div class="center-box"><div class="error-text">Admin access only.</div></div>`;
+  } else if (!token) {
+    window.location.href = "/login.html";
+  } else {
+    loadAll();
+  }
+</script>
+</body>
+</html>
