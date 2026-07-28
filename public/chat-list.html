@@ -11,16 +11,24 @@
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #211D1A; --subtext: #5C5955; --black: #111111;
-    --gold: #F5C518; --price-red: #A3131C;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
-  .back-button {
+  /* Room mode locks the page to a fixed-height flex column (chat layout).
+     List mode is normal, scrollable, default document flow. Only one of
+     #listScreen / #roomScreen is visible at a time - switching between
+     them is a JS/CSS toggle, never a real page navigation, which is what
+     makes this feel instant instead of a fresh page load every time. */
+  body.room-mode { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .back-button, .menu-button {
     width: 36px; height: 36px; border-radius: 18px;
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
-    border: none; cursor: pointer; color: #fff; font-size: 18px;
+    border: none; cursor: pointer; color: #fff; font-size: 18px; flex-shrink: 0;
   }
   .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
 
@@ -52,55 +60,168 @@
     display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-top: 4px;
     color: #fff; font-size: 10px; font-weight: 700;
   }
+
+  /* ---- Room view ---- */
+  .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
+  .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
+  .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .header-name { color: var(--gold); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
+
+  .messages-list { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; }
+  .bubble-row { display: flex; margin-bottom: 8px; align-items: flex-end; gap: 4px; }
+  .bubble-row.mine { justify-content: flex-end; }
+  .bubble-row.theirs { justify-content: flex-start; }
+  .bubble { max-width: 78%; padding: 12px; border-radius: 16px; font-size: 14px; }
+  .bubble.mine { background: var(--black); color: var(--gold); border-bottom-right-radius: 4px; }
+  .bubble.theirs { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; }
+  .tick { font-size: 11px; color: var(--subtext); margin-bottom: 2px; }
+  .photo-bubble { max-width: 65%; border-radius: 16px; overflow: hidden; padding: 3px; cursor: pointer; }
+  .chat-photo { width: 180px; height: 180px; border-radius: 12px; object-fit: cover; background: var(--border); display: block; }
+  .audio-bubble { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; min-width: 150px; cursor: pointer; }
+  .audio-wave { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+  #quickReplyWrap, #inputWrap { flex-shrink: 0; }
+  .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 4px; flex-shrink: 0; }
+  .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+
+  .input-row { display: flex; padding: 12px; gap: 8px; background: var(--bg); border-top: 1px solid var(--border); align-items: flex-end; flex-shrink: 0; }
+  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 20px; }
+  .msg-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; font-size: 14px; max-height: 100px; resize: none; }
+  .send-btn { background: var(--red-btn); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
+  .mic-btn { background: var(--orange); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
+
+  .recording-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .recording-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--red-btn); }
+  .recording-text { flex: 1; font-size: 13px; font-weight: 600; }
+  .cancel-record-btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; color: var(--subtext); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .stop-record-btn { background: var(--red-btn); padding: 8px 14px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
+
+  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; align-items: center; justify-content: center; }
+  .viewer-overlay.open { display: flex; }
+  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
+  .viewer-img { max-width: 100%; max-height: 100%; }
+
+  .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .menu-overlay.open { display: flex; }
+  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .menu-row { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .menu-row.danger { color: var(--price-red); }
+  .menu-cancel-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 4px; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <button class="back-button" onclick="history.back()">←</button>
-  <div class="header-title">💬 Chats</div>
+<!-- ===================== LIST SCREEN ===================== -->
+<div id="listScreen">
+  <div class="topbar">
+    <button class="back-button" onclick="history.back()">←</button>
+    <div class="header-title">💬 Chats</div>
+  </div>
+  <button class="support-banner" id="supportBtn">🛟 Contact Support</button>
+  <div id="content"><div class="center-box">Loading…</div></div>
 </div>
 
-<button class="support-banner" id="supportBtn">🛟 Contact Support</button>
+<!-- ===================== ROOM SCREEN ===================== -->
+<div id="roomScreen" style="display:none;">
+  <div class="topbar">
+    <button class="back-button" id="roomBackBtn">←</button>
+    <button class="header-profile" id="headerProfileBtn">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <div class="header-name" id="headerName">Chat</div>
+    </button>
+    <button class="menu-button" id="menuBtn">⋮</button>
+  </div>
 
-<div id="content"><div class="center-box">Loading…</div></div>
+  <div id="blockedBannerWrap"></div>
+  <div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
+  <div id="quickReplyWrap"></div>
+  <div id="inputWrap"></div>
+</div>
+
+<div class="viewer-overlay" id="viewerOverlay">
+  <button class="back-button viewer-back" id="viewerBackBtn">←</button>
+  <img class="viewer-img" id="viewerImg" />
+</div>
+
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-box">
+    <button class="menu-row" id="viewContactBtn">📞 View Contact Number</button>
+    <button class="menu-row" id="reportUserBtn">🚩 Report User</button>
+    <button class="menu-row danger" id="blockToggleBtn">🚫 Block User</button>
+    <button class="menu-cancel-btn" id="menuCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<div class="menu-overlay" id="messageActionsOverlay">
+  <div class="menu-box" id="messageActionsBox"></div>
+</div>
 
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const content = document.getElementById("content");
-  const token = localStorage.getItem("zm_token");
-  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
+  const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
+  const UPLOAD_PRESET = "online_shops_uploads";
+  const POLL_INTERVAL = 3000;
+  const QUICK_REPLIES = ["✅ Still available", "💰 Price is negotiable", "❌ Sold, sorry", "📍 Where can we meet?"];
 
-  // Hints the browser to start downloading a chat-room.html page in the
-  // background, before the person has even tapped it. By the time they
-  // do tap a conversation, most (sometimes all) of the page-load work is
-  // already done, so opening it feels close to instant. This is a
-  // one-time browser-native hint (not a cache override), so unlike the
-  // service-worker caching approach, it can never get stuck serving a
-  // stale version - each prefetch is fresh, every time this list loads.
-  function prefetchChatRoom(userId) {
-    if (!userId) return;
-    const url = `/chat-room.html?userId=${userId}`;
-    if (document.querySelector(`link[rel="prefetch"][href="${url}"]`)) return;
-    const link = document.createElement("link");
-    link.rel = "prefetch";
-    link.href = url;
-    link.as = "document";
-    document.head.appendChild(link);
+  const token = localStorage.getItem("zm_token");
+  const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
   }
+
+  /* ========================================================================
+     ROUTER - swaps between the list screen and the room screen using the
+     History API instead of a real page navigation. This is the actual
+     fix for the "instant" request: no full reload happens between chats
+     anymore, only between this page and somewhere else entirely.
+     Both /chat-list.html and /chat-room.html?userId=X serve this exact
+     same file, so whichever one someone lands on first works correctly,
+     and once they're inside, all further chat navigation stays client-side.
+  ======================================================================== */
+  function showListScreen(push) {
+    stopRoomPolling();
+    document.body.classList.remove("room-mode");
+    document.getElementById("roomScreen").style.display = "none";
+    document.getElementById("listScreen").style.display = "block";
+    if (push) history.pushState({ view: "list" }, "", "/chat-list.html");
+    loadConversations();
+  }
+
+  function showRoomScreen(userId, push) {
+    document.body.classList.add("room-mode");
+    document.getElementById("listScreen").style.display = "none";
+    document.getElementById("roomScreen").style.display = "flex";
+    if (push) history.pushState({ view: "room", userId }, "", `/chat-room.html?userId=${userId}`);
+    initRoom(userId);
+  }
+
+  window.addEventListener("popstate", () => {
+    const params = new URLSearchParams(location.search);
+    const uid = params.get("userId");
+    if (uid) showRoomScreen(uid, false);
+    else showListScreen(false);
+  });
+
+  /* ========================================================================
+     LIST SCREEN
+  ======================================================================== */
+  const content = document.getElementById("content");
 
   function formatTime(dateString) {
     const date = new Date(dateString);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
+    if (isToday) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
 
   async function loadConversations() {
-    if (!user) {
+    if (!currentUser) {
       content.innerHTML = `
         <div class="center-box">
           <div class="empty-text">Log in to see your chats.</div>
@@ -108,11 +229,8 @@
         </div>`;
       return;
     }
-
     try {
-      const res = await fetch(`${API_URL}/messages/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch(`${API_URL}/messages/conversations`, { headers: authHeaders() });
       const conversations = await res.json();
 
       if (!conversations.length) {
@@ -121,15 +239,9 @@
       }
 
       content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
-
       conversations.forEach(conv => {
         const row = document.getElementById(`convrow-${conv.other_user_id}`);
-        if (row) row.addEventListener("click", () => {
-          window.location.href = `/chat-room.html?userId=${conv.other_user_id}`;
-        });
-        // Prefetch every visible conversation's chat page right away -
-        // there are usually only a handful in this list, so the cost is small.
-        prefetchChatRoom(conv.other_user_id);
+        if (row) row.addEventListener("click", () => showRoomScreen(conv.other_user_id, true));
       });
     } catch (e) {
       content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
@@ -137,11 +249,10 @@
   }
 
   function renderRow(conv) {
-    const isMine = conv.sender_id === user.id;
+    const isMine = conv.sender_id === currentUser.id;
     let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
     if (conv.last_photo_url) preview = "📷 Photo";
     if (conv.last_audio_url) preview = "🎤 Voice note";
-
     return `
       <div class="row" id="convrow-${conv.other_user_id}">
         <div class="avatar">${conv.other_user_name ? conv.other_user_name.charAt(0).toUpperCase() : "?"}</div>
@@ -161,12 +272,139 @@
       const res = await fetch(`${API_URL}/admin/support-contact`);
       if (res.ok) {
         const data = await res.json();
-        window.location.href = `/chat-room.html?userId=${data.id}`;
+        showRoomScreen(data.id, true);
       }
     } catch (e) {}
   });
 
-  loadConversations();
-</script>
-</body>
-</html>
+  /* ========================================================================
+     ROOM SCREEN
+  ======================================================================== */
+  let roomUserId = null;
+  let messages = [];
+  let otherUser = null;
+  let iBlockedThem = false;
+  let theyBlockedMe = false;
+  let pollTimer = null;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingSeconds = 0;
+  let recordingTimer = null;
+  let playingId = null;
+  let currentAudio = null;
+  let composerBuilt = false;
+
+  const messagesList = document.getElementById("messagesList");
+
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  function stopRoomPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    playingId = null;
+  }
+
+  // Called every time a room is opened - including switching from one
+  // conversation straight into another without ever leaving this page.
+  function initRoom(userId) {
+    if (!currentUser) { window.location.href = "/login.html"; return; }
+    stopRoomPolling();
+    roomUserId = userId;
+    messages = [];
+    otherUser = null;
+    iBlockedThem = false;
+    theyBlockedMe = false;
+
+    document.getElementById("headerName").textContent = "Chat";
+    document.getElementById("headerAvatar").textContent = "?";
+    document.getElementById("blockedBannerWrap").innerHTML = "";
+    messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
+
+    if (!composerBuilt) {
+      buildComposerOnce();
+      composerBuilt = true;
+    }
+    updateComposerVisibility();
+
+    loadOtherUser();
+    loadMessages(true);
+    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
+  }
+
+  async function loadOtherUser() {
+    try {
+      const res = await fetch(`${API_URL}/auth/user-info/${roomUserId}`, { headers: authHeaders() });
+      otherUser = await res.json();
+      renderHeader();
+      updateComposerVisibility();
+    } catch (e) {}
+  }
+
+  function renderHeader() {
+    if (!otherUser) return;
+    document.getElementById("headerName").textContent = otherUser.display_name || "Chat";
+    const avatar = document.getElementById("headerAvatar");
+    if (otherUser.shop_photo_url) {
+      avatar.innerHTML = `<img src="${otherUser.shop_photo_url}" />`;
+    } else {
+      avatar.textContent = otherUser.display_name ? otherUser.display_name.charAt(0).toUpperCase() : "?";
+    }
+  }
+
+  document.getElementById("headerProfileBtn").addEventListener("click", () => {
+    if (otherUser && !otherUser.is_admin) {
+      window.location.href = `/seller-profile.html?id=${roomUserId}`;
+    }
+  });
+
+  document.getElementById("roomBackBtn").addEventListener("click", () => history.back());
+
+  async function loadMessages(showSpinner) {
+    try {
+      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
+      const res = await fetch(`${API_URL}/messages/conversation/${roomUserId}`, { headers: authHeaders() });
+      const data = await res.json();
+      messages = data.messages || [];
+      iBlockedThem = data.i_blocked_them || false;
+      theyBlockedMe = data.they_blocked_me || false;
+      renderBlockedBanner();
+      renderMessages();
+      const recording = mediaRecorder && mediaRecorder.state !== "inactive";
+      if (!recording) updateComposerVisibility();
+    } catch (e) {}
+  }
+
+  function renderBlockedBanner() {
+    const wrap = document.getElementById("blockedBannerWrap");
+    if (theyBlockedMe) {
+      wrap.innerHTML = `<div class="blocked-banner">This user has blocked you.</div>`;
+    } else if (iBlockedThem) {
+      wrap.innerHTML = `<div class="blocked-banner">You have blocked this user.</div>`;
+    } else {
+      wrap.innerHTML = "";
+    }
+    updateBlockButtonLabel();
+  }
+
+  function renderMessages() {
+    if (!messages.length) {
+      messagesList.innerHTML = `<div class="empty-text">Say hello 👋</div>`;
+      return;
+    }
+    messagesList.innerHTML = messages.map(renderBubble).join("");
+    messagesList.scrollTop = messagesList.scrollHeight;
+
+    messages.forEach(msg => {
+      const el = document.getElementById(`msg-${msg.id}`);
+      if (el) {
+        el.addEventListener("contextmenu", (e) => { e.preventDefault(); openMessageActions(msg.id); });
+        let pressTimer;
+        el.addEventListener("touchstart", () => { pressTimer = setTimeout(() => openMessageActions(msg.id), 500); });
+        el.addEventListener("touchend", () => clearTimeout(pressTimer));
+      }
+      const photoEl = document.getElementById(`photo-${msg.id}`);
+      if (photoEl) photoEl.addEventListen
