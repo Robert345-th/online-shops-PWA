@@ -128,7 +128,7 @@
   function handleRespond(post) {
     if (!user) { window.location.href = "/login.html"; return; }
     if (post.user_id === user.id) { alert("This is your own wanted post."); return; }
-    window.location.href = `/chat-room.html?userId=${post.user_id}`;
+    window.location.href = `/chat-room.html?userId=${post.user_id}&name=${encodeURIComponent(post.poster_name || "")}`;
   }
 
   async function handleClosePost(postId) {
