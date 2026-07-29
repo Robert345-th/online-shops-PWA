@@ -20,10 +20,12 @@
   .subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 32px; }
   .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
   .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; }
-  .phone-row { display: flex; margin-bottom: 18px; gap: 8px; }
+  .phone-row { display: flex; margin-bottom: 6px; gap: 8px; }
   .phone-prefix { background: var(--black); border-radius: 10px; padding: 0 12px; display: flex; align-items: center; }
   .phone-prefix span { color: var(--gold); font-weight: 700; font-size: 13px; white-space: nowrap; }
   .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .phone-hint { font-size: 11.5px; color: var(--subtext); margin-bottom: 18px; }
+  .phone-hint b { color: var(--text); }
 
   .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: -8px; margin-bottom: 14px; cursor: pointer; }
   .checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--subtext); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
@@ -68,6 +70,7 @@
     <div class="phone-prefix"><span>🇿🇲 +260</span></div>
     <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" />
   </div>
+  <div class="phone-hint">Only <b>Airtel</b> allowed</div>
 
   <div class="label">Password</div>
   <input class="field-input" id="passwordInput" type="password" placeholder="Create a password (8-15 characters)" maxlength="15" />
@@ -134,8 +137,10 @@
     signupBtn.disabled = !ageConfirmed;
   });
 
+  // Only allows Airtel Zambia number ranges: 0573, 0574, 077, 097
+  // (each variant must total 10 digits, e.g. 0573123456, 0771234567)
   function isValidZambianPhone(phone) {
-    return /^0(7|9)\d{8}$/.test(phone);
+    return /^(0573\d{6}|0574\d{6}|077\d{7}|097\d{7})$/.test(phone);
   }
 
   signupBtn.addEventListener("click", async () => {
@@ -151,7 +156,7 @@
       return;
     }
     if (!isValidZambianPhone(phone)) {
-      showError("Please enter a valid Zambian phone number (e.g. 0977123456).");
+      showError("Only Airtel allowed.");
       return;
     }
     if (password.length < 8 || password.length > 15) {
