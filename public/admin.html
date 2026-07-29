@@ -102,7 +102,7 @@
   <div class="modal-box">
     <div class="modal-title">Reject Shop Application</div>
     <div class="modal-subtitle">This reason will be shown to the seller so they know what to fix before trying again.</div>
-    <textarea class="modal-input" id="rejectReasonInput" placeholder="e.g. NRC photo is blurry, please retake"></textarea>
+    <textarea class="modal-input" id="rejectReasonInput" placeholder="e.g. Selfie photo is blurry, please retake"></textarea>
     <div class="modal-actions">
       <button class="modal-cancel-btn" id="rejectCancelBtn">Cancel</button>
       <button class="modal-submit-btn" id="rejectSubmitBtn">Reject</button>
@@ -313,11 +313,6 @@
           <div class="card">
             <div class="card-name">${s.shop_name || s.name}</div>
             <div class="card-sub">${s.name} · ${s.phone}</div>
-            <div class="card-detail">NRC Number: ${s.nrc_number}</div>
-            <div class="card-detail" style="margin-top:8px;font-weight:700;">NRC Front</div>
-            <img class="doc-image" src="${s.nrc_photo_url}" />
-            <div class="card-detail" style="margin-top:8px;font-weight:700;">NRC Back</div>
-            <img class="doc-image" src="${s.nrc_back_photo_url}" />
             <div class="card-detail" style="margin-top:8px;font-weight:700;">Selfie</div>
             <img class="doc-image" src="${s.selfie_photo_url}" />
             <div class="card-actions">
