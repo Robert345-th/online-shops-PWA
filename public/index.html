@@ -23,6 +23,10 @@
     --price-red: #A3131C;
     --orange: #FF7A1A;
   }
+  body.dark {
+    --bg: #121212; --card: #1E1E1E; --border: #333333;
+    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { overscroll-behavior-y: contain; }
   body {
@@ -30,6 +34,7 @@
     background: var(--bg);
     color: var(--text);
     overscroll-behavior-y: contain;
+    transition: background 0.2s, color 0.2s;
   }
   .topbar {
     background: var(--black);
@@ -117,7 +122,7 @@
 
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff; border-top: 1px solid var(--border);
+    background: var(--card); border-top: 1px solid var(--border);
     display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
     z-index: 50;
   }
@@ -131,6 +136,7 @@
 </style>
 </head>
 <body>
+<script>if (localStorage.getItem("zm_dark_mode") === "true") document.body.classList.add("dark");</script>
 
 <div class="sticky-header">
   <div class="topbar">
