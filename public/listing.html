@@ -60,7 +60,19 @@
 
   .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; }
   .viewer-overlay.open { display: block; }
-  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
+  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; color: #fff; }
+  .viewer-back span { color: #fff; font-size: 24px; font-weight: 700; }
+  .viewer-nav-btn {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: #fff; font-size: 22px; font-weight: 700;
+  }
+  .viewer-prev { left: 12px; }
+  .viewer-next { right: 12px; }
+  .viewer-counter {
+    position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
+    color: #fff; font-size: 13px; font-weight: 600; z-index: 10;
+  }
   .viewer-img { width: 100%; height: 100%; object-fit: contain; }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
@@ -93,7 +105,10 @@
 
 <div class="viewer-overlay" id="viewerOverlay">
   <button class="round-btn viewer-back" id="viewerBackBtn"><span>←</span></button>
+  <button class="viewer-nav-btn viewer-prev" id="viewerPrevBtn" style="display:none;">‹</button>
+  <button class="viewer-nav-btn viewer-next" id="viewerNextBtn" style="display:none;">›</button>
   <img class="viewer-img" id="viewerImg" />
+  <div class="viewer-counter" id="viewerCounter" style="display:none;"></div>
 </div>
 
 <div class="modal-overlay" id="reviewModal">
@@ -294,10 +309,53 @@
     document.getElementById("callBtn").addEventListener("click", handleCall);
   }
 
+  let viewerPhotos = [];
+  let viewerIndex = 0;
+
   function openViewer(index, photos) {
-    document.getElementById("viewerImg").src = photos[index];
+    viewerPhotos = photos;
+    viewerIndex = index;
+    updateViewerImage();
     document.getElementById("viewerOverlay").classList.add("open");
   }
+
+  function updateViewerImage() {
+    document.getElementById("viewerImg").src = viewerPhotos[viewerIndex];
+    const prevBtn = document.getElementById("viewerPrevBtn");
+    const nextBtn = document.getElementById("viewerNextBtn");
+    const counter = document.getElementById("viewerCounter");
+    const showNav = viewerPhotos.length > 1;
+    prevBtn.style.display = showNav ? "flex" : "none";
+    nextBtn.style.display = showNav ? "flex" : "none";
+    counter.style.display = showNav ? "block" : "none";
+    if (showNav) counter.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`;
+  }
+
+  document.getElementById("viewerPrevBtn").addEventListener("click", () => {
+    viewerIndex = (viewerIndex - 1 + viewerPhotos.length) % viewerPhotos.length;
+    updateViewerImage();
+  });
+  document.getElementById("viewerNextBtn").addEventListener("click", () => {
+    viewerIndex = (viewerIndex + 1) % viewerPhotos.length;
+    updateViewerImage();
+  });
+
+  let touchStartX = 0;
+  document.getElementById("viewerImg").addEventListener("touchstart", (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.getElementById("viewerImg").addEventListener("touchend", (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+    if (Math.abs(diff) < 40 || viewerPhotos.length <= 1) return;
+    if (diff < 0) {
+      viewerIndex = (viewerIndex + 1) % viewerPhotos.length;
+    } else {
+      viewerIndex = (viewerIndex - 1 + viewerPhotos.length) % viewerPhotos.length;
+    }
+    updateViewerImage();
+  });
+
   document.getElementById("viewerBackBtn").addEventListener("click", () => {
     document.getElementById("viewerOverlay").classList.remove("open");
   });
