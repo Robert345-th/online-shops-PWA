@@ -30,7 +30,8 @@
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; color: #fff; font-size: 18px;
   }
-  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .header-title svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .filter-row { display: flex; gap: 8px; padding: 12px; flex-shrink: 0; }
   .search-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; }
@@ -75,7 +76,7 @@
 </script>
 <div class="topbar">
   <button class="back-button" onclick="history.back()">←</button>
-  <div class="header-title">🗺️ Map View</div>
+  <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5v17l-5 2V5.5z"/><path d="M9 3.5 15 5.5v17l-6-2z"/><path d="M15 5.5 20 3.5v17l-5 2z"/></svg>Map View</div>
 </div>
 
 <div class="filter-row">

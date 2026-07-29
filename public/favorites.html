@@ -27,7 +27,8 @@
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; color: #fff; font-size: 18px;
   }
-  .brand { color: var(--gold); font-size: 18px; font-weight: 700; }
+  .brand { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
   .empty-text { color: var(--subtext); margin-bottom: 16px; }
@@ -62,7 +63,7 @@
 
 <div class="topbar">
   <button class="back-button" onclick="history.back()">←</button>
-  <div class="brand">❤️ Favorites</div>
+  <div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Favorites</div>
 </div>
 
 <div id="content"><div class="center-box"><div class="spinner"></div></div></div>

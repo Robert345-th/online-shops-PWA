@@ -26,7 +26,8 @@
     background: var(--black); padding: 16px;
     display: flex; justify-content: space-between; align-items: center;
   }
-  .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
+  .brand { color: var(--gold); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
   .sub-brand { color: #C9BFAF; font-size: 12px; margin-top: 2px; }
   .countdown { color: var(--gold); font-size: 11px; margin-top: 2px; font-weight: 600; }
   .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -37,7 +38,8 @@
     border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer;
   }
   .upgrade-btn { flex: 1; background: var(--black); color: var(--gold); border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; }
-  .admin-btn { background: var(--card); border: 1.5px solid var(--black); padding: 12px 16px; border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer; }
+  .admin-btn { background: var(--card); border: 1.5px solid var(--black); padding: 12px 16px; border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .admin-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .warning-banner { background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 12px; margin: 0 12px 8px; }
   .warning-text { color: var(--warn-text); font-size: 12px; margin-bottom: 8px; }
@@ -143,6 +145,8 @@
 
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
+  const MY_SHOP_BRAND = '<div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>';
+  const ADMIN_BTN = '<button class="admin-btn" onclick="window.location.href=\'/admin.html\'"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>';
   const app = document.getElementById("app");
   const manageModal = document.getElementById("manageModal");
   const buyerModal = document.getElementById("buyerModal");
@@ -188,13 +192,13 @@
 
       render();
     } catch (e) {
-      app.innerHTML = `<div class="topbar"><div class="brand">🛍️ My Shop</div></div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;
+      app.innerHTML = `<div class="topbar">${MY_SHOP_BRAND}</div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;
     }
   }
 
   function renderLoggedOut() {
     app.innerHTML = `
-      <div class="topbar"><div class="brand">🛍️ My Shop</div></div>
+      <div class="topbar">${MY_SHOP_BRAND}</div>
       <div class="center-box">
         <div class="empty-text">Log in to see your shop.</div>
         <button class="login-btn" onclick="window.location.href='/index.html'">Log In</button>
@@ -232,7 +236,7 @@
       app.innerHTML = `
         <div class="topbar">
           <div>
-            <div class="brand">🛍️ My Shop</div>
+            ${MY_SHOP_BRAND}
             <div class="sub-brand">${user.name}</div>
           </div>
         </div>
@@ -252,7 +256,7 @@
     app.innerHTML = `
       <div class="topbar">
         <div>
-          <div class="brand">🛍️ My Shop</div>
+          ${MY_SHOP_BRAND}
           <div class="sub-brand">${user.name} ${isVerifiedShop ? "· ✅ Verified Shop" : isPending ? "· ⏳ Pending" : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${daysLeft > 0 ? `⏳ Renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}` : "⚠️ Expires today"}</div>` : ""}
         </div>
@@ -264,7 +268,7 @@
         <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">👁️ View My Profile</button>
         ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? "⏳ Upgrade Pending" : "🏆 Upgrade to Shop"}</button>` : ""}
         ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">🔄 Renew Now</button>` : ""}
-        ${user.is_admin ? `<button class="admin-btn" onclick="window.location.href='/admin.html'">⚙️ Admin</button>` : ""}
+        ${user.is_admin ? ADMIN_BTN : ""}
       </div>
 
       ${disabledCount > 0 ? `
