@@ -43,7 +43,18 @@
   .gear .icon { font-size: 26px; color: var(--gold); }
   .gear .label { color: #C9BFAF; font-size: 9px; margin-top: 2px; }
   .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
-  .auth-line { color: var(--gold); font-size: 12px; margin-top: 4px; background: none; border: none; cursor: pointer; }
+  .auth-line {
+    color: var(--black);
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
+    background: var(--gold);
+    border: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 14px;
+    display: inline-block;
+  }
   .icon-row { display: flex; gap: 10px; align-items: center; }
   .icon-btn {
     width: 36px; height: 36px; border-radius: 18px;
@@ -199,9 +210,9 @@
   const PAGE_SIZE = 20;
 
   let activeCategory = "All";
-  let sortBy = "Newest";
+  let sortBy = "Nearest";
   let listings = [];
-  let myCoords = null; // { lat, lng } - used to calculate distance to each listing
+  let myCoords = null;
 
   const feed = document.getElementById("feed");
   const sortRow = document.getElementById("sortRow");
@@ -229,8 +240,6 @@
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
 
-  // Calculates the straight-line distance in kilometers between two GPS points
-  // using the Haversine formula (same math used across the mobile app).
   function getDistanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -285,8 +294,6 @@
       );
     }
 
-    // Attach a distanceKm value to each item if we know the user's location
-    // and the listing has coordinates saved.
     if (myCoords) {
       items = items.map(item => ({
         ...item,
@@ -346,8 +353,6 @@
 
   searchInput.addEventListener("input", renderFeed);
 
-  // "Home" location: saved once via geolocation and reused from localStorage,
-  // so the person isn't asked for permission every single time.
   function loadHomeLocation() {
     const saved = localStorage.getItem("zm_home_location");
     if (saved) {
@@ -360,7 +365,7 @@
           localStorage.setItem("zm_home_location", JSON.stringify(myCoords));
           renderFeed();
         },
-        () => { /* permission denied or unavailable - just skip distances */ }
+        () => {}
       );
     }
   }
@@ -379,7 +384,7 @@
           myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           renderFeed();
         },
-        () => { /* permission denied or unavailable - just skip distances */ }
+        () => {}
       );
     }
   });
