@@ -208,9 +208,8 @@
   if (nameFromLink) renderHeader();
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
-    if (otherUser && !otherUser.is_admin) {
-      window.location.href = `/seller-profile.html?id=${userId}`;
-    }
+    if (otherUser?.is_admin) return;
+    window.location.href = `/seller-profile.html?id=${userId}`;
   });
 
   async function loadMessages(showSpinner) {
