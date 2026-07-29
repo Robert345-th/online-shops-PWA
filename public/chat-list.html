@@ -140,7 +140,7 @@
       const res = await fetch(`${API_URL}/admin/support-contact`);
       if (res.ok) {
         const data = await res.json();
-        window.location.href = `/chat-room.html?userId=${data.id}`;
+        window.location.href = `/chat-room.html?userId=${data.id}&support=1`;
       }
     } catch (e) {}
   });
