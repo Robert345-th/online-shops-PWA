@@ -29,7 +29,7 @@
   .photo-ph circle { fill: currentColor; stroke: none; }
   .round-btn { position: absolute; top: 14px; width: 48px; height: 48px; border-radius: 24px; background: var(--black); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 10; }
   .back-button { left: 18px; }
-  .back-button span { color: var(--gold); font-size: 24px; font-weight: 700; }
+  .back-button svg, .round-btn svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
   .report-button { right: 18px; }
   .report-button svg { width: 20px; height: 20px; }
   .report-button svg path { fill: var(--gold); }
@@ -74,8 +74,7 @@
 
   .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; }
   .viewer-overlay.open { display: block; }
-  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; color: #fff; }
-  .viewer-back span { color: #fff; font-size: 24px; font-weight: 700; }
+  .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
   .viewer-nav-btn {
     position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
     width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.15);
@@ -125,7 +124,7 @@
 <div id="app"><div class="center-box">Loading…</div></div>
 
 <div class="viewer-overlay" id="viewerOverlay">
-  <button class="round-btn viewer-back" id="viewerBackBtn"><span>←</span></button>
+  <button class="round-btn viewer-back" id="viewerBackBtn" aria-label="Close photo"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <button class="viewer-nav-btn viewer-prev" id="viewerPrevBtn" style="display:none;">‹</button>
   <button class="viewer-nav-btn viewer-next" id="viewerNextBtn" style="display:none;">›</button>
   <img class="viewer-img" id="viewerImg" />
@@ -233,7 +232,7 @@
 
     app.innerHTML = `
       <div class="hero-wrap">
-        <button class="round-btn back-button" onclick="history.back()"><span>←</span></button>
+        <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
         <button class="round-btn report-button" id="reportOpenBtn" aria-label="Report listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>
         ${photos.length > 0
           ? `<img class="hero-photo" id="heroPhoto" src="${photos[mainPhotoIndex]}" />`

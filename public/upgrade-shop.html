@@ -35,8 +35,12 @@
 
   .top-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
   .back-button {
-    width: 36px; height: 36px; border-radius: 18px; background: var(--black);
-    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: var(--gold); font-size: 18px;
+    width: 40px; height: 40px; padding: 0; border-radius: 20px; background: var(--black);
+    display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; flex-shrink: 0;
+  }
+  .back-button svg {
+    width: 22px; height: 22px; stroke: var(--gold); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   }
   .header-title { font-size: 20px; font-weight: 700; }
 
@@ -149,7 +153,7 @@
       app.innerHTML = `
         <div class="content">
           <div class="top-row">
-            <button class="back-button" id="backBtn">←</button>
+            <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="header-title">Upgrade to Shop</div>
           </div>
           <div class="step-row"><div class="step-dot active"></div><div class="step-dot"></div></div>
@@ -167,7 +171,7 @@
       app.innerHTML = `
         <div class="content">
           <div class="top-row">
-            <button class="back-button" id="backBtn">←</button>
+            <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div class="header-title">Upgrade to Shop</div>
           </div>
           <div class="step-row"><div class="step-dot active"></div><div class="step-dot active"></div></div>

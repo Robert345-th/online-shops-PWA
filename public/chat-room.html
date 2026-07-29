@@ -22,7 +22,16 @@
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); overflow: hidden; transition: background 0.2s, color 0.2s; }
 
   .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .back-button, .menu-button {
+  .back-button {
+    width: 40px; height: 40px; padding: 0;
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .back-button svg {
+    width: 22px; height: 22px; stroke: var(--gold); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .menu-button {
     width: 36px; height: 36px; border-radius: 18px;
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; color: #fff; font-size: 18px; flex-shrink: 0;
@@ -93,7 +102,7 @@
 </script>
 
 <div class="topbar">
-  <button class="back-button" onclick="history.back()">←</button>
+  <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <button class="header-profile" id="headerProfileBtn">
     <div class="header-avatar" id="headerAvatar">?</div>
     <div class="header-name" id="headerName">Chat</div>
@@ -109,7 +118,7 @@
 <div id="inputWrap"></div>
 
 <div class="viewer-overlay" id="viewerOverlay">
-  <button class="back-button viewer-back" id="viewerBackBtn">←</button>
+  <button class="back-button viewer-back" id="viewerBackBtn" aria-label="Close photo"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <img class="viewer-img" id="viewerImg" />
 </div>
 
