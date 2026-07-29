@@ -35,11 +35,13 @@
     display: flex; align-items: center; background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 16px; margin-bottom: 12px; gap: 12px; cursor: pointer;
   }
-  .menu-icon { font-size: 24px; }
+  .menu-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--price-red); }
+  .menu-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .menu-info { flex: 1; }
   .menu-title { font-size: 15px; font-weight: 700; }
   .menu-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
-  .menu-arrow { font-size: 18px; color: var(--price-red); font-weight: 700; }
+  .menu-arrow { display: flex; align-items: center; color: var(--price-red); }
+  .menu-arrow svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 </head>
 <body>
@@ -57,30 +59,30 @@
 
 <div class="content">
   <div class="menu-row" onclick="window.location.href='/edit-shop-photo.html'">
-    <div class="menu-icon">📷</div>
+    <div class="menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
     <div class="menu-info">
       <div class="menu-title">Edit Shop Logo</div>
       <div class="menu-sub">Upload a logo or graphic for your shop</div>
     </div>
-    <div class="menu-arrow">→</div>
+    <div class="menu-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 
   <div class="menu-row" onclick="window.location.href='/edit-shop-bio.html'">
-    <div class="menu-icon">📝</div>
+    <div class="menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
     <div class="menu-info">
       <div class="menu-title">Edit Shop Bio</div>
       <div class="menu-sub">Tell buyers about your shop</div>
     </div>
-    <div class="menu-arrow">→</div>
+    <div class="menu-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 
   <div class="menu-row" onclick="window.location.href='/edit-shop-name.html'">
-    <div class="menu-icon">🖊️</div>
+    <div class="menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
     <div class="menu-info">
       <div class="menu-title">Request Name Change</div>
       <div class="menu-sub">Requires admin approval</div>
     </div>
-    <div class="menu-arrow">→</div>
+    <div class="menu-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></div>
   </div>
 </div>
 
