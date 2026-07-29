@@ -132,8 +132,15 @@
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
   const nameFromLink = params.get("name");
+  const isKnownSupportChat = params.get("support") === "1";
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  if (isKnownSupportChat) {
+    document.getElementById("headerName").textContent = "ZedMarket Support";
+    document.getElementById("headerAvatar").textContent = "🛟";
+    document.getElementById("menuBtn").style.display = "none";
+  }
 
   let messages = [];
   let otherUser = null;
@@ -198,6 +205,7 @@
     if (otherUser?.is_admin) {
       document.getElementById("headerName").textContent = "ZedMarket Support";
       document.getElementById("headerAvatar").textContent = "🛟";
+      document.getElementById("menuBtn").style.display = "none";
       return;
     }
     const nameToShow = otherUser?.display_name || nameFromLink;
