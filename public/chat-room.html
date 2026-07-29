@@ -195,6 +195,11 @@
   }
 
   function renderHeader() {
+    if (otherUser?.is_admin) {
+      document.getElementById("headerName").textContent = "ZedMarket Support";
+      document.getElementById("headerAvatar").textContent = "🛟";
+      return;
+    }
     const nameToShow = otherUser?.display_name || nameFromLink;
     if (!nameToShow && !otherUser) return;
     document.getElementById("headerName").textContent = nameToShow || "Chat";
@@ -534,7 +539,10 @@
     }
   }
 
-  document.getElementById("menuBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.add("open"));
+  document.getElementById("menuBtn").addEventListener("click", () => {
+    document.getElementById("viewContactBtn").style.display = otherUser?.is_admin ? "none" : "block";
+    document.getElementById("menuOverlay").classList.add("open");
+  });
   document.getElementById("menuCancelBtn").addEventListener("click", () => document.getElementById("menuOverlay").classList.remove("open"));
   document.getElementById("menuOverlay").addEventListener("click", (e) => {
     if (e.target.id === "menuOverlay") e.target.classList.remove("open");
@@ -542,6 +550,7 @@
 
   document.getElementById("viewContactBtn").addEventListener("click", () => {
     document.getElementById("menuOverlay").classList.remove("open");
+    if (otherUser?.is_admin) return;
     if (!otherUser?.phone) return;
     if (confirm(`${otherUser.display_name}\n${otherUser.phone}\n\nTap OK to call.`)) {
       window.location.href = `tel:${otherUser.phone}`;
