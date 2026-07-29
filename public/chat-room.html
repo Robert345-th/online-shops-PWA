@@ -131,6 +131,7 @@
 
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
+  const nameFromLink = params.get("name");
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
 
@@ -194,15 +195,17 @@
   }
 
   function renderHeader() {
-    if (!otherUser) return;
-    document.getElementById("headerName").textContent = otherUser.display_name || "Chat";
+    const nameToShow = otherUser?.display_name || nameFromLink;
+    if (!nameToShow && !otherUser) return;
+    document.getElementById("headerName").textContent = nameToShow || "Chat";
     const avatar = document.getElementById("headerAvatar");
-    if (otherUser.shop_photo_url) {
+    if (otherUser?.shop_photo_url) {
       avatar.innerHTML = `<img src="${otherUser.shop_photo_url}" />`;
-    } else {
-      avatar.textContent = otherUser.display_name ? otherUser.display_name.charAt(0).toUpperCase() : "?";
+    } else if (nameToShow) {
+      avatar.textContent = nameToShow.charAt(0).toUpperCase();
     }
   }
+  if (nameFromLink) renderHeader();
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
     if (otherUser && !otherUser.is_admin) {
