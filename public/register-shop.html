@@ -30,6 +30,19 @@
   .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; }
   .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
   .submit-btn:disabled { opacity: 0.7; }
+
+  .form-banner {
+    display: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+  .form-banner.error { background: #FBE7E8; color: var(--price-red); border: 1px solid #F0C1C4; }
+  .form-banner.success { background: #E7F5EA; color: #1E7A38; border: 1px solid #BFE6C9; }
+  .form-banner.show { display: block; }
 </style>
 </head>
 <body>
@@ -45,10 +58,26 @@
 
   document.getElementById("backBtn").addEventListener("click", () => history.back());
 
+  function showError(message) {
+    const banner = document.getElementById("formBanner");
+    if (!banner) return;
+    banner.textContent = message;
+    banner.className = "form-banner error show";
+    banner.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function showSuccess(message) {
+    const banner = document.getElementById("formBanner");
+    if (!banner) return;
+    banner.textContent = message;
+    banner.className = "form-banner success show";
+    banner.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   function render() {
     content.innerHTML = `
       <div class="step-title">Shop Details</div>
       <div class="subtitle">Set up your shop to start selling on ZedMarket. It just takes a moment.</div>
+      <div class="form-banner" id="formBanner"></div>
       <div class="label">Shop Name (optional)</div>
       <input class="field-input" id="shopNameInput" placeholder="e.g. Robert's Electronics" />
       <div class="skip-hint">Leave blank to just use your account name — you can add a shop name later anytime.</div>
@@ -72,13 +101,13 @@
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Could not submit registration.");
+        showError(data.error || "Could not submit registration.");
         return;
       }
-      alert("Submitted — your shop registration is under review. You will be notified once approved.");
-      window.location.href = "/my-shop.html";
+      showSuccess("Submitted — your shop registration is under review. You will be notified once approved.");
+      setTimeout(() => { window.location.href = "/my-shop.html"; }, 1800);
     } catch (e) {
-      alert("Could not connect to the server.");
+      showError("Could not connect to the server.");
     } finally {
       btn.disabled = false;
       btn.textContent = "Submit for Review";
