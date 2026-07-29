@@ -20,11 +20,17 @@
     --orange: #FF7A1A;
     --thumb-bg: #E9E2D3;
   }
+  body.dark {
+    --bg: #121212; --card: #1E1E1E; --border: #333333;
+    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+    --thumb-bg: #2A2A2A;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
     background: var(--bg);
-    color: var(--text);
+    color: var(--text); transition: background 0.2s, color 0.2s;
   }
   .topbar { background: var(--black); padding: 16px; }
   .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
@@ -77,7 +83,7 @@
 
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff; border-top: 1px solid var(--border);
+    background: var(--card); border-top: 1px solid var(--border);
     display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
     z-index: 50;
   }
@@ -88,7 +94,13 @@
 </style>
 </head>
 <body>
-
+<script>
+  function applyDarkMode() {
+    document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
+  }
+  applyDarkMode();
+  window.addEventListener("pageshow", applyDarkMode);
+</script>
 <div class="topbar">
   <div class="brand">Online Shops</div>
   <button class="auth-line" id="authBtn">Login / Sign Up</button>

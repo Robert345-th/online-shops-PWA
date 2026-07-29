@@ -12,8 +12,14 @@
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #111111; --subtext: #5C5955; --price-red: #A3131C; --red-btn: #E01B27;
   }
+  body.dark {
+    --bg: #121212; --card: #1E1E1E; --border: #333333;
+    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+    --thumb-bg: #2A2A2A;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
   .content { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 24px; max-width: 480px; margin: 0 auto; }
   .title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
   .subtitle { font-size: 13px; color: var(--subtext); margin-bottom: 28px; }
@@ -50,7 +56,13 @@
 </style>
 </head>
 <body>
-
+<script>
+  function applyDarkMode() {
+    document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
+  }
+  applyDarkMode();
+  window.addEventListener("pageshow", applyDarkMode);
+</script>
 <div class="content">
   <div class="title">Verify Your Phone</div>
   <div class="subtitle" id="subtitleText">Enter the 6-digit code sent to your phone</div>
