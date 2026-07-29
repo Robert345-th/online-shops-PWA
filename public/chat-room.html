@@ -221,7 +221,7 @@
   if (nameFromLink) renderHeader();
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
-    if (otherUser?.is_admin) return;
+    if (isKnownSupportChat || otherUser?.is_admin) return;
     window.location.href = `/seller-profile.html?id=${userId}`;
   });
 
