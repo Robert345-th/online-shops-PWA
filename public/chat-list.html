@@ -107,7 +107,7 @@
       conversations.forEach(conv => {
         const row = document.getElementById(`convrow-${conv.other_user_id}`);
         if (row) row.addEventListener("click", () => {
-          window.location.href = `/chat-room.html?userId=${conv.other_user_id}`;
+          window.location.href = `/chat-room.html?userId=${conv.other_user_id}&name=${encodeURIComponent(conv.other_user_name || "")}`;
         });
       });
     } catch (e) {
