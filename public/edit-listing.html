@@ -6,12 +6,12 @@
 <title>ZedMarket - Edit Listing</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/icon-192.png" />
+<link rel="icon" href="/assets/icon.png" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #211D1A; --subtext: #5C5955; --black: #111111;
-    --gold: #F5C518; --price-red: #A3131C;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27;
   }
   body.dark {
     --bg: #121212; --card: #1E1E1E; --border: #333333;
@@ -31,34 +31,38 @@
   .header-title { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .header-title svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-  .support-banner {
-    background: #2F4F3E; padding: 12px; text-align: center;
-    color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: none; width: 100%;
-  }
+  .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
+  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 14px; color: var(--text); }
+  textarea.field-input { height: 80px; resize: vertical; }
 
-  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
-  .empty-text { color: var(--subtext); margin-bottom: 16px; }
-  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .photo-thumb-wrap { width: 80px; height: 80px; border-radius: 10px; overflow: hidden; position: relative; }
+  .photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; }
+  .remove-btn { position: absolute; top: 3px; right: 3px; background: rgba(17,17,17,0.7); width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; border: none; cursor: pointer; }
+  .add-photo-box { width: 80px; height: 80px; border: 2px dashed var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--card); cursor: pointer; color: var(--price-red); font-weight: 600; font-size: 11px; }
 
-  .list { padding: 12px; }
-  .row {
-    display: flex; align-items: center; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px; margin-bottom: 8px; gap: 12px; cursor: pointer;
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+
+  .extra-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .extra-box-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+
+  .loc-button { width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px; padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; margin-bottom: 20px; }
+
+  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .submit-btn:disabled { opacity: 0.7; }
+
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
+  .error-text { color: var(--subtext); margin-bottom: 16px; font-size: 14px; }
+  .back-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
   }
-  .avatar {
-    width: 44px; height: 44px; border-radius: 22px; background: #E01B27;
-    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; flex-shrink: 0;
-  }
-  .row-info { flex: 1; min-width: 0; }
-  .row-name { font-size: 14px; font-weight: 700; }
-  .row-preview { font-size: 12px; color: var(--subtext); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
-  .row-time { font-size: 10px; color: var(--subtext); }
-  .unread-badge {
-    background: #E01B27; border-radius: 10px; min-width: 20px; height: 20px;
-    display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-top: 4px;
-    color: #fff; font-size: 10px; font-weight: 700;
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -69,108 +73,399 @@
   applyDarkMode();
   window.addEventListener("pageshow", applyDarkMode);
 </script>
+
 <div class="topbar">
   <button class="back-button" onclick="history.back()">←</button>
   <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit Listing</div>
 </div>
 
-<button class="support-banner" id="supportBtn">🛟 Contact Support</button>
-
-<div id="content"><div class="center-box">Loading…</div></div>
+<div id="app"><div class="center-box"><div class="spinner"></div></div></div>
 
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const content = document.getElementById("content");
+  const CLOUDINARY_CLOUD_NAME = "kstg72vx";
+  const CLOUDINARY_UPLOAD_PRESET = "online_shops_uploads";
+  const MAX_PHOTOS = 5;
+  const CATEGORY_OPTIONS = [
+    { label: "Electronics", id: 1 },
+    { label: "Clothing", id: 2 },
+    { label: "Furniture", id: 3 },
+    { label: "Produce", id: 4 },
+    { label: "Cars", id: 5 },
+    { label: "Land", id: 6 },
+  ];
+
+  const app = document.getElementById("app");
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const listingId = new URLSearchParams(window.location.search).get("id");
 
-  function prefetchChatRoom(userId) {
-    if (!userId) return;
-    const url = `/chat-room.html?userId=${userId}`;
-    if (document.querySelector(`link[rel="prefetch"][href="${url}"]`)) return;
-    const link = document.createElement("link");
-    link.rel = "prefetch";
-    link.href = url;
-    link.as = "document";
-    document.head.appendChild(link);
+  let listing = null;
+  let photos = [];
+  let categoryId = CATEGORY_OPTIONS[0].id;
+  let condition = null;
+  let landUnit = "acres";
+  let coords = null;
+  let locationLabel = "";
+  let gettingLocation = false;
+  let carDetails = null;
+  let landDetails = null;
+
+  function selectedCategory() {
+    return CATEGORY_OPTIONS.find(c => c.id === categoryId)?.label;
   }
 
-  function formatTime(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-    return date.toLocaleDateString([], { month: "short", day: "numeric" });
-  }
-
-  async function loadConversations() {
-    if (!user) {
-      content.innerHTML = `
-        <div class="center-box">
-          <div class="empty-text">Log in to see your chats.</div>
-          <button class="login-btn" onclick="window.location.href='/login.html'">Log In</button>
-        </div>`;
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/messages/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const conversations = await res.json();
-
-      if (!conversations.length) {
-        content.innerHTML = `<div class="center-box"><div class="empty-text">No conversations yet.</div></div>`;
-        return;
-      }
-
-      content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
-
-      conversations.forEach(conv => {
-        const row = document.getElementById(`convrow-${conv.other_user_id}`);
-        if (row) row.addEventListener("click", () => {
-          window.location.href = `/chat-room.html?userId=${conv.other_user_id}`;
-        });
-        prefetchChatRoom(conv.other_user_id);
-      });
-    } catch (e) {
-      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
-    }
-  }
-
-  function renderRow(conv) {
-    const isMine = conv.sender_id === user.id;
-    let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
-    if (conv.last_photo_url) preview = "📷 Photo";
-    if (conv.last_audio_url) preview = "🎤 Voice note";
-
-    return `
-      <div class="row" id="convrow-${conv.other_user_id}">
-        <div class="avatar">${conv.other_user_name ? conv.other_user_name.charAt(0).toUpperCase() : "?"}</div>
-        <div class="row-info">
-          <div class="row-name">${conv.other_user_name}</div>
-          <div class="row-preview">${preview}</div>
-        </div>
-        <div class="row-side">
-          <div class="row-time">${formatTime(conv.last_sent_at)}</div>
-          ${parseInt(conv.unread_count) > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ""}
-        </div>
+  function showError(message) {
+    app.innerHTML = `
+      <div class="center-box">
+        <div class="error-text">${message}</div>
+        <button class="back-btn" onclick="window.location.href='/my-shop.html'">Go to My Shop</button>
       </div>`;
   }
 
-  document.getElementById("supportBtn").addEventListener("click", async () => {
-    try {
-      const res = await fetch(`${API_URL}/admin/support-contact`);
-      if (res.ok) {
-        const data = await res.json();
-        window.location.href = `/chat-room.html?userId=${data.id}`;
-      }
-    } catch (e) {}
-  });
+  if (!token || !user) {
+    window.location.href = "/login.html";
+  } else if (!listingId) {
+    showError("No listing specified.");
+  } else {
+    loadListing();
+  }
 
-  loadConversations();
+  async function loadListing() {
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || "Could not load this listing.");
+        return;
+      }
+
+      if (data.seller_id !== user.id) {
+        showError("You can only edit your own listings.");
+        return;
+      }
+
+      listing = data;
+      photos = (data.photos || []).map(url => ({ uri: url, url, uploading: false }));
+      categoryId = data.category_id || CATEGORY_OPTIONS.find(c => c.label === data.category)?.id || CATEGORY_OPTIONS[0].id;
+      condition = data.condition || null;
+      landUnit = data.land_details?.size_unit || "acres";
+      carDetails = data.car_details || null;
+      landDetails = data.land_details || null;
+
+      if (data.latitude && data.longitude) {
+        coords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+        locationLabel = data.location_label || "";
+      }
+
+      renderForm();
+      populateFields();
+    } catch (e) {
+      showError("Could not connect to the server.");
+    }
+  }
+
+  function renderForm() {
+    app.innerHTML = `
+      <div class="content">
+        <div class="label">Photos (<span id="photoCount">${photos.length}</span>/${MAX_PHOTOS})</div>
+        <div class="photo-grid" id="photoGrid"></div>
+
+        <div class="label">Title</div>
+        <input class="field-input" id="titleInput" placeholder="e.g. iPhone 11, 64GB" />
+
+        <div class="label">Price (ZMW)</div>
+        <input class="field-input" id="priceInput" type="number" placeholder="e.g. 1850" />
+
+        <div class="label">Condition</div>
+        <div class="chip-row" id="conditionRow">
+          <div class="chip" data-cond="New">New</div>
+          <div class="chip" data-cond="Pre-owned">Pre-owned</div>
+        </div>
+
+        <div class="label">Category</div>
+        <div class="chip-row" id="categoryRow"></div>
+
+        <div id="extraFields"></div>
+
+        <div class="label">Description</div>
+        <textarea class="field-input" id="descInput" placeholder="Describe condition, age, reason for selling..."></textarea>
+
+        <div class="label">Location</div>
+        <div class="loc-button" id="locButton">${locationLabel ? `📍 ${locationLabel}` : "📍 Use my current location"}</div>
+
+        <button class="submit-btn" id="submitBtn">Save Changes</button>
+      </div>`;
+
+    renderPhotoGrid();
+    renderCategoryChips();
+    renderExtraFields();
+    updateConditionChips();
+
+    document.querySelectorAll("[data-cond]").forEach(el =>
+      el.addEventListener("click", () => { condition = el.dataset.cond; updateConditionChips(); })
+    );
+
+    document.getElementById("locButton").addEventListener("click", handleUseLocation);
+    document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+  }
+
+  function populateFields() {
+    document.getElementById("titleInput").value = listing.title || "";
+    document.getElementById("priceInput").value = listing.price ? parseFloat(listing.price) : "";
+    document.getElementById("descInput").value = listing.description || "";
+
+    if (carDetails) {
+      const make = document.getElementById("carMake");
+      const model = document.getElementById("carModel");
+      const year = document.getElementById("carYear");
+      const mileage = document.getElementById("carMileage");
+      if (make) make.value = carDetails.make || "";
+      if (model) model.value = carDetails.model || "";
+      if (year) year.value = carDetails.year || "";
+      if (mileage) mileage.value = carDetails.mileage || "";
+    }
+
+    if (landDetails) {
+      const size = document.getElementById("landSize");
+      const deed = document.getElementById("landDeedStatus");
+      if (size) size.value = landDetails.size || "";
+      if (deed) deed.value = landDetails.title_deed_status || "";
+    }
+  }
+
+  function updateConditionChips() {
+    document.querySelectorAll("[data-cond]").forEach(el =>
+      el.classList.toggle("active", el.dataset.cond === condition)
+    );
+  }
+
+  function renderCategoryChips() {
+    const row = document.getElementById("categoryRow");
+    row.innerHTML = CATEGORY_OPTIONS.map(c =>
+      `<div class="chip ${categoryId === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</div>`
+    ).join("");
+    row.querySelectorAll("[data-cat]").forEach(el =>
+      el.addEventListener("click", () => {
+        categoryId = parseInt(el.dataset.cat);
+        carDetails = null;
+        landDetails = null;
+        renderCategoryChips();
+        renderExtraFields();
+      })
+    );
+  }
+
+  function renderExtraFields() {
+    const box = document.getElementById("extraFields");
+    const cat = selectedCategory();
+    if (cat === "Cars") {
+      box.innerHTML = `
+        <div class="extra-box">
+          <div class="extra-box-title">🚗 Car Details</div>
+          <div class="label">Make</div>
+          <input class="field-input" id="carMake" placeholder="e.g. Toyota" />
+          <div class="label">Model</div>
+          <input class="field-input" id="carModel" placeholder="e.g. Vitz" />
+          <div class="label">Year</div>
+          <input class="field-input" id="carYear" type="number" placeholder="e.g. 2015" />
+          <div class="label">Mileage (km)</div>
+          <input class="field-input" id="carMileage" type="number" placeholder="e.g. 78000" />
+        </div>`;
+      if (carDetails) populateFields();
+    } else if (cat === "Land") {
+      box.innerHTML = `
+        <div class="extra-box">
+          <div class="extra-box-title">🌳 Land Details</div>
+          <div class="label">Size</div>
+          <input class="field-input" id="landSize" type="number" placeholder="e.g. 2" />
+          <div class="label">Unit</div>
+          <div class="chip-row" id="landUnitRow">
+            <div class="chip ${landUnit === "acres" ? "active" : ""}" data-unit="acres">Acres</div>
+            <div class="chip ${landUnit === "plots" ? "active" : ""}" data-unit="plots">Plots</div>
+          </div>
+          <div class="label">Title Deed Status</div>
+          <input class="field-input" id="landDeedStatus" placeholder="e.g. Titled / Not titled" />
+        </div>`;
+      document.querySelectorAll("[data-unit]").forEach(el =>
+        el.addEventListener("click", () => {
+          landUnit = el.dataset.unit;
+          document.querySelectorAll("[data-unit]").forEach(x => x.classList.toggle("active", x.dataset.unit === landUnit));
+        })
+      );
+      if (landDetails) populateFields();
+    } else {
+      box.innerHTML = "";
+    }
+  }
+
+  function renderPhotoGrid() {
+    const grid = document.getElementById("photoGrid");
+    const countEl = document.getElementById("photoCount");
+    if (countEl) countEl.textContent = photos.length;
+
+    const addBox = `<label class="add-photo-box" id="addPhotoBox">+ Add<input type="file" id="photoInput" accept="image/*" multiple style="display:none;" /></label>`;
+
+    grid.innerHTML = photos.map(p => `
+      <div class="photo-thumb-wrap">
+        <img src="${p.uri}" />
+        ${p.uploading ? `<div class="photo-overlay">…</div>` : ""}
+        <button class="remove-btn" data-uri="${p.uri}">✕</button>
+      </div>
+    `).join("") + (photos.length < MAX_PHOTOS ? addBox : "");
+
+    document.querySelectorAll(".remove-btn").forEach(btn =>
+      btn.addEventListener("click", () => { photos = photos.filter(p => p.uri !== btn.dataset.uri); renderPhotoGrid(); })
+    );
+
+    const input = document.getElementById("photoInput");
+    if (input) input.addEventListener("change", handlePhotoSelect);
+
+    const addBoxEl = document.getElementById("addPhotoBox");
+    if (addBoxEl) addBoxEl.addEventListener("click", (e) => {
+      if (photos.length >= MAX_PHOTOS) { e.preventDefault(); alert(`You can add up to ${MAX_PHOTOS} photos.`); }
+    });
+  }
+
+  function handlePhotoSelect(e) {
+    const files = Array.from(e.target.files).slice(0, MAX_PHOTOS - photos.length);
+    files.forEach(file => {
+      const uri = URL.createObjectURL(file);
+      photos.push({ uri, url: null, uploading: true, file });
+      uploadToCloudinary(file, uri);
+    });
+    renderPhotoGrid();
+  }
+
+  async function uploadToCloudinary(file, uri) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+
+      const p = photos.find(p => p.uri === uri);
+      if (p) { p.url = data.secure_url || null; p.uploading = false; }
+
+      if (!data.secure_url) alert("One of your photos could not be uploaded.");
+      renderPhotoGrid();
+    } catch (e) {
+      const p = photos.find(p => p.uri === uri);
+      if (p) p.uploading = false;
+      alert("Could not upload one of the photos.");
+      renderPhotoGrid();
+    }
+  }
+
+  async function handleUseLocation() {
+    if (gettingLocation) return;
+    gettingLocation = true;
+    const btn = document.getElementById("locButton");
+    btn.textContent = "Getting location…";
+
+    if (!navigator.geolocation) {
+      alert("Location is not supported on this device.");
+      gettingLocation = false;
+      btn.textContent = locationLabel ? `📍 ${locationLabel}` : "📍 Use my current location";
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      coords = { lat: latitude, lng: longitude };
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await res.json();
+        const addr = data.address || {};
+        const label = [addr.suburb || addr.city_district || addr.town || addr.city, addr.state].filter(Boolean).join(", ");
+        locationLabel = label || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      } catch (e) {
+        locationLabel = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      }
+      btn.textContent = `📍 ${locationLabel}`;
+      gettingLocation = false;
+    }, () => {
+      alert("Could not get your location.");
+      gettingLocation = false;
+      btn.textContent = locationLabel ? `📍 ${locationLabel}` : "📍 Use my current location";
+    });
+  }
+
+  async function handleSubmit() {
+    const title = document.getElementById("titleInput").value.trim();
+    const price = document.getElementById("priceInput").value;
+    const description = document.getElementById("descInput").value.trim();
+
+    if (!title || !price) { alert("Title and price are required."); return; }
+    if (!condition) { alert("Please select whether the item is New or Pre-owned."); return; }
+    if (!coords) { alert("Please set a location before saving."); return; }
+    if (photos.some(p => p.uploading)) { alert("Photos are still uploading."); return; }
+
+    const cat = selectedCategory();
+    let carMake, carModel, carYear, carMileage, landSize, landDeedStatus;
+    if (cat === "Cars") {
+      carMake = document.getElementById("carMake").value.trim();
+      carModel = document.getElementById("carModel").value.trim();
+      carYear = document.getElementById("carYear").value;
+      carMileage = document.getElementById("carMileage").value;
+      if (!carMake || !carModel) { alert("Please fill in the car make and model."); return; }
+    }
+    if (cat === "Land") {
+      landSize = document.getElementById("landSize").value;
+      landDeedStatus = document.getElementById("landDeedStatus").value.trim();
+      if (!landSize) { alert("Please fill in the land size."); return; }
+    }
+
+    const body = {
+      title, description,
+      price: parseFloat(price),
+      category_id: categoryId,
+      condition,
+      photos: photos.map(p => p.url).filter(Boolean),
+      latitude: coords.lat,
+      longitude: coords.lng,
+      location_label: locationLabel,
+    };
+
+    if (cat === "Cars") {
+      body.car_details = { make: carMake, model: carModel, year: carYear ? parseInt(carYear) : null, mileage: carMileage ? parseInt(carMileage) : null };
+    }
+    if (cat === "Land") {
+      body.land_details = { size: parseFloat(landSize), size_unit: landUnit, title_deed_status: landDeedStatus };
+    }
+
+    const submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving…";
+
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Something went wrong.");
+        return;
+      }
+
+      alert("Listing updated!");
+      window.location.href = "/my-shop.html";
+    } catch (e) {
+      alert("Could not connect to the server.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save Changes";
+    }
+  }
 </script>
 </body>
 </html>
