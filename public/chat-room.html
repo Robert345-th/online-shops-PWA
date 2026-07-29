@@ -6,7 +6,7 @@
 <title>ZedMarket - Chat</title>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/icon-192.png" />
+<link rel="icon" href="/assets/icon.png" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
@@ -15,7 +15,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); overflow: hidden; }
 
   .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .back-button, .menu-button {
@@ -111,6 +111,17 @@
 </div>
 
 <script>
+  function setVH() {
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+  }
+  setVH();
+  window.addEventListener('resize', setVH);
+  window.addEventListener('orientationchange', setVH);
+  window.addEventListener('load', setVH);
+  window.addEventListener('pageshow', setVH);
+  setTimeout(setVH, 100);
+  setTimeout(setVH, 400);
+
   const API_URL = "https://online-shops-production.up.railway.app";
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
   const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
@@ -307,6 +318,7 @@
       }
     }
     msgInput.addEventListener("input", updateActionBtn);
+    msgInput.addEventListener("focus", () => setTimeout(setVH, 300));
 
     actionBtn.addEventListener("click", () => {
       if (msgInput.value.trim()) {
@@ -547,6 +559,7 @@
   } else {
     buildComposerOnce();
     updateComposerVisibility();
+    setTimeout(updateComposerVisibility, 300);
     loadOtherUser();
     loadMessages(true);
     pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
