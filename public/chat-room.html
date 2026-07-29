@@ -159,12 +159,38 @@
   }
 
   async function loadOtherUser() {
+    const cacheKey = `zm_userinfo_${userId}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        otherUser = JSON.parse(cached);
+        renderHeader();
+        updateComposerVisibility();
+      }
+    } catch (e) {}
+
     try {
       const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
-      otherUser = await res.json();
+      if (!res.ok) throw new Error("fetch failed");
+      const data = await res.json();
+      otherUser = data;
+      localStorage.setItem(cacheKey, JSON.stringify(data));
       renderHeader();
       updateComposerVisibility();
-    } catch (e) {}
+    } catch (e) {
+      // One retry after a short delay, in case it was a transient network hiccup
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`${API_URL}/auth/user-info/${userId}`, { headers: authHeaders() });
+          if (!res.ok) return;
+          const data = await res.json();
+          otherUser = data;
+          localStorage.setItem(cacheKey, JSON.stringify(data));
+          renderHeader();
+          updateComposerVisibility();
+        } catch (e2) {}
+      }, 1000);
+    }
   }
 
   function renderHeader() {
