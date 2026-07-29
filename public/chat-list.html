@@ -26,12 +26,15 @@
     background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; color: #fff; font-size: 18px;
   }
-  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .header-title svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .support-banner {
     background: #2F4F3E; padding: 12px; text-align: center;
     color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: none; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
+  .support-banner svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
   .empty-text { color: var(--subtext); margin-bottom: 16px; }
@@ -69,10 +72,10 @@
 
 <div class="topbar">
   <button class="back-button" onclick="history.back()">←</button>
-  <div class="header-title">💬 Chats</div>
+  <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chats</div>
 </div>
 
-<button class="support-banner" id="supportBtn">🛟 Contact Support</button>
+<button class="support-banner" id="supportBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>Contact Support</button>
 
 <div id="content"><div class="center-box">Loading…</div></div>
 

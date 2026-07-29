@@ -29,6 +29,7 @@
   }
   .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
   .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
+  .header-avatar .input-icon { stroke: #fff; }
   .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .header-name { color: var(--gold); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -54,10 +55,13 @@
   .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
 
   .input-row { display: flex; padding: 12px; gap: 8px; background: var(--bg); border-top: 1px solid var(--border); align-items: flex-end; flex-shrink: 0; }
-  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 20px; }
+  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: var(--subtext); }
   .msg-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; font-size: 14px; max-height: 100px; resize: none; color: var(--text); }
-  .send-btn { background: var(--red-btn); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
-  .mic-btn { background: var(--orange); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; border: none; cursor: pointer; flex-shrink: 0; }
+  .send-btn { background: var(--red-btn); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; border: none; cursor: pointer; flex-shrink: 0; }
+  .mic-btn { background: var(--orange); width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #fff; border: none; cursor: pointer; flex-shrink: 0; }
+  .input-icon { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .input-icon-filled { fill: currentColor; stroke: none; }
+  .audio-play-icon { width: 14px; height: 14px; flex-shrink: 0; fill: currentColor; stroke: none; }
 
   .recording-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; }
   .recording-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--red-btn); }
@@ -73,7 +77,8 @@
   .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .menu-overlay.open { display: flex; }
   .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
-  .menu-row { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .menu-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .menu-row svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .menu-row.danger { color: var(--price-red); }
   .menu-cancel-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 4px; }
 </style>
@@ -110,9 +115,9 @@
 
 <div class="menu-overlay" id="menuOverlay">
   <div class="menu-box">
-    <button class="menu-row" id="viewContactBtn">📞 View Contact Number</button>
-    <button class="menu-row" id="reportUserBtn">🚩 Report User</button>
-    <button class="menu-row danger" id="blockToggleBtn">🚫 Block User</button>
+    <button class="menu-row" id="viewContactBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>View Contact Number</button>
+    <button class="menu-row" id="reportUserBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Report User</button>
+    <button class="menu-row danger" id="blockToggleBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Block User</button>
     <button class="menu-cancel-btn" id="menuCancelBtn">Cancel</button>
   </div>
 </div>
@@ -140,6 +145,21 @@
   const POLL_INTERVAL = 3000;
   const QUICK_REPLIES = ["✅ Still available", "💰 Price is negotiable", "❌ Sold, sorry", "📍 Where can we meet?"];
 
+  function iconSvg(type, size = 20) {
+    const icons = {
+      camera: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="input-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+      mic: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="input-icon"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+      send: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="input-icon"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" class="input-icon-filled"/></svg>`,
+      play: `<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" class="audio-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+      pause: `<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" class="audio-play-icon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
+      support: `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="input-icon"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`,
+      trash: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+      block: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+      check: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`,
+    };
+    return icons[type] || "";
+  }
+
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
   const nameFromLink = params.get("name");
@@ -149,7 +169,7 @@
 
   if (isKnownSupportChat) {
     document.getElementById("headerName").textContent = "ZedMarket Support";
-    document.getElementById("headerAvatar").textContent = "🛟";
+    document.getElementById("headerAvatar").innerHTML = iconSvg("support");
     document.getElementById("menuBtn").style.display = "none";
   }
 
@@ -215,7 +235,7 @@
   function renderHeader() {
     if (otherUser?.is_admin) {
       document.getElementById("headerName").textContent = "ZedMarket Support";
-      document.getElementById("headerAvatar").textContent = "🛟";
+      document.getElementById("headerAvatar").innerHTML = iconSvg("support");
       document.getElementById("menuBtn").style.display = "none";
       return;
     }
@@ -291,7 +311,7 @@
     const rowClass = isMine ? "mine" : "theirs";
 
     if (msg.deleted_for_everyone) {
-      return `<div class="bubble-row ${rowClass}"><div class="bubble deleted">🚫 This message was deleted</div></div>`;
+      return `<div class="bubble-row ${rowClass}"><div class="bubble deleted">This message was deleted</div></div>`;
     }
 
     let inner;
@@ -300,7 +320,7 @@
     } else if (msg.audio_url) {
       inner = `
         <div class="audio-bubble bubble ${isMine ? "mine" : "theirs"}" id="audio-${msg.id}">
-          <span>${playingId === msg.id ? "⏸️" : "▶️"}</span>
+          <span>${playingId === msg.id ? iconSvg("pause") : iconSvg("play")}</span>
           <div class="audio-wave"></div>
           <span>${formatDuration(msg.audio_duration || 0)}</span>
         </div>`;
@@ -345,10 +365,10 @@
     const inputWrap = document.getElementById("inputWrap");
     inputWrap.innerHTML = `
       <div class="input-row" id="inputRow">
-        <button class="photo-btn" id="photoBtn">📷</button>
+        <button class="photo-btn" id="photoBtn" aria-label="Send photo">${iconSvg("camera")}</button>
         <input type="file" id="photoInput" accept="image/*" style="display:none;" />
         <textarea class="msg-input" id="msgInput" placeholder="Type a message..." rows="1"></textarea>
-        <button class="mic-btn" id="composerActionBtn">🎤</button>
+        <button class="mic-btn" id="composerActionBtn" aria-label="Record voice message">${iconSvg("mic")}</button>
       </div>
       <div class="recording-row" id="recordingRow" style="display:none;">
         <div class="recording-dot"></div>
@@ -363,10 +383,12 @@
     function updateActionBtn() {
       if (msgInput.value.trim()) {
         actionBtn.className = "send-btn";
-        actionBtn.textContent = "➤";
+        actionBtn.innerHTML = iconSvg("send");
+        actionBtn.setAttribute("aria-label", "Send message");
       } else {
         actionBtn.className = "mic-btn";
-        actionBtn.textContent = "🎤";
+        actionBtn.innerHTML = iconSvg("mic");
+        actionBtn.setAttribute("aria-label", "Record voice message");
       }
     }
     msgInput.addEventListener("input", updateActionBtn);
@@ -517,8 +539,8 @@
 
     const box = document.getElementById("messageActionsBox");
     box.innerHTML = `
-      ${canUnsend ? `<button class="menu-row danger" id="unsendBtn">🗑️ Delete for Everyone</button>` : ""}
-      <button class="menu-row" id="deleteForMeBtn">🗑️ Delete for Me</button>
+      ${canUnsend ? `<button class="menu-row danger" id="unsendBtn">${iconSvg("trash", 18)} Delete for Everyone</button>` : ""}
+      <button class="menu-row" id="deleteForMeBtn">${iconSvg("trash", 18)} Delete for Me</button>
       <button class="menu-cancel-btn" id="msgActionsCancelBtn">Cancel</button>
     `;
     document.getElementById("messageActionsOverlay").classList.add("open");
@@ -607,7 +629,9 @@
   });
 
   function updateBlockButtonLabel() {
-    document.getElementById("blockToggleBtn").innerHTML = iBlockedThem ? "✅ Unblock User" : "🚫 Block User";
+    document.getElementById("blockToggleBtn").innerHTML = iBlockedThem
+      ? `${iconSvg("check", 18)} Unblock User`
+      : `${iconSvg("block", 18)} Block User`;
   }
 
   if (!currentUser) {
