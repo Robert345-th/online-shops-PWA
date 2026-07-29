@@ -201,6 +201,7 @@
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
+  let myCoords = null; // { lat, lng } - used to calculate distance to each listing
 
   const feed = document.getElementById("feed");
   const sortRow = document.getElementById("sortRow");
@@ -227,6 +228,22 @@
   });
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
+
+  // Calculates the straight-line distance in kilometers between two GPS points
+  // using the Haversine formula (same math used across the mobile app).
+  function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
   function renderChips() {
     sortRow.innerHTML = SORT_OPTIONS.map(o =>
@@ -268,9 +285,27 @@
       );
     }
 
+    // Attach a distanceKm value to each item if we know the user's location
+    // and the listing has coordinates saved.
+    if (myCoords) {
+      items = items.map(item => ({
+        ...item,
+        distanceKm: (item.latitude && item.longitude)
+          ? getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude))
+          : null
+      }));
+    }
+
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
 
-    if (sortBy === "Price: Low-High") {
+    if (sortBy === "Nearest" && myCoords) {
+      items.sort((a, b) => {
+        if (isBoosted(a) !== isBoosted(b)) return isBoosted(a) ? -1 : 1;
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+    } else if (sortBy === "Price: Low-High") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(a.price) - parseFloat(b.price));
     } else if (sortBy === "Price: High-Low") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(b.price) - parseFloat(a.price));
@@ -295,6 +330,7 @@
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const distancePart = (item.distanceKm != null) ? `${item.distanceKm.toFixed(1)} km · ` : "";
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">
@@ -303,22 +339,48 @@
         <div class="card-info">
           <div class="price">K${item.price}</div>
           <div class="title">${item.title}</div>
-          <div class="loc">📍 ${item.location_label || ""}</div>
+          <div class="loc">📍 ${distancePart}${item.location_label || ""}</div>
         </div>
       </div>`;
   }
 
   searchInput.addEventListener("input", renderFeed);
 
+  // "Home" location: saved once via geolocation and reused from localStorage,
+  // so the person isn't asked for permission every single time.
+  function loadHomeLocation() {
+    const saved = localStorage.getItem("zm_home_location");
+    if (saved) {
+      myCoords = JSON.parse(saved);
+      renderFeed();
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          localStorage.setItem("zm_home_location", JSON.stringify(myCoords));
+          renderFeed();
+        },
+        () => { /* permission denied or unavailable - just skip distances */ }
+      );
+    }
+  }
+
   document.getElementById("locHome").addEventListener("click", () => {
     document.getElementById("locHome").classList.add("active");
     document.getElementById("locCurrent").classList.remove("active");
+    loadHomeLocation();
   });
   document.getElementById("locCurrent").addEventListener("click", () => {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(() => {}, () => {});
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          renderFeed();
+        },
+        () => { /* permission denied or unavailable - just skip distances */ }
+      );
     }
   });
 
@@ -342,29 +404,16 @@
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       const isAndroid = /Android/i.test(navigator.userAgent);
       if (isIOS) {
-        // iOS Safari has no install API at all - Apple never added one.
-        // The only path is the manual Share -> Add to Home Screen gesture,
-        // so show clear in-app instructions instead of a plain alert.
         document.getElementById("iosInstallModal").style.display = "flex";
       } else if (isAndroid) {
-        // Browser doesn't support the native install prompt (e.g. Phoenix
-        // Browser, UC Browser, etc. on Android don't implement it at all,
-        // so deferredInstallPrompt is never set no matter what). Instead of
-        // showing an alert, jump straight into Chrome via an Android intent
-        // URL - Chrome will reopen this same page and the real install
-        // flow will work there.
         const intentUrl = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
         window.location.href = intentUrl;
       } else {
-        // Desktop fallback
         alert('To install: open this site in Chrome, then tap the ⋮ menu → "Add to Home screen" or "Install app".');
       }
     }
   });
 
-  // If already running as an installed PWA (standalone mode on iOS, or
-  // display-mode: standalone elsewhere), hide the Install button entirely -
-  // there's nothing to install.
   const isStandalone = window.navigator.standalone === true ||
     window.matchMedia('(display-mode: standalone)').matches;
   if (isStandalone) {
@@ -388,6 +437,7 @@
 
   renderChips();
   loadListings();
+  loadHomeLocation();
 </script>
 </body>
 </html>
