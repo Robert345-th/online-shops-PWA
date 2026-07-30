@@ -32,11 +32,6 @@
   .hero h1 { font-size: 22px; font-weight: 800; line-height: 1.25; margin-bottom: 8px; }
   .hero p { font-size: 14px; color: var(--subtext); line-height: 1.5; }
 
-  .install-btn {
-    display: block; width: 100%; border: none; border-radius: 12px; padding: 16px;
-    background: var(--black); color: var(--gold); font-weight: 800; font-size: 15px;
-    cursor: pointer; margin: 18px 0 10px; text-align: center;
-  }
   .download-btn {
     display: block; width: 100%; border: none; border-radius: 12px; padding: 16px;
     background: var(--gold); color: var(--black); font-weight: 800; font-size: 15px;
@@ -76,8 +71,6 @@
   }
   .alt-link:hover { text-decoration: underline; }
 
-  #apkSection { display: none; }
-  #chromeSection { display: none; }
   #iosBox { display: none; }
 
   .bottom-nav {
@@ -110,47 +103,11 @@
   </div>
 
   <div id="androidBox">
-    <div id="chromeSection">
-      <button class="install-btn" id="installBtn" type="button" data-i18n="install_app">Install App</button>
-      <div class="size-note" id="chromeNote" data-i18n="download_chrome_ready">You're in Chrome — tap Install App to add ZedMarket to your home screen.</div>
-      <div class="card">
-        <h2 data-i18n="download_how_title">How to install</h2>
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text" data-i18n="download_chrome_step_1">Tap <strong>Install App</strong> above</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text" data-i18n="download_chrome_step_2">Confirm when Chrome asks to install</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-text" data-i18n="download_step_4">Open ZedMarket from your home screen</div>
-        </div>
-      </div>
-    </div>
+    <button class="download-btn" id="downloadBtn" type="button" disabled data-i18n="download_coming_soon">Coming soon</button>
+    <div class="size-note" id="sizeNote" data-i18n="download_size">Small download · installs in seconds</div>
 
-    <div id="apkSection">
-      <button class="download-btn" id="downloadBtn" type="button" disabled data-i18n="download_coming_soon">Coming soon</button>
-      <div class="size-note" id="sizeNote" data-i18n="download_size">Small download · installs in seconds</div>
-      <div class="warn" data-i18n="download_warn">
-        Your phone may ask you to allow installation. Tap Allow or Install when prompted.
-      </div>
-      <div class="card">
-        <h2 data-i18n="download_how_title">How to install</h2>
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text" data-i18n="download_step_1">Tap <strong>Download App</strong> above</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text" data-i18n="download_step_2">When download finishes, tap <strong>Open</strong></div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-text" data-i18n="download_step_3">Allow install, then tap <strong>Install</strong></div>
-        </div>
-      </div>
+    <div class="warn" data-i18n="download_warn">
+      Your phone may ask you to allow installation. Tap Allow or Install when prompted.
     </div>
 
     <div class="card">
@@ -162,7 +119,27 @@
       </ul>
     </div>
 
-    <a class="alt-link" id="openChromeLink" href="/install.html" data-i18n="download_chrome_alt">Open in Chrome to install →</a>
+    <div class="card">
+      <h2 data-i18n="download_how_title">How to install</h2>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text" data-i18n="download_step_1">Tap <strong>Download App</strong> above</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text" data-i18n="download_step_2">When download finishes, tap <strong>Open</strong> or open the file from your notifications</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text" data-i18n="download_step_3">If asked, allow install from Chrome (or your browser) — then tap <strong>Install</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text" data-i18n="download_step_4">Open ZedMarket from your home screen</div>
+      </div>
+    </div>
+
+    <a class="alt-link" href="/index.html" data-i18n="download_chrome_alt">Install from home page instead →</a>
   </div>
 
   <div id="iosBox">
@@ -184,14 +161,10 @@
 
 <script src="/js/bottom-nav.js"></script>
 <script src="/js/lang.js"></script>
-<script src="/js/pwa-install.js"></script>
 <script>
   const APK_URL = "/zedmarket.apk";
   const MIN_APK_BYTES = 500000;
   const downloadBtn = document.getElementById("downloadBtn");
-  const chromeSection = document.getElementById("chromeSection");
-  const apkSection = document.getElementById("apkSection");
-  const openChromeLink = document.getElementById("openChromeLink");
   const androidBox = document.getElementById("androidBox");
   const iosBox = document.getElementById("iosBox");
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -201,69 +174,41 @@
     iosBox.style.display = "block";
   }
 
-  function inChrome() {
-    return typeof isAndroidChrome === "function" && isAndroidChrome();
-  }
-
-  function inEmbeddedBrowser() {
-    return typeof isEmbeddedBrowser === "function" && isEmbeddedBrowser();
-  }
-
   function enableDownload(size) {
     downloadBtn.disabled = false;
     downloadBtn.classList.add("ready");
     downloadBtn.textContent = t("download_btn", "Download App");
     downloadBtn.onclick = () => { window.location.href = APK_URL; };
-    apkSection.style.display = "block";
     if (size) {
       const mb = (size / (1024 * 1024)).toFixed(1);
       document.getElementById("sizeNote").textContent = t("download_size_mb", "Download size: {size} MB").replace("{size}", mb);
     }
   }
 
-  async function apkIsReady() {
+  async function checkApk() {
     try {
       const res = await fetch(APK_URL, { method: "HEAD" });
       const size = parseInt(res.headers.get("content-length") || "0", 10);
-      return res.ok && size >= MIN_APK_BYTES ? size : 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  async function initPage() {
-    applyTranslations(document.body);
-
-    if (inEmbeddedBrowser()) {
-      openChromeLink.style.display = "block";
-      chromeSection.style.display = "none";
-      apkSection.style.display = "none";
-      return;
-    }
-
-    openChromeLink.style.display = "none";
-
-    if (inChrome()) {
-      chromeSection.style.display = "block";
-      initPwaInstall({ buttonIds: ["installBtn"], showBanner: false });
-    }
-
-    const size = await apkIsReady();
-    if (size) {
-      enableDownload(size);
-      if (inChrome()) {
-        document.getElementById("chromeNote").textContent = t("download_chrome_or_apk", "Install from Chrome above, or download the APK file below.");
+      if (!res.ok || size < MIN_APK_BYTES) {
+        disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "APK is being prepared — use Chrome install below for now."));
+        return;
       }
-    } else if (!inChrome()) {
-      apkSection.style.display = "block";
-      downloadBtn.disabled = true;
-      downloadBtn.textContent = t("download_coming_soon", "Coming soon");
-      document.getElementById("sizeNote").textContent = t("download_open_chrome", "Open this page in Chrome to install the app.");
-      openChromeLink.style.display = "block";
+      enableDownload(size);
+    } catch {
+      disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "APK is being prepared — use Chrome install below for now."));
     }
   }
 
-  initPage();
+  function disableDownload(btnText, subText) {
+    downloadBtn.disabled = true;
+    downloadBtn.classList.remove("ready");
+    downloadBtn.onclick = null;
+    downloadBtn.textContent = btnText;
+    document.getElementById("sizeNote").textContent = subText;
+  }
+
+  applyTranslations(document.body);
+  checkApk();
 </script>
 </body>
 </html>

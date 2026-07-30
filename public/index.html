@@ -244,6 +244,12 @@
     <input class="search-input" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="Search listings..." />
   </div>
 
+  <div style="padding: 0 12px 12px;">
+    <button id="installBtn" style="display:block; width:100%; background: var(--black); color: var(--gold); border: none; border-radius: 12px; padding: 13px; font-weight: 700; font-size: 14px; cursor: pointer;" data-i18n="install_app">
+      Install App
+    </button>
+  </div>
+
   <div class="loc-row" id="locRow">
     <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
     <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
@@ -463,7 +469,7 @@
     }
   });
 
-  initPwaInstall({ showBanner: true });
+  initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
   function getAuthUser() {
     try {
