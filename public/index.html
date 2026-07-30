@@ -184,6 +184,22 @@
   .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
   .loc-chip { flex: 1; text-align: center; }
 
+  .loc-reset-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .loc-reset-backdrop.open { display: flex; }
+  .loc-reset-box {
+    background: var(--card); color: var(--text); border-radius: 14px;
+    padding: 20px; max-width: 340px; width: 100%; border: 1px solid var(--border);
+  }
+  .loc-reset-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  .loc-reset-text { font-size: 13px; line-height: 1.5; color: var(--subtext); margin-bottom: 16px; white-space: pre-line; }
+  .loc-reset-btn {
+    width: 100%; background: var(--orange); color: #fff; border: none;
+    border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--card); border-top: 1px solid var(--border);
@@ -259,6 +275,14 @@
 </div>
 
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
+
+<div class="loc-reset-backdrop" id="locResetBackdrop" aria-hidden="true">
+  <div class="loc-reset-box">
+    <div class="loc-reset-title" id="locResetTitle" data-i18n="loc_blocked_title">Location is turned off</div>
+    <div class="loc-reset-text" id="locResetText"></div>
+    <button type="button" class="loc-reset-btn" id="locResetOk" data-i18n="loc_blocked_ok">Got it</button>
+  </div>
+</div>
 
 <div class="bottom-nav">
   <a href="/index.html" class="nav-item active"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></div><div data-i18n="home">Home</div></a>
@@ -433,14 +457,30 @@
   async function requestUserLocation() {
     try {
       const coords = await requestUserLocationCoords();
-      if (!isValidCoords(coords)) return false;
+      if (!isValidCoords(coords)) return { ok: false, code: 2 };
       myCoords = coords;
       localStorage.setItem("zm_home_location", JSON.stringify(coords));
       renderFeed();
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: err && err.code != null ? err.code : -1 };
     }
+  }
+
+  function isStandaloneApp() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  function showLocResetModal() {
+    const text = document.getElementById("locResetText");
+    if (text) {
+      text.textContent = isStandaloneApp() ? t("loc_blocked_steps_app") : t("loc_blocked_steps_browser");
+    }
+    document.getElementById("locResetBackdrop")?.classList.add("open");
+  }
+
+  function hideLocResetModal() {
+    document.getElementById("locResetBackdrop")?.classList.remove("open");
   }
 
   function switchToHomeArea() {
@@ -456,15 +496,35 @@
     label.textContent = loading ? t("loc_getting") : t("loc_current");
   }
 
+  let locRetryAfterGrant = false;
+
   async function handleUseCurrentLocation() {
+    hideLocResetModal();
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
+
+    const permState = await getLocationPermissionState();
+    if (permState === "denied") {
+      locRetryAfterGrant = true;
+      showLocResetModal();
+      switchToHomeArea();
+      return;
+    }
+
     setLocCurrentLoading(true);
 
-    const ok = await requestUserLocation();
+    const result = await requestUserLocation();
     setLocCurrentLoading(false);
 
-    if (ok) return;
+    if (result.ok) {
+      locRetryAfterGrant = false;
+      return;
+    }
+
+    if (result.code === 1) {
+      locRetryAfterGrant = true;
+      showLocResetModal();
+    }
 
     switchToHomeArea();
   }
@@ -473,8 +533,31 @@
     switchToHomeArea();
   }
 
-  document.getElementById("locHome").addEventListener("click", switchToHomeArea);
+  document.getElementById("locHome").addEventListener("click", () => {
+    hideLocResetModal();
+    switchToHomeArea();
+  });
   document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
+  document.getElementById("locResetOk").addEventListener("click", hideLocResetModal);
+  document.getElementById("locResetBackdrop").addEventListener("click", (e) => {
+    if (e.target.id === "locResetBackdrop") hideLocResetModal();
+  });
+
+  watchLocationPermission((state) => {
+    if (state === "granted") {
+      hideLocResetModal();
+      if (locRetryAfterGrant) handleUseCurrentLocation();
+    }
+  });
+
+  window.addEventListener("pageshow", () => {
+    getLocationPermissionState().then((state) => {
+      if (state === "granted") {
+        hideLocResetModal();
+        if (locRetryAfterGrant) handleUseCurrentLocation();
+      }
+    });
+  });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
