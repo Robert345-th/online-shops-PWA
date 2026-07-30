@@ -268,6 +268,13 @@
     window.open(PRIVACY_POLICY_URL, "_blank");
   });
 
+  const logoutRow = document.getElementById("logoutRow");
+  const deleteAccountRow = document.getElementById("deleteAccountRow");
+  if (!user || !token) {
+    logoutRow.style.display = "none";
+    deleteAccountRow.style.display = "none";
+  }
+
   document.getElementById("logoutRow").addEventListener("click", () => {
     document.getElementById("logoutModal").classList.add("open");
   });

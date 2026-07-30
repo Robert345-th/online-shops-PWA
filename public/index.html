@@ -156,7 +156,7 @@
       </button>
       <div>
         <div class="brand">ZedMarket</div>
-        <button class="auth-line" id="authBtn" data-i18n="login_signup">Login / Sign Up</button>
+        <button class="auth-line" id="authBtn">Login / Sign Up</button>
       </div>
     </div>
     <div class="icon-row">
@@ -398,11 +398,24 @@
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
+  function getAuthUser() {
+    try {
+      const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+      return user && typeof user === "object" ? user : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isLoggedIn() {
+    return !!(getAuthUser() && localStorage.getItem("zm_token"));
+  }
+
   function refreshAuthState() {
-    const user = JSON.parse(localStorage.getItem("zm_user") || "null");
-    const token = localStorage.getItem("zm_token");
-    if (user && token) {
-      authBtn.textContent = t("hi_user", { name: user.name });
+    const user = getAuthUser();
+    if (isLoggedIn()) {
+      const name = user.display_name || user.name || user.shop_name || user.phone || "User";
+      authBtn.textContent = t("hi_user", { name });
       authBtn.onclick = () => { window.location.href = "/settings.html"; };
     } else {
       authBtn.textContent = t("login_signup");
@@ -410,14 +423,23 @@
     }
   }
 
-  const savedUser = JSON.parse(localStorage.getItem("zm_user") || "null");
-  if (savedUser && localStorage.getItem("zm_token")) {
+  function syncLoggedInServices() {
+    if (!isLoggedIn()) return;
     startPresenceHeartbeat();
     syncPushSubscription();
     initIncomingCallListener();
   }
+
   refreshAuthState();
-  window.addEventListener("pageshow", refreshAuthState);
+  syncLoggedInServices();
+  document.addEventListener("DOMContentLoaded", () => {
+    refreshAuthState();
+    syncLoggedInServices();
+  });
+  window.addEventListener("pageshow", () => {
+    refreshAuthState();
+    syncLoggedInServices();
+  });
   window.addEventListener("langchange", () => {
     refreshAuthState();
     renderChips();
