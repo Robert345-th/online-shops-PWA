@@ -18,6 +18,16 @@
     return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   }
 
+  function isStandalonePwa() {
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+  }
+
+  function getPwaPushHint() {
+    if (!isStandalonePwa()) return "";
+    return "Also check Phone Settings → Apps → ZedMarket → Notifications → ON, and set Battery to Unrestricted.";
+  }
+
   function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -268,6 +278,8 @@
   }
 
   window.isPushSupported = isPushSupported;
+  window.isStandalonePwa = isStandalonePwa;
+  window.getPwaPushHint = getPwaPushHint;
   window.isPushEnabled = isPushEnabled;
   window.setPushEnabled = setPushEnabled;
   window.enablePushNotifications = enablePushNotifications;

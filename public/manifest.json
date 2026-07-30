@@ -3,6 +3,8 @@
   "short_name": "ZedMarket",
   "description": "ZedMarket (Zed Market) — buy and sell locally in Zambia. Phones, cars, land, electronics, and more.",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#F4F1EC",
   "theme_color": "#111111",
