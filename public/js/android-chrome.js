@@ -2,6 +2,7 @@
   const REDIRECT_KEY = "zm_chrome_redirect";
   const INAPP_GUIDE_DISMISS_KEY = "zm_inapp_install_guide_dismissed";
   const NO_AUTO_REDIRECT = [
+    "/install.html",
     "/login.html",
     "/signup.html",
     "/verify-otp.html",
@@ -179,8 +180,13 @@
     );
   }
 
+  function isInstallPage() {
+    const path = location.pathname.toLowerCase();
+    return path === "/install.html" || path.endsWith("/install.html");
+  }
+
   function openInChrome() {
-    if (isEmbeddedBrowser()) {
+    if (isEmbeddedBrowser() && !isInstallPage()) {
       showInAppBrowserGuide();
       return;
     }
@@ -205,6 +211,7 @@
 
   function maybeRedirectToChrome() {
     if (isStandalone()) return;
+    if (isInstallPage()) return;
     if (isEmbeddedBrowser()) {
       showInAppBrowserGuide();
       return;
