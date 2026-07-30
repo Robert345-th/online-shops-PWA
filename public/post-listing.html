@@ -27,37 +27,86 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 40px; height: 40px; padding: 0; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .back-button svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
   .content { padding: 20px; max-width: 560px; margin: 0 auto; }
-  .title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
-  .label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
-  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 14px; }
-  textarea.field-input { height: 80px; resize: vertical; }
+  .step-subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 24px; }
+  .step-row { display: flex; gap: 8px; margin-bottom: 28px; }
+  .step-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--border); }
+  .step-dot.active { background: var(--orange); }
+  .step-dot.done { background: var(--gold); }
+  .step-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { font-size: 13px; color: var(--subtext); margin-bottom: 20px; line-height: 1.4; }
+  .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
+  .field-input {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; margin-bottom: 18px; font-size: 14px; color: var(--text);
+  }
+  textarea.field-input { height: 100px; resize: vertical; }
 
-  .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .photo-thumb-wrap { width: 80px; height: 80px; border-radius: 10px; overflow: hidden; position: relative; }
   .photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
   .photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; }
-  .remove-btn { position: absolute; top: 3px; right: 3px; background: rgba(17,17,17,0.7); width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; border: none; cursor: pointer; }
-  .add-photo-box { width: 80px; height: 80px; border: 2px dashed var(--orange); border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--card); cursor: pointer; color: var(--price-red); font-weight: 600; font-size: 11px; }
+  .remove-btn {
+    position: absolute; top: 3px; right: 3px; background: rgba(17,17,17,0.7); width: 20px; height: 20px;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff;
+    font-size: 11px; font-weight: 700; border: none; cursor: pointer;
+  }
+  .add-photo-box {
+    width: 80px; height: 80px; border: 2px dashed var(--orange); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; background: var(--card);
+    cursor: pointer; color: var(--price-red); font-weight: 600; font-size: 11px;
+  }
 
-  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    padding: 8px 14px; font-size: 12px; cursor: pointer;
+  }
   .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
 
-  .extra-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .extra-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 18px; }
   .extra-box-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .extra-box .field-input { margin-bottom: 14px; }
+  .extra-box .field-input:last-child { margin-bottom: 0; }
 
-  .loc-button { width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px; padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
-  .loc-hint { font-size: 12px; color: var(--price-red); line-height: 1.4; margin-bottom: 12px; display: none; }
+  .loc-button {
+    width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px;
+    padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px;
+    cursor: pointer; margin-bottom: 8px;
+  }
 
-  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .submit-btn {
+    flex: 1; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px;
+    color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
   .submit-btn:disabled { opacity: 0.7; }
+  .back-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 18px;
+    color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+
+  .form-banner {
+    display: none; border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600;
+    margin-bottom: 16px; line-height: 1.4;
+  }
+  .form-banner.error { background: #FBE7E8; color: var(--price-red); border: 1px solid #F0C1C4; }
+  .form-banner.show { display: block; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
   .pending-icon { font-size: 48px; margin-bottom: 12px; }
   .pending-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
   .pending-text { font-size: 13px; color: var(--subtext); text-align: center; margin-bottom: 20px; }
-  .back-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+  .pending-back-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -68,7 +117,95 @@
   applyDarkMode();
   window.addEventListener("pageshow", applyDarkMode);
 </script>
-<div id="app"></div>
+
+<div id="pendingView" style="display:none;">
+  <div class="center-box">
+    <div class="pending-icon">⏳</div>
+    <div class="pending-title">Shop Under Review</div>
+    <div class="pending-text" id="pendingMessage"></div>
+    <button class="pending-back-btn" onclick="window.location.href='/my-shop.html'">Go Back</button>
+  </div>
+</div>
+
+<div id="wizardView" style="display:none;">
+  <div class="topbar">
+    <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="header-title">Post a Listing</div>
+  </div>
+  <div class="content">
+    <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Photos</div>
+    <div class="step-row">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+      <div class="step-dot" id="dot4"></div>
+    </div>
+    <div class="form-banner" id="formBanner"></div>
+
+    <div class="step-panel active" id="step1">
+      <div class="step-title">Photos</div>
+      <div class="subtitle">Add up to 5 photos. Good photos help your item sell faster.</div>
+      <div class="label">Photos (<span id="photoCount">0</span>/5)</div>
+      <div class="photo-grid" id="photoGrid">
+        <label class="add-photo-box" id="addPhotoBox">+ Add
+          <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
+        </label>
+      </div>
+      <button type="button" class="submit-btn" id="next1Btn">Next</button>
+    </div>
+
+    <div class="step-panel" id="step2">
+      <div class="step-title">Item details</div>
+      <div class="subtitle">What are you selling and for how much?</div>
+      <div class="label">Title</div>
+      <input class="field-input" id="titleInput" placeholder="e.g. iPhone 11, 64GB" />
+      <div class="label">Price (ZMW)</div>
+      <input class="field-input" id="priceInput" type="number" placeholder="e.g. 1850" />
+      <div class="label">Condition</div>
+      <div class="chip-row" id="conditionRow">
+        <div class="chip" data-cond="New">New</div>
+        <div class="chip" data-cond="Pre-owned">Pre-owned</div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="back-btn" id="back2Btn">Back</button>
+        <button type="button" class="submit-btn" id="next2Btn">Next</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="step3">
+      <div class="step-title">Category & description</div>
+      <div class="subtitle">Pick a category and describe your item.</div>
+      <div class="label">Category</div>
+      <div class="chip-row" id="categoryRow"></div>
+      <div id="extraFields"></div>
+      <div class="label">Description</div>
+      <textarea class="field-input" id="descInput" placeholder="Describe condition, age, reason for selling..."></textarea>
+      <div class="btn-row">
+        <button type="button" class="back-btn" id="back3Btn">Back</button>
+        <button type="button" class="submit-btn" id="next3Btn">Next</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="step4">
+      <div class="step-title">Location</div>
+      <div class="subtitle">Where can buyers find this item?</div>
+      <div id="listingFromSection" style="display:none;">
+        <div class="label">Where is this item?</div>
+        <div class="chip-row" id="listingFromRow">
+          <div class="chip" data-from="shop">At my shop</div>
+          <div class="chip" data-from="home">From home</div>
+        </div>
+      </div>
+      <div class="label">Location</div>
+      <div class="loc-button" id="locButton">📍 Use my current location</div>
+      <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
+      <div class="btn-row">
+        <button type="button" class="back-btn" id="back4Btn">Back</button>
+        <button type="button" class="submit-btn" id="submitBtn">Post Listing</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="/js/location.js"></script>
 <script>
@@ -85,10 +222,10 @@
     { label: "Land", id: 6 },
   ];
 
-  const app = document.getElementById("app");
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
 
+  let step = 1;
   let photos = [];
   let categoryId = CATEGORY_OPTIONS[0].id;
   let condition = null;
@@ -100,6 +237,24 @@
   let shopLocationLabel = "";
   let homeLocationLabel = "";
   let listingFrom = null;
+
+  const formBanner = document.getElementById("formBanner");
+  const stepSubtitle = document.getElementById("stepSubtitle");
+  const subtitles = {
+    1: "Step 1 of 4 — Photos",
+    2: "Step 2 of 4 — Item details",
+    3: "Step 3 of 4 — Category & description",
+    4: "Step 4 of 4 — Location",
+  };
+
+  function showError(message) {
+    formBanner.textContent = message;
+    formBanner.className = "form-banner error show";
+    formBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function clearBanner() {
+    formBanner.className = "form-banner";
+  }
 
   function loadSavedListingLocation() {
     try {
@@ -141,122 +296,53 @@
     if (locBtn && locationLabel) locBtn.textContent = `📍 ${locationLabel}`;
   }
 
-  loadSavedListingLocation();
-
   function selectedCategory() {
-    return CATEGORY_OPTIONS.find(c => c.id === categoryId)?.label;
+    return CATEGORY_OPTIONS.find((c) => c.id === categoryId)?.label;
   }
 
-  if (user?.account_type === "shop" && user?.shop_status !== "approved") {
-    const message = user.shop_status === "rejected"
-      ? "Your shop application was not approved. Please contact support for more information."
-      : "Your shop is still being reviewed. You'll be notified once it's approved and you can start posting.";
-    app.innerHTML = `
-      <div class="center-box">
-        <div class="pending-icon">⏳</div>
-        <div class="pending-title">Shop Under Review</div>
-        <div class="pending-text">${message}</div>
-        <button class="back-btn" onclick="window.location.href='/my-shop.html'">Go Back</button>
-      </div>`;
-  } else if (!token) {
-    window.location.href = "/login.html";
-  } else {
-    renderForm();
+  function updateStepUI() {
+    [1, 2, 3, 4].forEach((n) => {
+      document.getElementById(`step${n}`).classList.toggle("active", step === n);
+      const dot = document.getElementById(`dot${n}`);
+      if (dot) {
+        dot.classList.toggle("active", step === n);
+        dot.classList.toggle("done", step > n);
+      }
+    });
+    stepSubtitle.textContent = subtitles[step];
+    clearBanner();
+    if (step === 4) applyLocationStepDefaults();
   }
 
-  function renderForm() {
-    app.innerHTML = `
-      <div class="content">
-        <div class="title">Post a Listing</div>
-
-        <div class="label">Photos (<span id="photoCount">0</span>/${MAX_PHOTOS})</div>
-        <div class="photo-grid" id="photoGrid">
-          <label class="add-photo-box" id="addPhotoBox">+ Add
-            <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
-          </label>
-        </div>
-
-        <div class="label">Title</div>
-        <input class="field-input" id="titleInput" placeholder="e.g. iPhone 11, 64GB" />
-
-        <div class="label">Price (ZMW)</div>
-        <input class="field-input" id="priceInput" type="number" placeholder="e.g. 1850" />
-
-        <div class="label">Condition</div>
-        <div class="chip-row" id="conditionRow">
-          <div class="chip" data-cond="New">New</div>
-          <div class="chip" data-cond="Pre-owned">Pre-owned</div>
-        </div>
-
-        <div class="label">Category</div>
-        <div class="chip-row" id="categoryRow"></div>
-
-        <div id="extraFields"></div>
-
-        <div class="label">Description</div>
-        <textarea class="field-input" id="descInput" placeholder="Describe condition, age, reason for selling..."></textarea>
-
-        ${sellingType === "both" ? `
-        <div class="label">Where is this item?</div>
-        <div class="chip-row" id="listingFromRow">
-          <div class="chip" data-from="shop">At my shop</div>
-          <div class="chip" data-from="home">From home</div>
-        </div>
-        ` : ""}
-
-        <div class="label">Location</div>
-        <div class="loc-button" id="locButton">📍 Use my current location</div>
-        <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" style="margin-top:8px;" />
-
-        <button class="submit-btn" id="submitBtn">Post Listing</button>
-      </div>`;
-
-    renderPhotoGrid();
-    renderCategoryChips();
-    renderExtraFields();
-
-    document.querySelectorAll("[data-cond]").forEach(el =>
-      el.addEventListener("click", () => { condition = el.dataset.cond; updateConditionChips(); })
-    );
-
-    document.getElementById("addPhotoBox").addEventListener("click", (e) => {
-      if (photos.length >= MAX_PHOTOS) { e.preventDefault(); alert(`You can add up to ${MAX_PHOTOS} photos.`); }
-    });
-    document.getElementById("photoInput").addEventListener("change", handlePhotoSelect);
-    document.getElementById("locButton").addEventListener("click", handleUseLocation);
-    document.getElementById("locationInput").addEventListener("input", (e) => {
-      locationLabel = e.target.value.trim();
-    });
-    document.getElementById("submitBtn").addEventListener("click", handleSubmit);
-
-    if (sellingType === "both") {
+  function applyLocationStepDefaults() {
+    document.getElementById("listingFromSection").style.display = sellingType === "both" ? "block" : "none";
+    if (listingFrom) {
       document.querySelectorAll("[data-from]").forEach((el) =>
-        el.addEventListener("click", () => applyListingFrom(el.dataset.from))
+        el.classList.toggle("active", el.dataset.from === listingFrom)
       );
     }
-
-    if (locationLabel) {
-      const locInput = document.getElementById("locationInput");
-      if (locInput) locInput.value = locationLabel;
-      const locBtn = document.getElementById("locButton");
-      if (locBtn && coords) locBtn.textContent = `📍 ${locationLabel}`;
+    const locInput = document.getElementById("locationInput");
+    if (locInput && locationLabel) locInput.value = locationLabel;
+    const locBtn = document.getElementById("locButton");
+    if (locBtn && locationLabel) {
+      locBtn.textContent = coords ? `📍 ${locationLabel}` : `📍 ${locationLabel}`;
     }
   }
 
   function updateConditionChips() {
-    document.querySelectorAll("[data-cond]").forEach(el =>
+    document.querySelectorAll("[data-cond]").forEach((el) =>
       el.classList.toggle("active", el.dataset.cond === condition)
     );
   }
 
   function renderCategoryChips() {
     const row = document.getElementById("categoryRow");
-    row.innerHTML = CATEGORY_OPTIONS.map(c =>
+    row.innerHTML = CATEGORY_OPTIONS.map((c) =>
       `<div class="chip ${categoryId === c.id ? "active" : ""}" data-cat="${c.id}">${c.label}</div>`
     ).join("");
-    row.querySelectorAll("[data-cat]").forEach(el =>
+    row.querySelectorAll("[data-cat]").forEach((el) =>
       el.addEventListener("click", () => {
-        categoryId = parseInt(el.dataset.cat);
+        categoryId = parseInt(el.dataset.cat, 10);
         renderCategoryChips();
         renderExtraFields();
       })
@@ -293,10 +379,12 @@
           <div class="label">Title Deed Status</div>
           <input class="field-input" id="landDeedStatus" placeholder="e.g. Titled / Not titled" />
         </div>`;
-      document.querySelectorAll("[data-unit]").forEach(el =>
+      document.querySelectorAll("[data-unit]").forEach((el) =>
         el.addEventListener("click", () => {
           landUnit = el.dataset.unit;
-          document.querySelectorAll("[data-unit]").forEach(x => x.classList.toggle("active", x.dataset.unit === landUnit));
+          document.querySelectorAll("[data-unit]").forEach((x) =>
+            x.classList.toggle("active", x.dataset.unit === landUnit)
+          );
         })
       );
     } else {
@@ -307,30 +395,38 @@
   function renderPhotoGrid() {
     const grid = document.getElementById("photoGrid");
     document.getElementById("photoCount").textContent = photos.length;
-    const addBox = document.getElementById("addPhotoBox")?.outerHTML || `<label class="add-photo-box" id="addPhotoBox">+ Add<input type="file" id="photoInput" accept="image/*" multiple style="display:none;" /></label>`;
+    const addBox = `<label class="add-photo-box" id="addPhotoBox">+ Add<input type="file" id="photoInput" accept="image/*" multiple style="display:none;" /></label>`;
 
-    grid.innerHTML = photos.map(p => `
+    grid.innerHTML = photos.map((p) => `
       <div class="photo-thumb-wrap">
-        <img src="${p.uri}" />
+        <img src="${p.uri}" alt="" />
         ${p.uploading ? `<div class="photo-overlay">…</div>` : ""}
-        <button class="remove-btn" data-uri="${p.uri}">✕</button>
+        <button type="button" class="remove-btn" data-uri="${p.uri}">✕</button>
       </div>
     `).join("") + (photos.length < MAX_PHOTOS ? addBox : "");
 
-    document.querySelectorAll(".remove-btn").forEach(btn =>
-      btn.addEventListener("click", () => { photos = photos.filter(p => p.uri !== btn.dataset.uri); renderPhotoGrid(); })
+    document.querySelectorAll(".remove-btn").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        photos = photos.filter((p) => p.uri !== btn.dataset.uri);
+        renderPhotoGrid();
+      })
     );
     const input = document.getElementById("photoInput");
     if (input) input.addEventListener("change", handlePhotoSelect);
     const addBoxEl = document.getElementById("addPhotoBox");
-    if (addBoxEl) addBoxEl.addEventListener("click", (e) => {
-      if (photos.length >= MAX_PHOTOS) { e.preventDefault(); alert(`You can add up to ${MAX_PHOTOS} photos.`); }
-    });
+    if (addBoxEl) {
+      addBoxEl.addEventListener("click", (e) => {
+        if (photos.length >= MAX_PHOTOS) {
+          e.preventDefault();
+          showError(`You can add up to ${MAX_PHOTOS} photos.`);
+        }
+      });
+    }
   }
 
   function handlePhotoSelect(e) {
     const files = Array.from(e.target.files).slice(0, MAX_PHOTOS - photos.length);
-    files.forEach(file => {
+    files.forEach((file) => {
       const uri = URL.createObjectURL(file);
       photos.push({ uri, url: null, uploading: true, file });
       uploadToCloudinary(file, uri);
@@ -346,19 +442,22 @@
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
         method: "POST",
-        body: formData
+        body: formData,
       });
       const data = await res.json();
 
-      const p = photos.find(p => p.uri === uri);
-      if (p) { p.url = data.secure_url || null; p.uploading = false; }
+      const p = photos.find((item) => item.uri === uri);
+      if (p) {
+        p.url = data.secure_url || null;
+        p.uploading = false;
+      }
 
-      if (!data.secure_url) alert("One of your photos could not be uploaded.");
+      if (!data.secure_url) showError("One of your photos could not be uploaded.");
       renderPhotoGrid();
-    } catch (e) {
-      const p = photos.find(p => p.uri === uri);
+    } catch {
+      const p = photos.find((item) => item.uri === uri);
       if (p) p.uploading = false;
-      alert("Could not upload one of the photos.");
+      showError("Could not upload one of the photos.");
       renderPhotoGrid();
     }
   }
@@ -373,6 +472,7 @@
       const { lat, lng } = await getDeviceCoords();
       coords = { lat, lng };
       locationLabel = await reverseGeocodeLabel(lat, lng);
+      document.getElementById("locationInput").value = locationLabel;
       btn.textContent = `📍 ${locationLabel}`;
     } catch {
       coords = null;
@@ -382,48 +482,81 @@
     }
   }
 
+  function validateStep2() {
+    const title = document.getElementById("titleInput").value.trim();
+    const price = document.getElementById("priceInput").value;
+    if (!title || !price) {
+      showError("Please enter a title and price.");
+      return false;
+    }
+    if (!condition) {
+      showError("Please select whether the item is New or Pre-owned.");
+      return false;
+    }
+    return true;
+  }
+
+  function validateStep3() {
+    const cat = selectedCategory();
+    if (cat === "Cars") {
+      const carMake = document.getElementById("carMake")?.value.trim() || "";
+      const carModel = document.getElementById("carModel")?.value.trim() || "";
+      if (!carMake || !carModel) {
+        showError("Please fill in the car make and model.");
+        return false;
+      }
+    }
+    if (cat === "Land") {
+      const landSize = document.getElementById("landSize")?.value || "";
+      if (!landSize) {
+        showError("Please fill in the land size.");
+        return false;
+      }
+    }
+    return true;
+  }
+
   async function handleSubmit() {
+    if (sellingType === "both" && !listingFrom) {
+      showError("Please choose whether this item is at your shop or from home.");
+      return;
+    }
+
+    const manualLocation = document.getElementById("locationInput")?.value.trim() || "";
+    if (manualLocation) locationLabel = manualLocation;
+    if (!coords && !locationLabel) {
+      showError('Please add your location — tap "Use my location" or type your area.');
+      return;
+    }
+    if (photos.some((p) => p.uploading)) {
+      showError("Photos are still uploading. Please wait a moment.");
+      return;
+    }
+
     const title = document.getElementById("titleInput").value.trim();
     const price = document.getElementById("priceInput").value;
     const description = document.getElementById("descInput").value.trim();
-
-    if (!title || !price) { alert("Title and price are required."); return; }
-    if (!condition) { alert("Please select whether the item is New or Pre-owned."); return; }
-    if (sellingType === "both" && !listingFrom) {
-      alert("Please choose whether this item is at your shop or from home.");
-      return;
-    }
-    const manualLocation = document.getElementById("locationInput")?.value.trim() || "";
-    if (!coords && manualLocation) {
-      locationLabel = manualLocation;
-    }
-    if (!coords && !locationLabel) {
-      alert('Please add your location — tap "Use my location" or type your area.');
-      return;
-    }
-    if (photos.some(p => p.uploading)) { alert("Photos are still uploading."); return; }
-
     const cat = selectedCategory();
+
     let carMake, carModel, carYear, carMileage, landSize, landDeedStatus;
     if (cat === "Cars") {
       carMake = document.getElementById("carMake").value.trim();
       carModel = document.getElementById("carModel").value.trim();
       carYear = document.getElementById("carYear").value;
       carMileage = document.getElementById("carMileage").value;
-      if (!carMake || !carModel) { alert("Please fill in the car make and model."); return; }
     }
     if (cat === "Land") {
       landSize = document.getElementById("landSize").value;
       landDeedStatus = document.getElementById("landDeedStatus").value.trim();
-      if (!landSize) { alert("Please fill in the land size."); return; }
     }
 
     const body = {
-      title, description,
+      title,
+      description,
       price: parseFloat(price),
       category_id: categoryId,
       condition,
-      photos: photos.map(p => p.url).filter(Boolean),
+      photos: photos.map((p) => p.url).filter(Boolean),
       location_label: locationLabel,
     };
     if (listingFrom) body.listing_from = listingFrom;
@@ -431,12 +564,20 @@
       body.latitude = coords.lat;
       body.longitude = coords.lng;
     }
-
     if (cat === "Cars") {
-      body.car_details = { make: carMake, model: carModel, year: carYear ? parseInt(carYear) : null, mileage: carMileage ? parseInt(carMileage) : null };
+      body.car_details = {
+        make: carMake,
+        model: carModel,
+        year: carYear ? parseInt(carYear, 10) : null,
+        mileage: carMileage ? parseInt(carMileage, 10) : null,
+      };
     }
     if (cat === "Land") {
-      body.land_details = { size: parseFloat(landSize), size_unit: landUnit, title_deed_status: landDeedStatus };
+      body.land_details = {
+        size: parseFloat(landSize),
+        size_unit: landUnit,
+        title_deed_status: landDeedStatus,
+      };
     }
 
     const submitBtn = document.getElementById("submitBtn");
@@ -447,23 +588,91 @@
       const res = await fetch(`${API_URL}/listings`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Something went wrong.");
+        showError(data.error || "Something went wrong.");
         return;
       }
 
       alert("Listing posted! Your item is now live.");
       window.location.href = "/index.html";
-    } catch (e) {
-      alert("Could not connect to the server.");
+    } catch {
+      showError("Could not connect to the server.");
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Post Listing";
     }
+  }
+
+  function initWizard() {
+    loadSavedListingLocation();
+    renderPhotoGrid();
+    renderCategoryChips();
+    renderExtraFields();
+
+    document.querySelectorAll("[data-cond]").forEach((el) =>
+      el.addEventListener("click", () => {
+        condition = el.dataset.cond;
+        updateConditionChips();
+      })
+    );
+
+    document.querySelectorAll("[data-from]").forEach((el) =>
+      el.addEventListener("click", () => applyListingFrom(el.dataset.from))
+    );
+
+    document.getElementById("locButton").addEventListener("click", handleUseLocation);
+    document.getElementById("locationInput").addEventListener("input", (e) => {
+      locationLabel = e.target.value.trim();
+    });
+
+    document.getElementById("next1Btn").addEventListener("click", () => {
+      if (photos.some((p) => p.uploading)) {
+        showError("Photos are still uploading. Please wait a moment.");
+        return;
+      }
+      step = 2;
+      updateStepUI();
+    });
+
+    document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
+    document.getElementById("next2Btn").addEventListener("click", () => {
+      if (!validateStep2()) return;
+      step = 3;
+      updateStepUI();
+    });
+
+    document.getElementById("back3Btn").addEventListener("click", () => { step = 2; updateStepUI(); });
+    document.getElementById("next3Btn").addEventListener("click", () => {
+      if (!validateStep3()) return;
+      step = 4;
+      updateStepUI();
+    });
+
+    document.getElementById("back4Btn").addEventListener("click", () => { step = 3; updateStepUI(); });
+    document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      if (step === 1) history.back();
+      else { step -= 1; updateStepUI(); }
+    });
+
+    updateStepUI();
+  }
+
+  if (user?.account_type === "shop" && user?.shop_status !== "approved") {
+    document.getElementById("pendingMessage").textContent = user.shop_status === "rejected"
+      ? "Your shop application was not approved. Please contact support for more information."
+      : "Your shop is still being reviewed. You'll be notified once it's approved and you can start posting.";
+    document.getElementById("pendingView").style.display = "block";
+  } else if (!token) {
+    window.location.href = "/login.html";
+  } else {
+    document.getElementById("wizardView").style.display = "block";
+    initWizard();
   }
 </script>
 </body>
