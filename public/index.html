@@ -74,24 +74,52 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 12px;
   }
-  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-left { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
+  .topbar-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
   .gear { text-align: center; background: none; border: none; cursor: pointer; }
   .gear .icon { font-size: 26px; color: var(--gold); }
   .gear .label { color: #C9BFAF; font-size: 9px; margin-top: 2px; }
   .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
   .brand-tagline { color: #C9BFAF; font-size: 10px; font-weight: 500; margin-top: 2px; line-height: 1.3; }
-  .auth-line {
-    color: var(--black);
+  .auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(245, 197, 24, 0.7);
+    background: rgba(245, 197, 24, 0.1);
+    color: var(--gold);
     font-size: 12px;
     font-weight: 700;
-    margin-top: 6px;
-    background: var(--gold);
-    border: none;
+    letter-spacing: 0.01em;
     cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 14px;
-    display: inline-block;
+    white-space: nowrap;
+    max-width: 148px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .auth-btn svg {
+    width: 15px; height: 15px; stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+  }
+  .auth-btn.logged-in {
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+  .auth-btn.guest {
+    padding: 0 12px;
   }
   .icon-row { display: flex; gap: 10px; align-items: center; }
   .icon-btn {
@@ -190,14 +218,19 @@
       <div>
         <div class="brand">ZedMarket</div>
         <div class="brand-tagline">Zed Market — Zambia's buy &amp; sell marketplace</div>
-        <button class="auth-line" id="authBtn">Login / Sign Up</button>
       </div>
     </div>
-    <div class="icon-row">
+    <div class="topbar-right">
+      <button class="auth-btn guest" id="authBtn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="authBtnText">Login / Sign Up</span>
+      </button>
+      <div class="icon-row">
       <button class="icon-btn" onclick="window.location.href='/wanted.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></button>
       <button class="icon-btn" onclick="window.location.href='/map-view.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
       <button class="icon-btn" onclick="window.location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
       <button class="icon-btn" onclick="window.location.href='/favorites.html'" aria-label="Favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+      </div>
     </div>
   </div>
 
@@ -274,6 +307,7 @@
   });
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
+  const authBtnText = document.getElementById("authBtnText");
   const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
   if (urlSearchQuery) searchInput.value = urlSearchQuery;
 
@@ -450,10 +484,14 @@
     const user = getAuthUser();
     if (isLoggedIn()) {
       const name = user.display_name || user.name || user.shop_name || user.phone || "User";
-      authBtn.textContent = t("hi_user", { name });
+      authBtnText.textContent = t("hi_user", { name });
+      authBtn.classList.remove("guest");
+      authBtn.classList.add("logged-in");
       authBtn.onclick = () => { window.location.href = "/settings.html"; };
     } else {
-      authBtn.textContent = t("login_signup");
+      authBtnText.textContent = t("login_signup");
+      authBtn.classList.add("guest");
+      authBtn.classList.remove("logged-in");
       authBtn.onclick = () => { window.location.href = "/login.html"; };
     }
   }

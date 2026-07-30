@@ -8,7 +8,7 @@
       settings: "Settings",
       home: "Home",
       my_shop: "My Shop",
-      login_signup: "Login / Sign Up",
+      login_signup: "Log in",
       hi_user: "Hi, {name}",
       search_placeholder: "Search listings...",
       install_app: "Install App",
