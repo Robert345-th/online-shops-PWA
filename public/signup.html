@@ -220,6 +220,13 @@
     signupLocationLabel = e.target.value.trim();
   });
 
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+    ]);
+  }
+
   document.getElementById("locButton").addEventListener("click", async () => {
     if (gettingLocation) return;
     gettingLocation = true;
@@ -228,12 +235,23 @@
     clearError();
 
     try {
-      const coords = await requestDeviceCoords(true);
+      const coords = await withTimeout(
+        getDeviceCoords({ maximumAge: 0, timeout: 10000, enableHighAccuracy: false }),
+        12000
+      );
+      if (!isValidCoords(coords)) throw new Error("invalid");
       signupCoords = coords;
-      signupLocationLabel = await reverseGeocodeLabel(coords.lat, coords.lng);
-      document.getElementById("locationInput").value = signupLocationLabel;
-      btn.textContent = `📍 ${signupLocationLabel}`;
+      let label;
+      try {
+        label = await withTimeout(reverseGeocodeLabel(coords.lat, coords.lng), 8000);
+      } catch {
+        label = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`;
+      }
+      signupLocationLabel = label;
+      document.getElementById("locationInput").value = label;
+      btn.textContent = `📍 ${label}`;
     } catch {
+      signupCoords = null;
       showError("Could not get your location. Type your area below instead.");
       btn.textContent = "📍 Use my current location";
     } finally {
