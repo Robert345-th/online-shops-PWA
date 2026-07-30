@@ -53,6 +53,7 @@
   .header-name { color: var(--gold); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-status { color: #8BC34A; font-size: 11px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-status.offline { color: #C9BFAF; }
+  .header-status.typing { color: #8BC34A; font-style: italic; }
 
   .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
 
@@ -284,10 +285,10 @@
 
   async function refreshPresence() {
     if (isKnownSupportChat || otherUser?.is_admin || !userId) return;
-    const map = await fetchPresenceMap([userId]);
+    const map = await fetchPresenceMap([userId], { includeTyping: true });
     const data = map[userId];
     applyPresenceDot(document.getElementById("headerOnlineDot"), data);
-    applyPresenceStatus(document.getElementById("headerStatus"), data);
+    applyChatStatus(document.getElementById("headerStatus"), data);
   }
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
@@ -432,7 +433,11 @@
         actionBtn.setAttribute("aria-label", "Record voice message");
       }
     }
-    msgInput.addEventListener("input", updateActionBtn);
+    msgInput.addEventListener("input", () => {
+      updateActionBtn();
+      notifyTyping(userId);
+    });
+    msgInput.addEventListener("blur", () => stopTyping(userId));
     msgInput.addEventListener("focus", () => setTimeout(setVH, 300));
 
     actionBtn.addEventListener("click", () => {
@@ -440,6 +445,7 @@
         const content = msgInput.value;
         msgInput.value = "";
         updateActionBtn();
+        stopTyping(userId);
         sendMessagePayload({ content });
       } else {
         startRecording();
@@ -688,7 +694,10 @@
     pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
     presenceTimer = setInterval(refreshPresence, getPollInterval(POLL_INTERVAL));
     window.addEventListener("langchange", refreshPresence);
-    window.addEventListener("pagehide", stopPresenceHeartbeat);
+    window.addEventListener("pagehide", () => {
+      stopTyping(userId);
+      stopPresenceHeartbeat();
+    });
   }
 </script>
 </body>

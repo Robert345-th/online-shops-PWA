@@ -4,9 +4,12 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ONLINE_MS = 90 * 1000;
+const TYPING_MS = 5000;
 
 /** @type {Map<string, { lastSeen: number, showOnline?: boolean, showLastSeen?: boolean }>} */
 const presenceStore = new Map();
+/** @type {Map<string, { at: number }>} */
+const typingStore = new Map();
 
 function getUserIdFromToken(authHeader) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
@@ -53,12 +56,33 @@ app.post("/api/presence/heartbeat", (req, res) => {
   res.json({ ok: true });
 });
 
+app.post("/api/presence/typing", (req, res) => {
+  const fromId = getUserIdFromToken(req.headers.authorization);
+  if (!fromId) return res.status(401).json({ error: "Unauthorized" });
+  const targetId = req.body.target_user_id;
+  if (!targetId) return res.status(400).json({ error: "target_user_id required" });
+  const key = `${fromId}:${targetId}`;
+  if (req.body.typing === false) {
+    typingStore.delete(key);
+  } else {
+    typingStore.set(key, { at: Date.now() });
+  }
+  res.json({ ok: true });
+});
+
 app.get("/api/presence/batch", (req, res) => {
+  const viewerId = getUserIdFromToken(req.headers.authorization);
   const ids = String(req.query.ids || "").split(",").filter(Boolean);
+  const includeTyping = req.query.include_typing === "1";
   const now = Date.now();
   const result = {};
   ids.forEach((id) => {
-    result[id] = presencePayload(presenceStore.get(String(id)), now);
+    const payload = presencePayload(presenceStore.get(String(id)), now);
+    if (includeTyping && viewerId) {
+      const typingEntry = typingStore.get(`${id}:${viewerId}`);
+      payload.typing = !!(typingEntry && now - typingEntry.at < TYPING_MS);
+    }
+    result[id] = payload;
   });
   res.json(result);
 });

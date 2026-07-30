@@ -60,11 +60,14 @@
     }
   }
 
-  async function fetchPresenceMap(userIds) {
+  async function fetchPresenceMap(userIds, options) {
     const ids = [...new Set((userIds || []).filter(Boolean))];
     if (!ids.length) return {};
+    const opts = options || {};
+    const params = new URLSearchParams({ ids: ids.join(",") });
+    if (opts.includeTyping) params.set("include_typing", "1");
     try {
-      const res = await fetch(`/api/presence/batch?ids=${ids.join(",")}`, {
+      const res = await fetch(`/api/presence/batch?${params}`, {
         headers: authHeaders(),
       });
       if (!res.ok) return {};
@@ -72,6 +75,42 @@
     } catch (e) {
       return {};
     }
+  }
+
+  let typingPingTimer = null;
+  let typingStopTimer = null;
+  let typingTargetId = null;
+
+  async function sendTypingState(targetUserId, typing) {
+    if (!getToken() || !targetUserId) return;
+    try {
+      await fetch("/api/presence/typing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ target_user_id: targetUserId, typing }),
+      });
+    } catch (e) {}
+  }
+
+  function notifyTyping(targetUserId) {
+    if (!targetUserId) return;
+    typingTargetId = targetUserId;
+    sendTypingState(targetUserId, true);
+    clearTimeout(typingStopTimer);
+    clearInterval(typingPingTimer);
+    typingPingTimer = setInterval(() => sendTypingState(targetUserId, true), 2000);
+    typingStopTimer = setTimeout(() => stopTyping(targetUserId), 4000);
+  }
+
+  function stopTyping(targetUserId) {
+    const id = targetUserId || typingTargetId;
+    if (!id) return;
+    clearTimeout(typingStopTimer);
+    clearInterval(typingPingTimer);
+    typingPingTimer = null;
+    typingStopTimer = null;
+    sendTypingState(id, false);
+    if (typingTargetId === id) typingTargetId = null;
   }
 
   function formatLastSeenTime(iso) {
@@ -94,6 +133,11 @@
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
 
+  function formatChatStatusLabel(data) {
+    if (data?.typing) return typeof t === "function" ? t("status_typing") : "typing...";
+    return formatPresenceLabel(data);
+  }
+
   function formatPresenceLabel(data) {
     if (!data || data.hidden) return "";
     if (data.online) return typeof t === "function" ? t("status_online") : "online";
@@ -111,12 +155,17 @@
   }
 
   function applyPresenceStatus(statusEl, data) {
+    applyChatStatus(statusEl, data);
+  }
+
+  function applyChatStatus(statusEl, data) {
     if (!statusEl) return;
-    const label = formatPresenceLabel(data);
+    const label = formatChatStatusLabel(data);
     statusEl.textContent = label;
     statusEl.style.display = label ? "block" : "none";
-    statusEl.classList.toggle("online", !!(data && data.online));
-    statusEl.classList.toggle("offline", !(data && data.online));
+    statusEl.classList.toggle("typing", !!(data && data.typing));
+    statusEl.classList.toggle("online", !!(data && data.online && !data.typing));
+    statusEl.classList.toggle("offline", !(data && (data.online || data.typing)));
   }
 
   async function loadPresenceSettingsFromServer() {
@@ -161,6 +210,10 @@
   window.formatLastSeenTime = formatLastSeenTime;
   window.applyPresenceDot = applyPresenceDot;
   window.applyPresenceStatus = applyPresenceStatus;
+  window.applyChatStatus = applyChatStatus;
+  window.formatChatStatusLabel = formatChatStatusLabel;
+  window.notifyTyping = notifyTyping;
+  window.stopTyping = stopTyping;
   window.loadPresenceSettingsFromServer = loadPresenceSettingsFromServer;
   window.savePresenceSettings = savePresenceSettings;
 })();

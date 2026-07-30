@@ -65,6 +65,7 @@
   .row-info { flex: 1; min-width: 0; }
   .row-name { font-size: 14px; font-weight: 700; }
   .row-preview { font-size: 12px; color: var(--subtext); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-preview.typing { color: #4CAF50; font-style: italic; font-weight: 600; }
   .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
   .row-time { font-size: 10px; color: var(--subtext); }
   .unread-badge {
@@ -101,6 +102,7 @@
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
   let conversationsCache = [];
   let listPollTimer = null;
+  const previewCache = new Map();
 
   function formatTime(dateString) {
     const date = new Date(dateString);
@@ -153,6 +155,7 @@
     let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
     if (conv.last_photo_url) preview = "📷 Photo";
     if (conv.last_audio_url) preview = "🎤 Voice note";
+    previewCache.set(conv.other_user_id, preview);
 
     return `
       <div class="row" id="convrow-${conv.other_user_id}">
@@ -162,7 +165,7 @@
         </div>
         <div class="row-info">
           <div class="row-name">${conv.other_user_name}</div>
-          <div class="row-preview">${preview}</div>
+          <div class="row-preview" id="preview-${conv.other_user_id}">${preview}</div>
         </div>
         <div class="row-side">
           <div class="row-time">${formatTime(conv.last_sent_at)}</div>
@@ -173,9 +176,19 @@
 
   async function applyListPresence(conversations) {
     const ids = conversations.map((c) => c.other_user_id);
-    const map = await fetchPresenceMap(ids);
+    const map = await fetchPresenceMap(ids, { includeTyping: true });
     conversations.forEach((conv) => {
-      applyPresenceDot(document.getElementById(`dot-${conv.other_user_id}`), map[conv.other_user_id]);
+      const id = conv.other_user_id;
+      const data = map[id];
+      applyPresenceDot(document.getElementById(`dot-${id}`), data);
+      const previewEl = document.getElementById(`preview-${id}`);
+      if (previewEl && data?.typing) {
+        previewEl.textContent = typeof t === "function" ? t("status_typing") : "typing...";
+        previewEl.classList.add("typing");
+      } else if (previewEl) {
+        previewEl.textContent = previewCache.get(id) || previewEl.textContent;
+        previewEl.classList.remove("typing");
+      }
     });
   }
 
@@ -194,7 +207,7 @@
     loadConversations();
     listPollTimer = setInterval(async () => {
       if (conversationsCache.length) await applyListPresence(conversationsCache);
-    }, 15000);
+    }, 3000);
     window.addEventListener("pagehide", stopPresenceHeartbeat);
   } else {
     loadConversations();
