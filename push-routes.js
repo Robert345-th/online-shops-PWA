@@ -130,7 +130,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
       body: "Message notifications are working!",
       url: "/chat-list.html",
       tag: "push-test",
-      icon: "https://www.zedmarket.app/icon-192.png",
+      icon: "https://zedmarket.app/icon-192.png",
     });
     res.json({ ok: true, user_id: String(userId), ...result });
   });
@@ -170,7 +170,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
       body: preview,
       url: chatUrl,
       tag: `chat-${senderId}`,
-      icon: "https://www.zedmarket.app/icon-192.png",
+      icon: "https://zedmarket.app/icon-192.png",
     });
     res.json({ ok: true, ...result });
   });
@@ -187,7 +187,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
       body: body || "",
       url: url || "/chat-list.html",
       tag: tag || `zedmarket-${user_id}`,
-      icon: "https://www.zedmarket.app/icon-192.png",
+      icon: "https://zedmarket.app/icon-192.png",
     });
     res.json({ ok: true, ...result });
   });
@@ -203,7 +203,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
       body: body || "",
       url: url || "/",
       tag: tag || "zedmarket-broadcast",
-      icon: "https://www.zedmarket.app/icon-192.png",
+      icon: "https://zedmarket.app/icon-192.png",
     });
     res.json({ ok: true, ...result });
   });

@@ -139,7 +139,7 @@
       "box-shadow:0 4px 20px rgba(0,0,0,0.25)",
     ].join(";");
     banner.innerHTML = `
-      <img src="https://www.zedmarket.app/icon-192.png" alt="" width="40" height="40" style="border-radius:10px;flex-shrink:0;" />
+      <img src="https://zedmarket.app/icon-192.png" alt="" width="40" height="40" style="border-radius:10px;flex-shrink:0;" />
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="${androidNeedsChrome ? "install_android_banner_text" : "install_banner_text"}">Install ZedMarket on your home screen</div>
         <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${androidNeedsChrome ? "install_android_banner_sub" : "install_banner_sub"}">${androidNeedsChrome ? "Open in Chrome first — then tap Install app" : "Two taps in Safari — no App Store needed"}</div>

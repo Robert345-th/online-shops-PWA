@@ -50,7 +50,7 @@
       install_page_step_chrome: "Open the Chrome app",
       install_page_step_paste: "Paste the link in the address bar, then tap Install App",
       install_page_copy_btn: "Copy link",
-      install_page_copied: "Link copied! Open Chrome and paste www.zedmarket.app in the address bar.",
+      install_page_copied: "Link copied! Open Chrome and paste zedmarket.app in the address bar.",
       install_page_ready_sub: "You're in a browser that can install ZedMarket.",
       install_page_browse: "Just browse the website →",
       section_chat: "Chat",

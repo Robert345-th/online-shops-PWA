@@ -28,7 +28,7 @@ self.addEventListener('push', (event) => {
     title: 'ZedMarket',
     body: '',
     url: '/chat-list.html',
-    icon: 'https://www.zedmarket.app/icon-192.png',
+    icon: 'https://zedmarket.app/icon-192.png',
     tag: 'zedmarket',
   };
   try {

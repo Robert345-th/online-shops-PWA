@@ -44,6 +44,13 @@ function presencePayload(entry, now) {
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+  if (req.hostname === "www.zedmarket.app") {
+    return res.redirect(301, `https://zedmarket.app${req.originalUrl}`);
+  }
+  next();
+});
+
 app.post("/api/presence/heartbeat", (req, res) => {
   const userId = getUserIdFromToken(req.headers.authorization);
   if (!userId) return res.status(401).json({ error: "Unauthorized" });

@@ -1,6 +1,6 @@
 (function () {
   const PUSH_ENABLED_KEY = "zm_push_enabled";
-  const ICON_URL = "https://www.zedmarket.app/icon-192.png";
+  const ICON_URL = "https://zedmarket.app/icon-192.png";
 
   function getToken() {
     return localStorage.getItem("zm_token");
