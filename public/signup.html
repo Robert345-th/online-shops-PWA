@@ -18,24 +18,30 @@
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #111111; --subtext: #5C5955; --black: #111111;
     --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27; --btn-disabled: #D6A3A6;
+    --orange: #FF7A1A;
   }
   body.dark {
     --bg: #121212; --card: #1E1E1E; --border: #333333;
     --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
-    --thumb-bg: #2A2A2A;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
   .content { min-height: 100vh; padding: 24px; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; }
   .title { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
-  .subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 32px; }
+  .subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 24px; }
+  .step-row { display: flex; gap: 8px; margin-bottom: 28px; }
+  .step-dot {
+    flex: 1; height: 4px; border-radius: 2px; background: var(--border);
+  }
+  .step-dot.active { background: var(--orange); }
+  .step-dot.done { background: var(--gold); }
   .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
-  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; }
+  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; color: var(--text); }
   .phone-row { display: flex; margin-bottom: 6px; gap: 8px; }
   .phone-prefix { background: var(--black); border-radius: 10px; padding: 0 12px; display: flex; align-items: center; }
   .phone-prefix span { color: var(--gold); font-weight: 700; font-size: 13px; white-space: nowrap; }
-  .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .phone-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; color: var(--text); }
   .phone-hint { font-size: 11.5px; color: var(--subtext); margin-bottom: 18px; }
   .phone-hint b { color: var(--text); }
 
@@ -44,25 +50,33 @@
   .checkbox.checked { background: var(--red-btn); border-color: var(--red-btn); }
   .checkbox-label { font-size: 12px; color: var(--subtext); flex: 1; }
 
-  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+  .loc-button {
+    width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px;
+    padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px;
+    cursor: pointer; margin-bottom: 8px;
+  }
+  .loc-hint { font-size: 12px; color: var(--subtext); margin-bottom: 16px; line-height: 1.4; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .submit-btn {
+    flex: 1; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px;
+    color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
   .submit-btn:disabled { background: var(--btn-disabled); cursor: not-allowed; }
+  .back-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 18px;
+    color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer;
+  }
   .link { display: block; text-align: center; color: var(--price-red); margin-top: 20px; font-size: 13px; text-decoration: none; }
 
-  /* Styled inline banners, replacing the browser's native alert() popups */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+
   .form-banner {
-    display: none;
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    line-height: 1.4;
+    display: none; border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600;
+    margin-bottom: 16px; line-height: 1.4;
   }
-  .form-banner.error {
-    background: #FBE7E8;
-    color: var(--price-red);
-    border: 1px solid #F0C1C4;
-  }
+  .form-banner.error { background: #FBE7E8; color: var(--price-red); border: 1px solid #F0C1C4; }
   .form-banner.show { display: block; }
 </style>
 </head>
@@ -76,57 +90,86 @@
 </script>
 <div class="content">
   <div class="title">Create Account</div>
-  <div class="subtitle">Join ZedMarket</div>
+  <div class="subtitle" id="stepSubtitle">Step 1 of 3 — Your details</div>
+
+  <div class="step-row">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
 
   <div class="form-banner error" id="errorBanner"></div>
 
-  <div class="label">Full Name</div>
-  <input class="field-input" id="nameInput" placeholder="e.g. Robert Banda" />
+  <div class="step-panel active" id="step1">
+    <div class="label">Full Name</div>
+    <input class="field-input" id="nameInput" placeholder="e.g. Robert Banda" autocomplete="name" />
 
-  <div class="label">Phone Number</div>
-  <div class="phone-row">
-    <div class="phone-prefix"><span>🇿🇲 +260</span></div>
-    <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" />
-  </div>
-  <div class="phone-hint">Only <b>Airtel</b> allowed</div>
+    <div class="label">Phone Number</div>
+    <div class="phone-row">
+      <div class="phone-prefix"><span>🇿🇲 +260</span></div>
+      <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" autocomplete="tel" />
+    </div>
+    <div class="phone-hint">Only <b>Airtel</b> allowed</div>
 
-  <div class="label">Password</div>
-  <input class="field-input" id="passwordInput" type="password" placeholder="Create a password (8-15 characters)" maxlength="15" />
+    <div class="label">Referral Code (optional)</div>
+    <input class="field-input" id="referralInput" placeholder="Have a friend's code? Enter it here" style="text-transform:uppercase;" />
 
-  <div class="label">Confirm Password</div>
-  <input class="field-input" id="confirmPasswordInput" type="password" placeholder="Re-enter your password" maxlength="15" />
-
-  <div class="checkbox-row" id="showPasswordRow">
-    <div class="checkbox" id="showPasswordBox"></div>
-    <div class="checkbox-label">Show password</div>
+    <button type="button" class="submit-btn" id="next1Btn">Next</button>
   </div>
 
-  <div class="label">Referral Code (optional)</div>
-  <input class="field-input" id="referralInput" placeholder="Have a friend's code? Enter it here" style="text-transform:uppercase;" />
+  <div class="step-panel" id="step2">
+    <div class="label">Password</div>
+    <input class="field-input" id="passwordInput" type="password" placeholder="Create a password (8-15 characters)" maxlength="15" autocomplete="new-password" />
 
-  <div class="checkbox-row" id="ageConfirmRow">
-    <div class="checkbox" id="ageConfirmBox"></div>
-    <div class="checkbox-label">I confirm that I am 18 years of age or older</div>
+    <div class="label">Confirm Password</div>
+    <input class="field-input" id="confirmPasswordInput" type="password" placeholder="Re-enter your password" maxlength="15" autocomplete="new-password" />
+
+    <div class="checkbox-row" id="showPasswordRow">
+      <div class="checkbox" id="showPasswordBox"></div>
+      <div class="checkbox-label">Show password</div>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back2Btn">Back</button>
+      <button type="button" class="submit-btn" id="next2Btn">Next</button>
+    </div>
   </div>
 
-  <button class="submit-btn" id="signupBtn" disabled>Sign Up</button>
+  <div class="step-panel" id="step3">
+    <div class="label">Your Location</div>
+    <div class="loc-hint">This is where your listings will show from. You can change it later when posting.</div>
+    <button type="button" class="loc-button" id="locButton">📍 Use my current location</button>
+    <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
+
+    <div class="checkbox-row" id="ageConfirmRow">
+      <div class="checkbox" id="ageConfirmBox"></div>
+      <div class="checkbox-label">I confirm that I am 18 years of age or older</div>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back3Btn">Back</button>
+      <button type="button" class="submit-btn" id="signupBtn" disabled>Sign Up</button>
+    </div>
+  </div>
 
   <a class="link" href="/login.html">Already have an account? Log in</a>
 </div>
 
+<script src="/js/location.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
 
-  const nameInput = document.getElementById("nameInput");
-  const phoneInput = document.getElementById("phoneInput");
-  const passwordInput = document.getElementById("passwordInput");
-  const confirmPasswordInput = document.getElementById("confirmPasswordInput");
-  const referralInput = document.getElementById("referralInput");
-  const signupBtn = document.getElementById("signupBtn");
-  const errorBanner = document.getElementById("errorBanner");
+  let step = 1;
+  let showPassword = false;
+  let ageConfirmed = false;
+  let gettingLocation = false;
+  let signupCoords = null;
+  let signupLocationLabel = "";
 
-  // Replaces alert() - shows a styled banner above the form instead of the
-  // browser's native popup, and scrolls it into view so it's never missed.
+  const errorBanner = document.getElementById("errorBanner");
+  const stepSubtitle = document.getElementById("stepSubtitle");
+  const signupBtn = document.getElementById("signupBtn");
+
   function showError(message) {
     errorBanner.textContent = message;
     errorBanner.classList.add("show");
@@ -136,45 +179,95 @@
     errorBanner.classList.remove("show");
   }
 
-  let showPassword = false;
-  const showPasswordBox = document.getElementById("showPasswordBox");
-  document.getElementById("showPasswordRow").addEventListener("click", () => {
-    showPassword = !showPassword;
-    showPasswordBox.classList.toggle("checked", showPassword);
-    showPasswordBox.textContent = showPassword ? "✓" : "";
-    passwordInput.type = showPassword ? "text" : "password";
-    confirmPasswordInput.type = showPassword ? "text" : "password";
-  });
-
-  let ageConfirmed = false;
-  const ageConfirmBox = document.getElementById("ageConfirmBox");
-  document.getElementById("ageConfirmRow").addEventListener("click", () => {
-    ageConfirmed = !ageConfirmed;
-    ageConfirmBox.classList.toggle("checked", ageConfirmed);
-    ageConfirmBox.textContent = ageConfirmed ? "✓" : "";
-    signupBtn.disabled = !ageConfirmed;
-  });
-
-  // Only allows Airtel Zambia number ranges: 0573, 0574, 077, 097
-  // (each variant must total 10 digits, e.g. 0573123456, 0771234567)
   function isValidZambianPhone(phone) {
     return /^(0573\d{6}|0574\d{6}|077\d{7}|097\d{7})$/.test(phone);
   }
 
-  signupBtn.addEventListener("click", async () => {
+  function updateStepUI() {
+    [1, 2, 3].forEach((n) => {
+      document.getElementById(`step${n}`).classList.toggle("active", step === n);
+      const dot = document.getElementById(`dot${n}`);
+      dot.classList.toggle("active", step === n);
+      dot.classList.toggle("done", step > n);
+    });
+    const subtitles = {
+      1: "Step 1 of 3 — Your details",
+      2: "Step 2 of 3 — Create a password",
+      3: "Step 3 of 3 — Your location",
+    };
+    stepSubtitle.textContent = subtitles[step];
     clearError();
-    const name = nameInput.value.trim();
-    const phone = phoneInput.value.trim();
-    const password = passwordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
-    const referralCode = referralInput.value.trim();
+  }
 
-    if (!name || !phone || !password || !confirmPassword) {
-      showError("Please fill in all fields.");
+  document.getElementById("showPasswordRow").addEventListener("click", () => {
+    showPassword = !showPassword;
+    const box = document.getElementById("showPasswordBox");
+    box.classList.toggle("checked", showPassword);
+    box.textContent = showPassword ? "✓" : "";
+    document.getElementById("passwordInput").type = showPassword ? "text" : "password";
+    document.getElementById("confirmPasswordInput").type = showPassword ? "text" : "password";
+  });
+
+  document.getElementById("ageConfirmRow").addEventListener("click", () => {
+    ageConfirmed = !ageConfirmed;
+    const box = document.getElementById("ageConfirmBox");
+    box.classList.toggle("checked", ageConfirmed);
+    box.textContent = ageConfirmed ? "✓" : "";
+    signupBtn.disabled = !ageConfirmed;
+  });
+
+  document.getElementById("locationInput").addEventListener("input", (e) => {
+    signupLocationLabel = e.target.value.trim();
+  });
+
+  document.getElementById("locButton").addEventListener("click", async () => {
+    if (gettingLocation) return;
+    gettingLocation = true;
+    const btn = document.getElementById("locButton");
+    btn.textContent = "Getting location…";
+    clearError();
+
+    try {
+      const coords = await requestDeviceCoords(true);
+      signupCoords = coords;
+      signupLocationLabel = await reverseGeocodeLabel(coords.lat, coords.lng);
+      document.getElementById("locationInput").value = signupLocationLabel;
+      btn.textContent = `📍 ${signupLocationLabel}`;
+    } catch {
+      showError("Could not get your location. Type your area below instead.");
+      btn.textContent = "📍 Use my current location";
+    } finally {
+      gettingLocation = false;
+    }
+  });
+
+  document.getElementById("next1Btn").addEventListener("click", () => {
+    clearError();
+    const name = document.getElementById("nameInput").value.trim();
+    const phone = document.getElementById("phoneInput").value.trim();
+    if (!name || !phone) {
+      showError("Please enter your name and phone number.");
       return;
     }
     if (!isValidZambianPhone(phone)) {
       showError("Only Airtel allowed.");
+      return;
+    }
+    step = 2;
+    updateStepUI();
+  });
+
+  document.getElementById("back2Btn").addEventListener("click", () => {
+    step = 1;
+    updateStepUI();
+  });
+
+  document.getElementById("next2Btn").addEventListener("click", () => {
+    clearError();
+    const password = document.getElementById("passwordInput").value;
+    const confirmPassword = document.getElementById("confirmPasswordInput").value;
+    if (!password || !confirmPassword) {
+      showError("Please enter and confirm your password.");
       return;
     }
     if (password.length < 8 || password.length > 15) {
@@ -182,25 +275,67 @@
       return;
     }
     if (password !== confirmPassword) {
-      showError("Passwords don't match. Please make sure both passwords are the same.");
+      showError("Passwords don't match.");
       return;
     }
-    if (!ageConfirmed) {
-      showError("You must confirm you are 18 years or older to create an account.");
+    step = 3;
+    updateStepUI();
+  });
+
+  document.getElementById("back3Btn").addEventListener("click", () => {
+    step = 2;
+    updateStepUI();
+  });
+
+  signupBtn.addEventListener("click", async () => {
+    clearError();
+    const name = document.getElementById("nameInput").value.trim();
+    const phone = document.getElementById("phoneInput").value.trim();
+    const password = document.getElementById("passwordInput").value;
+    const confirmPassword = document.getElementById("confirmPasswordInput").value;
+    const referralCode = document.getElementById("referralInput").value.trim();
+    const manualLocation = document.getElementById("locationInput").value.trim();
+
+    if (!manualLocation && !signupCoords) {
+      showError('Please add your location — tap "Use my current location" or type your area.');
       return;
+    }
+    if (manualLocation && !signupLocationLabel) {
+      signupLocationLabel = manualLocation;
+    }
+    if (!ageConfirmed) {
+      showError("You must confirm you are 18 years or older.");
+      return;
+    }
+
+    if (signupCoords && isValidCoords(signupCoords)) {
+      localStorage.setItem("zm_home_location", JSON.stringify(signupCoords));
+    }
+    if (signupLocationLabel) {
+      localStorage.setItem("zm_user_location_label", signupLocationLabel);
     }
 
     signupBtn.disabled = true;
     signupBtn.textContent = "Creating account…";
 
     try {
+      const body = {
+        name,
+        phone,
+        password,
+        confirmPassword,
+        referral_code: referralCode || undefined,
+      };
+      if (signupLocationLabel) body.location_label = signupLocationLabel;
+      if (signupCoords && isValidCoords(signupCoords)) {
+        body.latitude = signupCoords.lat;
+        body.longitude = signupCoords.lng;
+      }
+
       const res = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name, phone, password, confirmPassword,
-          referral_code: referralCode || undefined
-        })
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
@@ -210,7 +345,7 @@
       }
 
       window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
-    } catch (e) {
+    } catch {
       showError("Could not connect to the server.");
     } finally {
       signupBtn.disabled = !ageConfirmed;

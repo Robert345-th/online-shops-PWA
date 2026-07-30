@@ -97,6 +97,22 @@
   let locationLabel = "";
   let gettingLocation = false;
 
+  function loadSavedListingLocation() {
+    try {
+      const raw = localStorage.getItem("zm_home_location");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (isValidCoords(parsed)) coords = parsed;
+      }
+      const savedLabel = localStorage.getItem("zm_user_location_label");
+      if (savedLabel) locationLabel = savedLabel;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  loadSavedListingLocation();
+
   function selectedCategory() {
     return CATEGORY_OPTIONS.find(c => c.id === categoryId)?.label;
   }
@@ -174,6 +190,13 @@
       locationLabel = e.target.value.trim();
     });
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+
+    if (locationLabel) {
+      const locInput = document.getElementById("locationInput");
+      if (locInput) locInput.value = locationLabel;
+      const locBtn = document.getElementById("locButton");
+      if (locBtn && coords) locBtn.textContent = `📍 ${locationLabel}`;
+    }
   }
 
   function updateConditionChips() {
