@@ -81,11 +81,7 @@
   }
 
   function redirectToChrome() {
-    if (typeof window.openInChrome === "function") {
-      window.openInChrome();
-      return;
-    }
-    window.location.replace(buildChromeIntentUrl());
+    window.location.href = buildChromeIntentUrl();
   }
 
   async function promptPwaInstall() {
