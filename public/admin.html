@@ -333,7 +333,7 @@
         shopApps.map(s => `
           <div class="card">
             <div class="card-name">${s.shop_name || s.name}</div>
-            <div class="card-sub">${s.name} · ${s.phone}</div>
+            <div class="card-sub">${s.name} · ${s.phone}${s.date_of_birth ? ` · DOB: ${s.date_of_birth}` : ""}</div>
             <div class="card-detail" style="margin-top:8px;font-weight:700;">Selfie</div>
             <img class="doc-image" src="${s.selfie_photo_url}" />
             <div class="card-actions">

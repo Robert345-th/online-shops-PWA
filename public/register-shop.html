@@ -95,20 +95,52 @@
   }
 
   function render() {
+    const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+    const defaultName = user?.name || user?.display_name || "";
     content.innerHTML = `
       <div class="step-title">Shop Details</div>
-      <div class="subtitle">Set up your shop to start selling on ZedMarket. It just takes a moment.</div>
+      <div class="subtitle">Set up your shop to start selling on ZedMarket. We need your name and date of birth for verification.</div>
       <div class="form-banner" id="formBanner"></div>
+      <div class="label">Full Name</div>
+      <input class="field-input" id="fullNameInput" placeholder="e.g. Robert Banda" value="${defaultName.replace(/"/g, "&quot;")}" />
+      <div class="label">Date of Birth</div>
+      <input class="field-input" id="dobInput" type="date" max="${new Date().toISOString().slice(0, 10)}" />
       <div class="label">Shop Name (optional)</div>
       <input class="field-input" id="shopNameInput" placeholder="e.g. Robert's Electronics" />
-      <div class="skip-hint">Leave blank to just use your account name — you can add a shop name later anytime.</div>
+      <div class="skip-hint">Leave shop name blank to use your account name — you can add one later anytime.</div>
       <button class="submit-btn" id="submitBtn">Submit for Review</button>
     `;
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   }
 
+  function isValidDateOfBirth(dob) {
+    if (!dob) return false;
+    const birth = new Date(dob + "T00:00:00");
+    if (Number.isNaN(birth.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (birth >= today) return false;
+    const minAgeDate = new Date(today);
+    minAgeDate.setFullYear(minAgeDate.getFullYear() - 18);
+    return birth <= minAgeDate;
+  }
+
   async function handleSubmit() {
+    const fullName = document.getElementById("fullNameInput").value.trim();
+    const dateOfBirth = document.getElementById("dobInput").value;
     const shopName = document.getElementById("shopNameInput").value.trim();
+    if (!fullName) {
+      showError("Please enter your full name.");
+      return;
+    }
+    if (!dateOfBirth) {
+      showError("Please enter your date of birth.");
+      return;
+    }
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      showError("You must be at least 18 years old to register a shop.");
+      return;
+    }
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
     btn.textContent = "Submitting…";
@@ -117,6 +149,8 @@
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
+          name: fullName,
+          date_of_birth: dateOfBirth,
           shop_name: shopName || null
         })
       });

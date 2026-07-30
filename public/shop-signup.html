@@ -68,6 +68,9 @@
   <div class="label">Full Name</div>
   <input class="field-input" id="nameInput" placeholder="e.g. Robert Banda" />
 
+  <div class="label">Date of Birth</div>
+  <input class="field-input" id="dobInput" type="date" max="" />
+
   <div class="label">Phone Number</div>
   <div class="phone-row">
     <div class="phone-prefix"><span>🇿🇲 +260</span></div>
@@ -103,6 +106,8 @@
 
   let nrcPhotoUrl = "";
   let selfiePhotoUrl = "";
+
+  document.getElementById("dobInput").max = new Date().toISOString().slice(0, 10);
 
   function isValidZambianPhone(phone) {
     return /^0(7|9)\d{8}$/.test(phone);
@@ -144,15 +149,32 @@
     }
   }
 
+  function isValidDateOfBirth(dob) {
+    if (!dob) return false;
+    const birth = new Date(dob + "T00:00:00");
+    if (Number.isNaN(birth.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (birth >= today) return false;
+    const minAgeDate = new Date(today);
+    minAgeDate.setFullYear(minAgeDate.getFullYear() - 18);
+    return birth <= minAgeDate;
+  }
+
   document.getElementById("submitBtn").addEventListener("click", async () => {
     const name = document.getElementById("nameInput").value.trim();
+    const dateOfBirth = document.getElementById("dobInput").value;
     const phone = document.getElementById("phoneInput").value.trim();
     const password = document.getElementById("passwordInput").value;
     const confirmPassword = document.getElementById("confirmPasswordInput").value;
     const nrcNumber = document.getElementById("nrcNumberInput").value.trim();
 
-    if (!name || !phone || !password || !confirmPassword || !nrcNumber) {
+    if (!name || !dateOfBirth || !phone || !password || !confirmPassword || !nrcNumber) {
       alert("Please fill in all fields.");
+      return;
+    }
+    if (!isValidDateOfBirth(dateOfBirth)) {
+      alert("Please enter a valid date of birth. You must be at least 18 years old.");
       return;
     }
     if (!isValidZambianPhone(phone)) {
@@ -185,7 +207,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name, phone, password, confirmPassword,
+          name, date_of_birth: dateOfBirth, phone, password, confirmPassword,
           nrc_number: nrcNumber,
           nrc_photo_url: nrcPhotoUrl,
           selfie_photo_url: selfiePhotoUrl
