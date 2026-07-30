@@ -18,16 +18,6 @@
     return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   }
 
-  function isStandalonePwa() {
-    return window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
-  }
-
-  function getPwaPushHint() {
-    if (!isStandalonePwa()) return "";
-    return "Also check Phone Settings → Apps → ZedMarket → Notifications → ON, and set Battery to Unrestricted.";
-  }
-
   function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -103,19 +93,6 @@
     setPushEnabled(false);
   }
 
-  async function sendTestPush() {
-    const token = getToken();
-    if (!token) throw new Error("not_logged_in");
-    const res = await fetch("/api/push/test-self", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("test_failed");
-    const data = await res.json();
-    if (!data.sent) throw new Error("not_registered");
-    return data;
-  }
-
   async function enablePushNotifications() {
     if (!isPushSupported()) throw new Error("unsupported");
 
@@ -126,7 +103,6 @@
     if (permission !== "granted") throw new Error("denied");
 
     await subscribeToPush();
-    await sendTestPush();
     return true;
   }
 
@@ -278,8 +254,6 @@
   }
 
   window.isPushSupported = isPushSupported;
-  window.isStandalonePwa = isStandalonePwa;
-  window.getPwaPushHint = getPwaPushHint;
   window.isPushEnabled = isPushEnabled;
   window.setPushEnabled = setPushEnabled;
   window.enablePushNotifications = enablePushNotifications;
