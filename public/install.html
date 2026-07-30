@@ -128,15 +128,18 @@
 <script src="/js/pwa-install.js"></script>
 <script>
   const SITE_URL = "https://www.zedmarket.app/install.html";
+  let installPromptReady = false;
 
-  function isEmbedded() {
-    return typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser();
-  }
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installPromptReady = true;
+    refreshLayout();
+  });
 
   function refreshLayout() {
-    const embedded = isEmbedded();
-    document.getElementById("embeddedBox").style.display = embedded ? "block" : "none";
-    document.getElementById("browserBox").style.display = embedded ? "none" : "block";
+    const canInstallHere = installPromptReady;
+    document.getElementById("embeddedBox").style.display = canInstallHere ? "none" : "block";
+    document.getElementById("browserBox").style.display = canInstallHere ? "block" : "none";
     applyTranslations(document.body);
   }
 

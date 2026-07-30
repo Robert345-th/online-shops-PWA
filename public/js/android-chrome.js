@@ -32,6 +32,7 @@
   function isEmbeddedBrowser() {
     if (isStandalone()) return false;
     if (isInAppBrowser()) return true;
+    if (/[?&]fbclid=/i.test(location.search)) return true;
     const ref = document.referrer || "";
     if (/facebook\.com|instagram\.com|fb\.me|messenger\.com|twitter\.com|t\.co|linkedin\.com|whatsapp\.com/i.test(ref)) {
       return true;
