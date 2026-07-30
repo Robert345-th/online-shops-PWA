@@ -89,7 +89,7 @@
   }
 
   async function promptPwaInstall() {
-    if (typeof window.isInAppBrowser === "function" && window.isInAppBrowser()) {
+    if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) {
       if (typeof window.showInAppBrowserGuide === "function") {
         window.showInAppBrowserGuide();
         return;
@@ -114,7 +114,7 @@
 
   function showInstallBanner() {
     if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1") return;
-    if (typeof window.isInAppBrowser === "function" && window.isInAppBrowser()) return;
+    if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) return;
     if (document.getElementById("pwaInstallBanner")) return;
 
     const ios = isIOS();

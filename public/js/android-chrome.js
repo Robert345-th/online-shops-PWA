@@ -28,6 +28,17 @@
     return /FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|LinkedInApp|Snapchat/i.test(navigator.userAgent);
   }
 
+  function isEmbeddedBrowser() {
+    if (isStandalone()) return false;
+    if (isInAppBrowser()) return true;
+    const ref = document.referrer || "";
+    if (/facebook\.com|instagram\.com|fb\.me|messenger\.com|twitter\.com|t\.co|linkedin\.com|whatsapp\.com/i.test(ref)) {
+      return true;
+    }
+    if (isAndroid() && /;\s*wv\)|\bwv\b/i.test(navigator.userAgent)) return true;
+    return false;
+  }
+
   function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   }
@@ -111,10 +122,10 @@
       body.setAttribute("data-i18n", "inapp_install_android");
       body.textContent = t(
         "inapp_install_android",
-        'Tap the menu (⋮) at the top right of Facebook and choose "Open in Chrome" or "Open in browser". Then tap Install App on ZedMarket.'
+        'Tap the menu (⋮) at the top right and choose "Open in Chrome browser". If you see "Open ZedMarket", the app is already installed — tap that. Otherwise tap Install App on the home page.'
       );
       openBtn.setAttribute("data-i18n", "inapp_open_browser_btn");
-      openBtn.textContent = t("inapp_open_browser_btn", "Open in Chrome");
+      openBtn.textContent = t("inapp_open_browser_btn", "Open in Chrome browser");
     }
 
     if (typeof applyTranslations === "function") {
@@ -169,6 +180,10 @@
   }
 
   function openInChrome() {
+    if (isEmbeddedBrowser()) {
+      showInAppBrowserGuide();
+      return;
+    }
     const httpsUrl = getHttpsUrl();
     const intentUrl = buildChromeIntentUrl();
 
@@ -190,7 +205,7 @@
 
   function maybeRedirectToChrome() {
     if (isStandalone()) return;
-    if (isInAppBrowser()) {
+    if (isEmbeddedBrowser()) {
       showInAppBrowserGuide();
       return;
     }
@@ -207,6 +222,7 @@
   window.buildChromeIntentUrl = buildChromeIntentUrl;
   window.isAndroidChrome = isAndroidChrome;
   window.isInAppBrowser = isInAppBrowser;
+  window.isEmbeddedBrowser = isEmbeddedBrowser;
   window.needsChromeOnAndroid = needsChromeOnAndroid;
   window.showInAppBrowserGuide = showInAppBrowserGuide;
 
