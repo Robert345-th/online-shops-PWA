@@ -121,6 +121,14 @@ app.put("/api/presence/settings", (req, res) => {
 
 registerPushRoutes(app, getUserIdFromToken);
 
+app.get("/zedmarket.apk", (req, res, next) => {
+  const apkPath = path.join(__dirname, "public", "zedmarket.apk");
+  res.type("application/vnd.android.package-archive");
+  res.download(apkPath, "ZedMarket.apk", (err) => {
+    if (err && !res.headersSent) next();
+  });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {

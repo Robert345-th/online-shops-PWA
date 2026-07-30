@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="/js/android-chrome.js"></script>
+<script src="/js/app-touch.js"></script>
+<title>Download ZedMarket App</title>
+<meta name="description" content="Download the free ZedMarket Android app — Zambia's local marketplace." />
+<meta property="og:title" content="Download ZedMarket App" />
+<meta property="og:description" content="Get ZedMarket on your Android phone. Buy and sell locally in Zambia." />
+<meta property="og:url" content="https://zedmarket.app/download.html" />
+<meta property="og:image" content="https://zedmarket.app/icon-512.png" />
+<meta name="theme-color" content="#111111" />
+<link rel="icon" type="image/png" href="https://zedmarket.app/icon-192.png" />
+<link rel="apple-touch-icon" href="https://zedmarket.app/icon-192.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --black: #111111; --gold: #F5C518;
+    --orange: #F97316;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  .hero { text-align: center; margin-bottom: 20px; }
+  .hero img { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .hero h1 { font-size: 22px; font-weight: 800; line-height: 1.25; margin-bottom: 8px; }
+  .hero p { font-size: 14px; color: var(--subtext); line-height: 1.5; }
+
+  .download-btn {
+    display: block; width: 100%; border: none; border-radius: 12px; padding: 16px;
+    background: var(--gold); color: var(--black); font-weight: 800; font-size: 15px;
+    letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; margin: 18px 0 10px;
+    text-decoration: none; text-align: center;
+  }
+  .download-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .download-btn.ready { background: var(--gold); }
+  .size-note { text-align: center; font-size: 12px; color: var(--subtext); margin-bottom: 18px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 15px; font-weight: 800; margin-bottom: 10px; }
+  .card p, .card li { font-size: 14px; line-height: 1.55; color: var(--subtext); }
+  .card ul { padding-left: 18px; margin-top: 8px; }
+  .card li { margin-bottom: 8px; color: var(--text); }
+  .card li:last-child { margin-bottom: 0; }
+
+  .step { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+  .step:last-child { margin-bottom: 0; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 8px; background: var(--black); color: var(--gold);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0;
+  }
+  .step-text { font-size: 14px; line-height: 1.5; padding-top: 2px; }
+
+  .warn {
+    background: #FFF8E7; border: 1px solid #F0D890; border-radius: 12px;
+    padding: 12px 14px; font-size: 13px; line-height: 1.45; color: #6B5500; margin-bottom: 14px;
+  }
+
+  .alt-link {
+    display: block; text-align: center; color: #A3131C; font-size: 13px; font-weight: 700;
+    text-decoration: none; margin-top: 8px;
+  }
+  .alt-link:hover { text-decoration: underline; }
+
+  #iosBox { display: none; }
+</style>
+</head>
+<body>
+<script>
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    window.location.replace("/index.html");
+  }
+</script>
+
+<div class="wrap">
+  <div class="hero">
+    <img src="https://zedmarket.app/icon-192.png" alt="ZedMarket" />
+    <h1 data-i18n="download_hero_title">The ZedMarket experience, now in your pocket</h1>
+    <p data-i18n="download_hero_sub">Got an Android phone? Download the free ZedMarket app to buy and sell locally in Zambia.</p>
+  </div>
+
+  <div id="androidBox">
+    <a class="download-btn" id="downloadBtn" href="/zedmarket.apk" download="ZedMarket.apk" data-i18n="download_btn">Download App</a>
+    <div class="size-note" id="sizeNote" data-i18n="download_size">Small download · installs in seconds</div>
+
+    <div class="warn" data-i18n="download_warn">
+      Your phone may show a security check (like betPawa). That is normal for apps not from Play Store yet. Tap Open or Allow when asked.
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="download_why_title">Why get the app?</h2>
+      <ul>
+        <li data-i18n="download_why_1">Opens straight to ZedMarket — no browser bar</li>
+        <li data-i18n="download_why_2">Get notifications for messages and deals</li>
+        <li data-i18n="download_why_3">Works like a normal app on your home screen</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="download_how_title">How to install</h2>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text" data-i18n="download_step_1">Tap <strong>Download App</strong> above</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text" data-i18n="download_step_2">When download finishes, tap <strong>Open</strong> or open the file from your notifications</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text" data-i18n="download_step_3">If asked, allow install from Chrome (or your browser) — then tap <strong>Install</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text" data-i18n="download_step_4">Open ZedMarket from your home screen</div>
+      </div>
+    </div>
+
+    <a class="alt-link" href="/install.html" data-i18n="download_chrome_alt">Prefer Chrome install instead? →</a>
+  </div>
+
+  <div id="iosBox">
+    <div class="card">
+      <h2 data-i18n="download_ios_title">iPhone users</h2>
+      <p data-i18n="download_ios_body">APK is for Android only. On iPhone, open zedmarket.app in Safari and tap Share → Add to Home Screen.</p>
+    </div>
+    <a class="alt-link" href="/install.html" data-i18n="download_ios_link">Go to install instructions →</a>
+  </div>
+
+  <a class="alt-link" href="/index.html" style="margin-top:20px;" data-i18n="install_page_browse">Just browse the website →</a>
+</div>
+
+<script src="/js/lang.js"></script>
+<script>
+  const APK_URL = "/zedmarket.apk";
+  const downloadBtn = document.getElementById("downloadBtn");
+  const androidBox = document.getElementById("androidBox");
+  const iosBox = document.getElementById("iosBox");
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    androidBox.style.display = "none";
+    iosBox.style.display = "block";
+  }
+
+  async function checkApk() {
+    try {
+      const res = await fetch(APK_URL, { method: "HEAD" });
+      if (!res.ok) {
+        downloadBtn.removeAttribute("href");
+        downloadBtn.removeAttribute("download");
+        downloadBtn.style.pointerEvents = "none";
+        downloadBtn.textContent = t("download_coming_soon", "Coming soon");
+        document.getElementById("sizeNote").textContent = t("download_coming_sub", "Play Store version coming after Google verification.");
+        return;
+      }
+      const size = res.headers.get("content-length");
+      if (size) {
+        const mb = (parseInt(size, 10) / (1024 * 1024)).toFixed(1);
+        document.getElementById("sizeNote").textContent = t("download_size_mb", "Download size: {size} MB").replace("{size}", mb);
+      }
+    } catch {
+      downloadBtn.removeAttribute("href");
+      downloadBtn.style.pointerEvents = "none";
+      downloadBtn.textContent = t("download_coming_soon", "Coming soon");
+    }
+  }
+
+  applyTranslations(document.body);
+  checkApk();
+</script>
+</body>
+</html>

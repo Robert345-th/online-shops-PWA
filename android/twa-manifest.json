@@ -1,0 +1,40 @@
+{
+  "packageId": "app.zedmarket.twa",
+  "host": "zedmarket.app",
+  "name": "ZedMarket",
+  "launcherName": "ZedMarket",
+  "display": "standalone",
+  "themeColor": "#111111",
+  "themeColorDark": "#111111",
+  "navigationColor": "#111111",
+  "navigationColorDark": "#111111",
+  "navigationDividerColor": "#111111",
+  "navigationDividerColorDark": "#111111",
+  "backgroundColor": "#111111",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://zedmarket.app/icon-512.png",
+  "maskableIconUrl": "https://zedmarket.app/icon-512-maskable.png",
+  "monochromeIconUrl": "https://zedmarket.app/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "zedmarket"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://zedmarket.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": []
+}

@@ -2,6 +2,7 @@
   const REDIRECT_KEY = "zm_chrome_redirect";
   const NO_AUTO_REDIRECT = [
     "/install.html",
+    "/download.html",
     "/login.html",
     "/signup.html",
     "/verify-otp.html",

@@ -1,0 +1,11 @@
+{
+  "name": "zedmarket-android",
+  "private": true,
+  "scripts": {
+    "build": "bubblewrap build && node copy-apk.js",
+    "fingerprint": "bubblewrap fingerprint list"
+  },
+  "devDependencies": {
+    "@bubblewrap/cli": "^1.22.0"
+  }
+}
