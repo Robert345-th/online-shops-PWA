@@ -24,7 +24,7 @@
   body {
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
     background: var(--bg); color: var(--text);
-    min-height: 100vh; padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+    min-height: 100vh; padding: 20px 16px calc(72px + env(safe-area-inset-bottom));
   }
   .wrap { max-width: 520px; margin: 0 auto; }
   .hero { text-align: center; margin-bottom: 20px; }
@@ -72,6 +72,20 @@
   .alt-link:hover { text-decoration: underline; }
 
   #iosBox { display: none; }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border);
+    display: flex; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .nav-item {
+    flex: 1; text-align: center; text-decoration: none; color: var(--subtext);
+    font-size: 11px; padding: 4px 0;
+  }
+  .nav-item.active { color: var(--black); font-weight: 700; }
+  .nav-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+  .nav-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 </head>
 <body>
@@ -137,6 +151,12 @@
   </div>
 
   <a class="alt-link" href="/index.html" style="margin-top:20px;" data-i18n="install_page_browse">Just browse the website →</a>
+</div>
+
+<div class="bottom-nav">
+  <a href="/index.html" class="nav-item"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></div><div data-i18n="home">Home</div></a>
+  <a href="/my-shop.html" class="nav-item"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div data-i18n="my_shop">My Shop</div></a>
+  <a href="/download.html" class="nav-item active"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></div><div data-i18n="nav_download">Download</div></a>
 </div>
 
 <script src="/js/lang.js"></script>
