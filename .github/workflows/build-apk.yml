@@ -27,6 +27,11 @@ jobs:
         working-directory: android
         run: npm install
 
+      - name: Configure Bubblewrap paths
+        working-directory: android
+        run: |
+          npx bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="$ANDROID_HOME"
+
       - name: Create signing keystore
         working-directory: android
         env:
@@ -45,7 +50,7 @@ jobs:
 
       - name: Sync TWA project
         working-directory: android
-        run: echo "n" | npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation
+        run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation
 
       - name: Build signed APK
         working-directory: android
