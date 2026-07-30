@@ -1,4 +1,5 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const { registerPushRoutes } = require("./push-routes");
 
@@ -119,14 +120,35 @@ app.put("/api/presence/settings", (req, res) => {
   });
 });
 
+const MIN_APK_BYTES = 500_000;
+
+function getApkPath() {
+  return path.join(__dirname, "public", "zedmarket.apk");
+}
+
+function apkIsReady() {
+  try {
+    const apkPath = getApkPath();
+    return fs.existsSync(apkPath) && fs.statSync(apkPath).size >= MIN_APK_BYTES;
+  } catch {
+    return false;
+  }
+}
+
 registerPushRoutes(app, getUserIdFromToken);
 
-app.get("/zedmarket.apk", (req, res, next) => {
-  const apkPath = path.join(__dirname, "public", "zedmarket.apk");
-  res.type("application/vnd.android.package-archive");
-  res.download(apkPath, "ZedMarket.apk", (err) => {
-    if (err && !res.headersSent) next();
-  });
+app.head("/zedmarket.apk", (req, res) => {
+  if (!apkIsReady()) return res.status(404).end();
+  res.setHeader("Content-Type", "application/vnd.android.package-archive");
+  res.setHeader("Content-Length", String(fs.statSync(getApkPath()).size));
+  res.end();
+});
+
+app.get("/zedmarket.apk", (req, res) => {
+  if (!apkIsReady()) {
+    return res.status(404).json({ error: "APK not available yet. Use Chrome install or try again later." });
+  }
+  res.download(getApkPath(), "ZedMarket.apk");
 });
 
 app.use(express.static(path.join(__dirname, "public")));
