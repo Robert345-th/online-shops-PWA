@@ -67,7 +67,17 @@
   }
 
   function buildChromeIntentUrl() {
-    return `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+    if (typeof window.buildChromeIntentUrl === "function") {
+      return window.buildChromeIntentUrl();
+    }
+    const httpsUrl = `${location.protocol}//${location.host}${location.pathname}${location.search}`;
+    const pathPart = `${location.host}${location.pathname}${location.search}`;
+    return (
+      `intent://${pathPart}#Intent;` +
+      "scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;" +
+      "package=com.android.chrome;" +
+      `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};end`
+    );
   }
 
   function redirectToChrome() {

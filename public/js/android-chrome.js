@@ -19,6 +19,10 @@
     return window.matchMedia("(display-mode: standalone)").matches;
   }
 
+  function isSamsungBrowser() {
+    return /SamsungBrowser/i.test(navigator.userAgent);
+  }
+
   function isAndroidChrome() {
     const ua = navigator.userAgent;
     if (!isAndroid()) return false;
@@ -42,12 +46,38 @@
     return NO_AUTO_REDIRECT.some((p) => path === p || path.endsWith(p));
   }
 
+  function getHttpsUrl() {
+    return `${location.protocol}//${location.host}${location.pathname}${location.search}`;
+  }
+
   function buildChromeIntentUrl() {
-    return `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+    const httpsUrl = getHttpsUrl();
+    const pathPart = `${location.host}${location.pathname}${location.search}`;
+    return (
+      `intent://${pathPart}#Intent;` +
+      "scheme=https;" +
+      "action=android.intent.action.VIEW;" +
+      "category=android.intent.category.BROWSABLE;" +
+      "package=com.android.chrome;" +
+      `S.browser_fallback_url=${encodeURIComponent(httpsUrl)};` +
+      "end"
+    );
   }
 
   function openInChrome() {
-    window.location.replace(buildChromeIntentUrl());
+    const httpsUrl = getHttpsUrl();
+    const intentUrl = buildChromeIntentUrl();
+
+    // Opens Chrome directly on Samsung — skips the "Open with" chooser
+    if (isSamsungBrowser() || /Samsung/i.test(navigator.userAgent)) {
+      window.location.href = `googlechrome://navigate?url=${encodeURIComponent(httpsUrl)}`;
+      setTimeout(() => {
+        window.location.replace(intentUrl);
+      }, 700);
+      return;
+    }
+
+    window.location.replace(intentUrl);
   }
 
   function needsChromeOnAndroid() {
@@ -65,6 +95,7 @@
   }
 
   window.openInChrome = openInChrome;
+  window.buildChromeIntentUrl = buildChromeIntentUrl;
   window.isAndroidChrome = isAndroidChrome;
   window.needsChromeOnAndroid = needsChromeOnAndroid;
 
