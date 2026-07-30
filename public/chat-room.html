@@ -41,10 +41,18 @@
     border: none; cursor: pointer; color: #fff; font-size: 18px; flex-shrink: 0;
   }
   .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
+  .header-avatar-wrap { position: relative; flex-shrink: 0; }
   .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
   .header-avatar .input-icon { stroke: #fff; }
   .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .online-dot {
+    position: absolute; bottom: -1px; right: -1px; width: 11px; height: 11px;
+    border-radius: 6px; background: #4CAF50; border: 2px solid var(--black); display: none;
+  }
+  .header-text { flex: 1; min-width: 0; }
   .header-name { color: var(--gold); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-status { color: #8BC34A; font-size: 11px; font-weight: 500; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-status.offline { color: #C9BFAF; }
 
   .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
 
@@ -108,8 +116,14 @@
 <div class="topbar">
   <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <button class="header-profile" id="headerProfileBtn">
-    <div class="header-avatar" id="headerAvatar">?</div>
-    <div class="header-name" id="headerName">Chat</div>
+    <div class="header-avatar-wrap">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <span class="online-dot" id="headerOnlineDot"></span>
+    </div>
+    <div class="header-text">
+      <div class="header-name" id="headerName">Chat</div>
+      <div class="header-status" id="headerStatus"></div>
+    </div>
   </button>
   <button class="menu-button" id="menuBtn">⋮</button>
 </div>
@@ -139,6 +153,8 @@
   <div class="menu-box" id="messageActionsBox"></div>
 </div>
 
+<script src="/js/lang.js"></script>
+<script src="/js/presence.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
   function setVH() {
@@ -192,6 +208,7 @@
   let iBlockedThem = false;
   let theyBlockedMe = false;
   let pollTimer = null;
+  let presenceTimer = null;
   let mediaRecorder = null;
   let audioChunks = [];
   let recordingSeconds = 0;
@@ -264,6 +281,14 @@
     }
   }
   if (nameFromLink) renderHeader();
+
+  async function refreshPresence() {
+    if (isKnownSupportChat || otherUser?.is_admin || !userId) return;
+    const map = await fetchPresenceMap([userId]);
+    const data = map[userId];
+    applyPresenceDot(document.getElementById("headerOnlineDot"), data);
+    applyPresenceStatus(document.getElementById("headerStatus"), data);
+  }
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
     if (isKnownSupportChat || otherUser?.is_admin) return;
@@ -656,9 +681,14 @@
     buildComposerOnce();
     updateComposerVisibility();
     setTimeout(updateComposerVisibility, 300);
+    startPresenceHeartbeat();
     loadOtherUser();
     loadMessages(true);
+    refreshPresence();
     pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
+    presenceTimer = setInterval(refreshPresence, getPollInterval(POLL_INTERVAL));
+    window.addEventListener("langchange", refreshPresence);
+    window.addEventListener("pagehide", stopPresenceHeartbeat);
   }
 </script>
 </body>

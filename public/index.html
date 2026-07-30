@@ -202,6 +202,7 @@
 <script src="/js/lang.js"></script>
 <script src="/js/data-saver.js"></script>
 <script src="/js/pwa-install.js"></script>
+<script src="/js/presence.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
@@ -396,6 +397,7 @@
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
   const savedUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+  if (savedUser) startPresenceHeartbeat();
   function updateAuthBtn() {
     if (savedUser) {
       authBtn.textContent = t("hi_user", { name: savedUser.name });
