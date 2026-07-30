@@ -112,7 +112,7 @@
   document.getElementById("dobInput").max = new Date().toISOString().slice(0, 10);
 
   function isValidZambianPhone(phone) {
-    return /^0(7|9)\d{8}$/.test(phone);
+    return /^(0573\d{6}|0574\d{6}|077\d{7}|097\d{7})$/.test(phone);
   }
 
   document.getElementById("nrcBox").addEventListener("click", () => document.getElementById("nrcInput").click());
@@ -180,7 +180,7 @@
       return;
     }
     if (!isValidZambianPhone(phone)) {
-      alert("Please enter a valid Zambian phone number (e.g. 0977123456).");
+      alert("Only Airtel allowed (0573, 0574, 077, 097).");
       return;
     }
     if (password.length < 8 || password.length > 15) {
