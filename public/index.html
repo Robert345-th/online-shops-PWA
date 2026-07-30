@@ -181,9 +181,6 @@
   }
   .error { color: var(--price-red); }
 
-  .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
-  .loc-chip { flex: 1; text-align: center; }
-
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--card); border-top: 1px solid var(--border);
@@ -248,11 +245,6 @@
     <input class="search-input" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="Search listings..." />
   </div>
 
-  <div class="loc-row" id="locRow">
-    <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
-    <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
-  </div>
-
   <div class="chips-row" id="sortRow"></div>
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
   </div>
@@ -267,7 +259,6 @@
 </div>
 
 <script src="/js/lang.js"></script>
-<script src="/js/location.js?v=loc4"></script>
 <script src="/js/data-saver.js"></script>
 <script src="/js/pwa-install.js"></script>
 <script src="/js/presence.js"></script>
@@ -275,13 +266,12 @@
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
-  const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
+  const SORT_OPTIONS = ['Newest', 'Price: Low-High', 'Price: High-Low'];
   const PAGE_SIZE = 20;
 
   let activeCategory = "All";
-  let sortBy = "Nearest";
+  let sortBy = "Newest";
   let listings = [];
-  let myCoords = null;
 
   const feed = document.getElementById("feed");
   const sortRow = document.getElementById("sortRow");
@@ -311,20 +301,6 @@
   const authBtnText = document.getElementById("authBtnText");
   const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
   if (urlSearchQuery) searchInput.value = urlSearchQuery;
-
-  function getDistanceKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
 
   function renderChips() {
     sortRow.innerHTML = SORT_OPTIONS.map(o =>
@@ -366,25 +342,9 @@
       );
     }
 
-    if (myCoords) {
-      items = items.map(item => ({
-        ...item,
-        distanceKm: (item.latitude && item.longitude)
-          ? getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude))
-          : null
-      }));
-    }
-
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
 
-    if (sortBy === "Nearest" && myCoords) {
-      items.sort((a, b) => {
-        if (isBoosted(a) !== isBoosted(b)) return isBoosted(a) ? -1 : 1;
-        if (a.distanceKm == null) return 1;
-        if (b.distanceKm == null) return -1;
-        return a.distanceKm - b.distanceKm;
-      });
-    } else if (sortBy === "Price: Low-High") {
+    if (sortBy === "Price: Low-High") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(a.price) - parseFloat(b.price));
     } else if (sortBy === "Price: High-Low") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(b.price) - parseFloat(a.price));
@@ -414,7 +374,6 @@
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
-    const distancePart = (item.distanceKm != null) ? `${item.distanceKm.toFixed(1)} km · ` : "";
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">
@@ -423,58 +382,12 @@
         <div class="card-info">
           <div class="price">K${item.price}</div>
           <div class="title">${item.title}</div>
-          <div class="loc">📍 ${distancePart}${item.location_label || ""}</div>
+          <div class="loc">📍 ${item.location_label || ""}</div>
         </div>
       </div>`;
   }
 
   searchInput.addEventListener("input", renderFeed);
-
-  async function requestUserLocation() {
-    try {
-      const coords = await requestUserLocationCoords();
-      if (!isValidCoords(coords)) return false;
-      myCoords = coords;
-      localStorage.setItem("zm_home_location", JSON.stringify(coords));
-      renderFeed();
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function switchToHomeArea() {
-    document.getElementById("locHome").classList.add("active");
-    document.getElementById("locCurrent").classList.remove("active");
-    myCoords = readSavedCoords("zm_home_location");
-    renderFeed();
-  }
-
-  function setLocCurrentLoading(loading) {
-    const label = document.querySelector("#locCurrent span");
-    if (!label) return;
-    label.textContent = loading ? t("loc_getting") : t("loc_current");
-  }
-
-  async function handleUseCurrentLocation() {
-    document.getElementById("locCurrent").classList.add("active");
-    document.getElementById("locHome").classList.remove("active");
-    setLocCurrentLoading(true);
-
-    const ok = await requestUserLocation();
-    setLocCurrentLoading(false);
-
-    if (ok) return;
-
-    switchToHomeArea();
-  }
-
-  function initLocationOnOpen() {
-    switchToHomeArea();
-  }
-
-  document.getElementById("locHome").addEventListener("click", switchToHomeArea);
-  document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
@@ -526,7 +439,6 @@
   window.addEventListener("pageshow", () => {
     refreshAuthState();
     syncLoggedInServices();
-    initLocationOnOpen();
   });
   window.addEventListener("langchange", () => {
     refreshAuthState();
@@ -539,7 +451,6 @@
 
   renderChips();
   loadListings();
-  initLocationOnOpen();
 </script>
 </body>
 </html>
