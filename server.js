@@ -18,7 +18,7 @@ function getUserIdFromToken(authHeader) {
     const part = authHeader.slice(7).split(".")[1];
     const json = Buffer.from(part.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString();
     const payload = JSON.parse(json);
-    return payload.id ?? payload.userId ?? payload.sub ?? null;
+    return payload.id ?? payload.userId ?? payload.user_id ?? payload.sub ?? null;
   } catch {
     return null;
   }

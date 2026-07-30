@@ -115,6 +115,26 @@ function registerPushRoutes(app, getUserIdFromToken) {
     res.json({ publicKey: getPublicKey() });
   });
 
+  app.get("/api/push/status", (req, res) => {
+    const userId = getUserIdFromToken(req.headers.authorization);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const subs = pushSubscriptions.get(String(userId)) || [];
+    res.json({ user_id: String(userId), subscriptions: subs.length });
+  });
+
+  app.post("/api/push/test-self", async (req, res) => {
+    const userId = getUserIdFromToken(req.headers.authorization);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const result = await sendPushToUser(userId, {
+      title: "ZedMarket",
+      body: "Message notifications are working!",
+      url: "/chat-list.html",
+      tag: "push-test",
+      icon: "https://www.zedmarket.app/icon-192.png",
+    });
+    res.json({ ok: true, user_id: String(userId), ...result });
+  });
+
   app.post("/api/push/subscribe", (req, res) => {
     const userId = getUserIdFromToken(req.headers.authorization);
     if (!userId) return res.status(401).json({ error: "Unauthorized" });

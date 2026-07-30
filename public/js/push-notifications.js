@@ -39,11 +39,19 @@
     const registration = await ensureServiceWorker();
     if (!registration) throw new Error("unsupported");
 
+    await navigator.serviceWorker.ready;
+
     const keyRes = await fetch("/api/push/vapid-public-key");
     if (!keyRes.ok) throw new Error("vapid_unavailable");
     const { publicKey } = await keyRes.json();
+    if (!publicKey) throw new Error("vapid_unavailable");
 
-    const subscription = await registration.pushManager.subscribe({
+    let subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+      try { await subscription.unsubscribe(); } catch { /* ignore */ }
+    }
+
+    subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
@@ -85,34 +93,84 @@
     setPushEnabled(false);
   }
 
+  async function sendTestPush() {
+    const token = getToken();
+    if (!token) throw new Error("not_logged_in");
+    const res = await fetch("/api/push/test-self", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("test_failed");
+    const data = await res.json();
+    if (!data.sent) throw new Error("not_registered");
+    return data;
+  }
+
   async function enablePushNotifications() {
     if (!isPushSupported()) throw new Error("unsupported");
-    const permission = await Notification.requestPermission();
+
+    let permission = Notification.permission;
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+    }
     if (permission !== "granted") throw new Error("denied");
-    return subscribeToPush();
+
+    await subscribeToPush();
+    await sendTestPush();
+    return true;
   }
 
   async function syncPushSubscription() {
     if (!isPushEnabled() || !getToken() || !isPushSupported()) return;
+    if (Notification.permission !== "granted") {
+      setPushEnabled(false);
+      return;
+    }
     try {
       const registration = await ensureServiceWorker();
       if (!registration) return;
+      await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
-      if (!subscription && Notification.permission === "granted") {
+      if (!subscription) {
         await subscribeToPush();
         return;
       }
-      if (subscription) {
-        await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({ subscription: subscription.toJSON() }),
-        });
-      }
-    } catch (e) {}
+      const res = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({ subscription: subscription.toJSON() }),
+      });
+      if (!res.ok) setPushEnabled(false);
+    } catch (e) {
+      setPushEnabled(false);
+    }
+  }
+
+  async function refreshPushToggle(toggleEl) {
+    if (!toggleEl) return;
+    if (!isPushSupported()) {
+      toggleEl.disabled = true;
+      toggleEl.checked = false;
+      return;
+    }
+    toggleEl.disabled = false;
+    if (!isPushEnabled() || Notification.permission !== "granted") {
+      toggleEl.checked = false;
+      if (Notification.permission !== "granted") setPushEnabled(false);
+      return;
+    }
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      toggleEl.checked = !!subscription;
+      if (!subscription) setPushEnabled(false);
+    } catch (e) {
+      toggleEl.checked = false;
+      setPushEnabled(false);
+    }
   }
 
   function messagePreview(payload) {
@@ -126,7 +184,7 @@
     const token = getToken();
     if (!token || !recipientId) return;
     try {
-      await fetch("/api/push/notify-message", {
+      const res = await fetch("/api/push/notify-message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,25 +197,74 @@
           url: payload.url || "/chat-list.html",
         }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.sent === 0) console.warn("Push not delivered — recipient has no active subscription.");
+      }
     } catch (e) {}
   }
 
-  function showLocalMessageNotification(title, body, url) {
+  async function showLocalMessageNotification(title, body, url) {
     if (!isPushEnabled() || Notification.permission !== "granted") return;
-    if (!document.hidden) return;
+    const options = {
+      body,
+      icon: ICON_URL,
+      badge: ICON_URL,
+      tag: `chat-${title}`,
+      data: { url: url || "/chat-list.html" },
+    };
     try {
-      const n = new Notification(title, {
-        body,
-        icon: ICON_URL,
-        tag: `chat-${title}`,
-        data: { url },
-      });
-      n.onclick = () => {
-        window.focus();
-        if (url) window.location.href = url;
-        n.close();
-      };
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, options);
+        return;
+      }
+      new Notification(title, options);
     } catch (e) {}
+  }
+
+  let messagePollTimer = null;
+  let messageUnreadCache = new Map();
+
+  async function pollMessageNotifications(apiUrl, token, userId) {
+    if (!isPushEnabled() || !token || !userId) return;
+    try {
+      const res = await fetch(`${apiUrl}/messages/conversations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const conversations = await res.json();
+      conversations.forEach((conv) => {
+        const id = conv.other_user_id;
+        const prevUnread = messageUnreadCache.get(id) || 0;
+        const nextUnread = parseInt(conv.unread_count, 10) || 0;
+        if (nextUnread > prevUnread && conv.sender_id !== userId) {
+          const preview = conv.last_message || "New message";
+          showLocalMessageNotification(
+            conv.other_user_name || "ZedMarket",
+            preview,
+            `/chat-room.html?userId=${id}&name=${encodeURIComponent(conv.other_user_name || "")}`
+          );
+        }
+        messageUnreadCache.set(id, nextUnread);
+      });
+    } catch (e) {}
+  }
+
+  function startMessageNotificationPoll(apiUrl, token, userId) {
+    if (messagePollTimer || !isPushEnabled()) return;
+    pollMessageNotifications(apiUrl, token, userId);
+    messagePollTimer = setInterval(() => {
+      pollMessageNotifications(apiUrl, token, userId);
+    }, 12000);
+    window.addEventListener("pagehide", stopMessageNotificationPoll);
+  }
+
+  function stopMessageNotificationPoll() {
+    if (messagePollTimer) {
+      clearInterval(messagePollTimer);
+      messagePollTimer = null;
+    }
   }
 
   window.isPushSupported = isPushSupported;
@@ -166,9 +273,12 @@
   window.enablePushNotifications = enablePushNotifications;
   window.unsubscribeFromPush = unsubscribeFromPush;
   window.syncPushSubscription = syncPushSubscription;
+  window.refreshPushToggle = refreshPushToggle;
   window.notifyMessagePush = notifyMessagePush;
   window.messagePreview = messagePreview;
   window.showLocalMessageNotification = showLocalMessageNotification;
+  window.startMessageNotificationPoll = startMessageNotificationPoll;
+  window.stopMessageNotificationPoll = stopMessageNotificationPoll;
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/service-worker.js").catch(() => {});

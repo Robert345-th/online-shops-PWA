@@ -462,6 +462,10 @@
     if (!isLoggedIn()) return;
     startPresenceHeartbeat();
     syncPushSubscription();
+    if (isPushEnabled()) {
+      const user = getAuthUser();
+      startMessageNotificationPoll(API_URL, localStorage.getItem("zm_token"), user?.id);
+    }
   }
 
   refreshAuthState();

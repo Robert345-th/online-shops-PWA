@@ -222,26 +222,30 @@
     showLastSeenToggle.addEventListener("change", () => updatePresenceSetting("last_seen"));
 
     const pushToggle = document.getElementById("pushNotificationsToggle");
-    if (!isPushSupported()) {
-      pushToggle.disabled = true;
-      pushToggle.checked = false;
-    } else {
-      pushToggle.checked = isPushEnabled();
-      if (isPushEnabled()) syncPushSubscription();
+    refreshPushToggle(pushToggle);
+    if (isPushEnabled()) {
+      syncPushSubscription();
+      startMessageNotificationPoll(API_URL, token, user.id);
     }
 
     pushToggle.addEventListener("change", async () => {
       if (pushToggle.checked) {
         try {
           await enablePushNotifications();
+          alert(t("push_enabled_test", "Notifications enabled! You should see a test alert shortly."));
+          startMessageNotificationPoll(API_URL, token, user.id);
         } catch (e) {
           pushToggle.checked = false;
+          setPushEnabled(false);
           if (e.message === "denied") alert(t("push_denied"));
           else if (e.message === "unsupported") alert(t("push_unsupported"));
-          else alert(t("push_enable_failed"));
+          else if (e.message === "vapid_unavailable" || e.message === "subscribe_failed" || e.message === "test_failed") {
+            alert(t("push_server_unavailable", "Push server is unavailable. Make sure the app is running on zedmarket.app with Node.js."));
+          } else alert(t("push_enable_failed"));
         }
       } else {
         await unsubscribeFromPush();
+        stopMessageNotificationPoll();
       }
     });
   }
