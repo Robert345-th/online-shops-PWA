@@ -23,6 +23,13 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - name: Restore signing keystore
+        uses: actions/cache@v4
+        id: keystore-cache
+        with:
+          path: android/android.keystore
+          key: zedmarket-android-keystore-v1
+
       - name: Install Bubblewrap
         working-directory: android
         run: npm install
@@ -64,9 +71,10 @@ jobs:
       - name: Copy APK to public folder
         run: node android/copy-apk.js
 
-      - name: Print SHA-256 fingerprint (update assetlinks.json)
-        working-directory: android
-        run: npx bubblewrap fingerprint list
+      - name: Update asset links for full-screen TWA
+        env:
+          KEYSTORE_PASS: ${{ secrets.APK_KEYSTORE_PASSWORD }}
+        run: node android/update-assetlinks.js
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -74,10 +82,17 @@ jobs:
           name: zedmarket-apk
           path: public/zedmarket.apk
 
-      - name: Commit APK for download page
+      - name: Upload AAB for Play Store
+        uses: actions/upload-artifact@v4
+        with:
+          name: zedmarket-aab
+          path: android/app-release-bundle.aab
+          if-no-files-found: warn
+
+      - name: Commit APK and asset links
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/zedmarket.apk
-          git diff --staged --quiet || git commit -m "Add ZedMarket APK for download page."
+          git add public/zedmarket.apk public/.well-known/assetlinks.json
+          git diff --staged --quiet || git commit -m "Update ZedMarket APK and Android app links."
           git push

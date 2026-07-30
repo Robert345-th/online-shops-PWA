@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#111111",
   "backgroundColor": "#111111",
   "enableNotifications": true,
-  "startUrl": "/",
+  "startUrl": "/?utm_source=android",
   "iconUrl": "https://zedmarket.app/icon-512.png",
   "maskableIconUrl": "https://zedmarket.app/icon-512-maskable.png",
   "monochromeIconUrl": "https://zedmarket.app/icon-512.png",
