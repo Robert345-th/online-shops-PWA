@@ -97,7 +97,7 @@
 
   <a class="forgot-link" href="/forgot-password.html" data-i18n="forgot_password">Forgot Password?</a>
 
-  <button class="submit-btn" id="loginBtn" data-i18n="login">Log In</button>
+  <button class="submit-btn" id="loginBtn" type="button" data-i18n="login">Log In</button>
 
   <a class="link" href="/signup.html" data-i18n="no_account_signup">Don't have an account? Sign up</a>
 </div>
@@ -177,12 +177,15 @@
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
       showSuccess(`Welcome back! Logged in as ${data.user.name}`);
-      setTimeout(() => { window.location.href = "/index.html"; }, 700);
+      loginBtn.disabled = true;
+      setTimeout(() => { window.location.replace("/index.html"); }, 700);
     } catch (e) {
       showError("Could not connect to the server.");
     } finally {
-      loginBtn.disabled = false;
-      loginBtn.textContent = t("login");
+      if (!localStorage.getItem("zm_token")) {
+        loginBtn.disabled = false;
+        loginBtn.textContent = t("login");
+      }
     }
   });
   window.addEventListener("langchange", () => {
