@@ -76,6 +76,21 @@
     display: flex; align-items: center; justify-content: center; padding: 0 5px; margin-top: 4px;
     color: #fff; font-size: 10px; font-weight: 700;
   }
+
+  .chat-settings { padding: 12px 12px 0; }
+  .chat-settings-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin-bottom: 8px; }
+  .setting-row {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+  }
+  .setting-title { font-size: 13px; font-weight: 600; }
+  .setting-sub { font-size: 10px; color: var(--subtext); margin-top: 2px; }
+  .switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 26px; transition: 0.2s; }
+  .slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider { background: var(--price-red); }
+  input:checked + .slider::before { transform: translateX(18px); }
 </style>
 </head>
 <body>
@@ -90,6 +105,30 @@
 <div class="topbar">
   <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span data-i18n="chats">Chats</span></div>
+</div>
+
+<div id="chatSettingsPanel" class="chat-settings" style="display:none;">
+  <div class="chat-settings-label" data-i18n="section_chat">Chat</div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-title" data-i18n="show_online">Show Online Status</div>
+      <div class="setting-sub" data-i18n="show_online_sub">Let others see when you are online</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="showOnlineToggle" checked />
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-title" data-i18n="show_last_seen">Show Last Seen</div>
+      <div class="setting-sub" data-i18n="show_last_seen_sub">Let others see when you were last active</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="showLastSeenToggle" checked />
+      <span class="slider"></span>
+    </label>
+  </div>
 </div>
 
 <button class="support-banner" id="supportBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span data-i18n="contact_support">Contact Support</span></button>
@@ -107,6 +146,37 @@
   let conversationsCache = [];
   let listPollTimer = null;
   const previewCache = new Map();
+  const chatSettingsPanel = document.getElementById("chatSettingsPanel");
+
+  function initChatSettings() {
+    if (!user) {
+      chatSettingsPanel.style.display = "none";
+      return;
+    }
+    chatSettingsPanel.style.display = "block";
+
+    const showOnlineToggle = document.getElementById("showOnlineToggle");
+    const showLastSeenToggle = document.getElementById("showLastSeenToggle");
+    showOnlineToggle.checked = getShowOnline();
+    showLastSeenToggle.checked = getShowLastSeen();
+    loadPresenceSettingsFromServer().then((data) => {
+      showOnlineToggle.checked = data.show_online !== false;
+      showLastSeenToggle.checked = data.show_last_seen !== false;
+    });
+
+    async function updatePresenceSetting(changed) {
+      const showOnline = showOnlineToggle.checked;
+      const showLastSeen = showLastSeenToggle.checked;
+      const ok = await savePresenceSettings(showOnline, showLastSeen);
+      if (!ok) {
+        if (changed === "online") showOnlineToggle.checked = !showOnline;
+        if (changed === "last_seen") showLastSeenToggle.checked = !showLastSeen;
+        alert("Could not update chat privacy setting.");
+      }
+    }
+    showOnlineToggle.addEventListener("change", () => updatePresenceSetting("online"));
+    showLastSeenToggle.addEventListener("change", () => updatePresenceSetting("last_seen"));
+  }
 
   function formatTime(dateString) {
     const date = new Date(dateString);
@@ -268,6 +338,7 @@
   });
 
   if (user) {
+    initChatSettings();
     startPresenceHeartbeat();
     loadConversations();
     listPollTimer = setInterval(async () => {

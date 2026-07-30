@@ -125,28 +125,6 @@
     <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg><span data-i18n="invite_friends">Invite Friends</span></div>
   </div>
 
-  <div class="section-label" data-i18n="section_chat">Chat</div>
-  <div class="row">
-    <div>
-      <div class="row-title" data-i18n="show_online">Show Online Status</div>
-      <div class="row-sub" data-i18n="show_online_sub">Let others see when you are online</div>
-    </div>
-    <label class="switch">
-      <input type="checkbox" id="showOnlineToggle" checked />
-      <span class="slider"></span>
-    </label>
-  </div>
-  <div class="row">
-    <div>
-      <div class="row-title" data-i18n="show_last_seen">Show Last Seen</div>
-      <div class="row-sub" data-i18n="show_last_seen_sub">Let others see when you were last active</div>
-    </div>
-    <label class="switch">
-      <input type="checkbox" id="showLastSeenToggle" checked />
-      <span class="slider"></span>
-    </label>
-  </div>
-
   <div class="section-label" data-i18n="section_notifications">Notifications</div>
   <div class="row">
     <div style="flex:1; margin-right:10px;">
@@ -212,7 +190,6 @@
 <script src="/js/lang.js"></script>
 <script src="/js/data-saver.js"></script>
 <script src="/js/pwa-install.js"></script>
-<script src="/js/presence.js"></script>
 <script>
   initLangPicker("langRow");
 
@@ -241,29 +218,6 @@
   });
 
   initPwaInstall({ rowIds: ["installRow"] });
-
-  const showOnlineToggle = document.getElementById("showOnlineToggle");
-  const showLastSeenToggle = document.getElementById("showLastSeenToggle");
-  showOnlineToggle.checked = getShowOnline();
-  showLastSeenToggle.checked = getShowLastSeen();
-  loadPresenceSettingsFromServer().then((data) => {
-    showOnlineToggle.checked = data.show_online !== false;
-    showLastSeenToggle.checked = data.show_last_seen !== false;
-  });
-  if (user) startPresenceHeartbeat();
-
-  async function updatePresenceSetting(changed) {
-    const showOnline = showOnlineToggle.checked;
-    const showLastSeen = showLastSeenToggle.checked;
-    const ok = await savePresenceSettings(showOnline, showLastSeen);
-    if (!ok) {
-      if (changed === "online") showOnlineToggle.checked = !showOnline;
-      if (changed === "last_seen") showLastSeenToggle.checked = !showLastSeen;
-      alert("Could not update chat privacy setting.");
-    }
-  }
-  showOnlineToggle.addEventListener("change", () => updatePresenceSetting("online"));
-  showLastSeenToggle.addEventListener("change", () => updatePresenceSetting("last_seen"));
 
   const digestToggle = document.getElementById("digestToggle");
   async function loadDigestSetting() {
