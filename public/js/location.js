@@ -29,7 +29,18 @@
     });
   }
 
-  function requestUserLocationCoords() {
+  async function requestUserLocationCoords() {
+    const perm = await getLocationPermissionState();
+    if (perm === "denied") throw { code: 1 };
+
+    if (perm !== "granted") {
+      try {
+        await getDeviceCoords({ maximumAge: 0, timeout: 30000 });
+      } catch (err) {
+        if (err && err.code === 1) throw err;
+      }
+    }
+
     return getDeviceCoords({
       enableHighAccuracy: true,
       maximumAge: 0,
