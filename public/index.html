@@ -465,7 +465,20 @@
     }
   }
 
+  function shouldShowLocBanner() {
+    return sessionStorage.getItem("zm_loc_banner_off") !== "1";
+  }
+
+  function switchToHomeArea() {
+    document.getElementById("locHome").classList.add("active");
+    document.getElementById("locCurrent").classList.remove("active");
+    sessionStorage.setItem("zm_loc_banner_off", "1");
+    hideLocBanner();
+    loadHomeLocation();
+  }
+
   function showLocBanner() {
+    if (!shouldShowLocBanner()) return;
     const banner = document.getElementById("locBanner");
     const btn = document.getElementById("locAllowBtn");
     if (banner) banner.hidden = false;
@@ -497,9 +510,16 @@
     if (state === "granted") {
       const ok = await requestLocation(true, true);
       if (ok) return;
+      switchToHomeArea();
+      return;
     }
 
-    if (!myCoords) showLocBanner();
+    if (state === "prompt" && shouldShowLocBanner() && !myCoords) {
+      showLocBanner();
+      return;
+    }
+
+    switchToHomeArea();
   }
 
   async function handleAllowLocationTap() {
@@ -510,27 +530,25 @@
       btn.disabled = true;
       btn.textContent = t("loc_getting") || "Getting location…";
     }
-    await requestLocation(true, true);
-    if (!myCoords) showLocBanner();
+    const ok = await requestLocation(true, true);
+    if (!ok) switchToHomeArea();
   }
 
   document.getElementById("locHome").addEventListener("click", () => {
-    document.getElementById("locHome").classList.add("active");
-    document.getElementById("locCurrent").classList.remove("active");
-    loadHomeLocation();
+    switchToHomeArea();
   });
   document.getElementById("locCurrent").addEventListener("click", async () => {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
-    await requestLocation(false, true);
-    if (!myCoords) showLocBanner();
+    const ok = await requestLocation(false, true);
+    if (!ok) switchToHomeArea();
   });
 
   document.getElementById("locAllowBtn").addEventListener("click", handleAllowLocationTap);
 
   watchLocationPermission((state) => {
     if (state === "granted") syncLocationAccess();
-    else if (!myCoords) showLocBanner();
+    else switchToHomeArea();
   });
 
   window.addEventListener("pageshow", () => {
