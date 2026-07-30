@@ -246,7 +246,7 @@
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
 
   if (isKnownSupportChat) {
-    document.getElementById("headerName").textContent = "ZedMarket Support";
+    document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
     document.getElementById("headerAvatar").innerHTML = iconSvg("support");
     document.getElementById("menuBtn").style.display = "none";
     document.getElementById("voiceCallBtn").style.display = "none";
@@ -447,7 +447,7 @@
 
   function renderHeader() {
     if (otherUser?.is_admin) {
-      document.getElementById("headerName").textContent = "ZedMarket Support";
+      document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
       document.getElementById("headerAvatar").innerHTML = iconSvg("support");
       document.getElementById("menuBtn").style.display = "none";
       document.getElementById("voiceCallBtn").style.display = "none";

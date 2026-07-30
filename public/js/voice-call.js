@@ -35,7 +35,7 @@
   function getUserName() {
     try {
       const u = JSON.parse(localStorage.getItem("zm_user") || "null");
-      return u?.display_name || u?.shop_name || u?.phone || "Someone";
+      return u?.display_name || u?.name || u?.shop_name || u?.phone || "Someone";
     } catch {
       return "Someone";
     }
