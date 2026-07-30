@@ -95,7 +95,8 @@
   async function syncPushSubscription() {
     if (!isPushEnabled() || !getToken() || !isPushSupported()) return;
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await ensureServiceWorker();
+      if (!registration) return;
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription && Notification.permission === "granted") {
         await subscribeToPush();
@@ -111,6 +112,33 @@
           body: JSON.stringify({ subscription: subscription.toJSON() }),
         });
       }
+    } catch (e) {}
+  }
+
+  function messagePreview(payload) {
+    if (payload.content) return payload.content;
+    if (payload.photo_url) return "📷 Photo";
+    if (payload.audio_url) return "🎤 Voice message";
+    return "New message";
+  }
+
+  async function notifyMessagePush(recipientId, payload) {
+    const token = getToken();
+    if (!token || !recipientId) return;
+    try {
+      await fetch("/api/push/notify-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          recipient_id: recipientId,
+          sender_name: payload.sender_name || "Someone",
+          body: payload.body || "New message",
+          url: payload.url || "/chat-list.html",
+        }),
+      });
     } catch (e) {}
   }
 
@@ -138,5 +166,11 @@
   window.enablePushNotifications = enablePushNotifications;
   window.unsubscribeFromPush = unsubscribeFromPush;
   window.syncPushSubscription = syncPushSubscription;
+  window.notifyMessagePush = notifyMessagePush;
+  window.messagePreview = messagePreview;
   window.showLocalMessageNotification = showLocalMessageNotification;
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+  }
 })();

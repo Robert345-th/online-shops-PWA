@@ -168,6 +168,7 @@
 
 <script src="/js/lang.js"></script>
 <script src="/js/presence.js"></script>
+<script src="/js/push-notifications.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
   function setVH() {
@@ -506,6 +507,14 @@
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Could not send message."); return; }
+      if (window.notifyMessagePush && currentUser) {
+        const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
+        notifyMessagePush(userId, {
+          sender_name: senderName,
+          body: messagePreview(payload),
+          url: `/chat-room.html?userId=${currentUser.id}&name=${encodeURIComponent(senderName)}`,
+        });
+      }
       loadMessages(false);
     } catch (e) {}
   }
@@ -705,6 +714,7 @@
     updateComposerVisibility();
     setTimeout(updateComposerVisibility, 300);
     startPresenceHeartbeat();
+    if (window.syncPushSubscription) syncPushSubscription();
     loadOtherUser();
     loadMessages(true);
     refreshPresence();

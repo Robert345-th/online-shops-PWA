@@ -2,11 +2,34 @@ const fs = require("fs");
 const path = require("path");
 const webpush = require("web-push");
 
-const vapidPath = path.join(__dirname, "..", ".vapid-keys.json");
+const vapidPath = path.join(__dirname, ".vapid-keys.json");
+const subsPath = path.join(__dirname, "push-subscriptions.json");
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@zedmarket.app";
 
 /** @type {Map<string, object[]>} */
 const pushSubscriptions = new Map();
+
+function loadSubscriptions() {
+  try {
+    if (!fs.existsSync(subsPath)) return;
+    const data = JSON.parse(fs.readFileSync(subsPath, "utf8"));
+    for (const [userId, list] of Object.entries(data)) {
+      if (Array.isArray(list) && list.length) pushSubscriptions.set(userId, list);
+    }
+  } catch (err) {
+    console.error("Failed to load push subscriptions:", err.message);
+  }
+}
+
+function saveSubscriptions() {
+  try {
+    fs.writeFileSync(subsPath, JSON.stringify(Object.fromEntries(pushSubscriptions), null, 2));
+  } catch (err) {
+    console.error("Failed to save push subscriptions:", err.message);
+  }
+}
+
+loadSubscriptions();
 
 function loadVapidKeys() {
   if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -38,6 +61,7 @@ function addSubscription(userId, subscription) {
     list.push(subscription);
   }
   pushSubscriptions.set(key, list);
+  saveSubscriptions();
 }
 
 function removeSubscription(userId, endpoint) {
@@ -45,6 +69,7 @@ function removeSubscription(userId, endpoint) {
   const list = (pushSubscriptions.get(key) || []).filter((s) => s.endpoint !== endpoint);
   if (list.length) pushSubscriptions.set(key, list);
   else pushSubscriptions.delete(key);
+  saveSubscriptions();
 }
 
 async function sendPushToUser(userId, payload) {
@@ -70,6 +95,7 @@ async function sendPushToUser(userId, payload) {
     const kept = subs.filter((s) => !dead.includes(s.endpoint));
     if (kept.length) pushSubscriptions.set(String(userId), kept);
     else pushSubscriptions.delete(String(userId));
+    saveSubscriptions();
   }
 
   return { sent, failed };
@@ -105,6 +131,28 @@ function registerPushRoutes(app, getUserIdFromToken) {
     if (!endpoint) return res.status(400).json({ error: "endpoint required" });
     removeSubscription(userId, endpoint);
     res.json({ ok: true });
+  });
+
+  app.post("/api/push/notify-message", async (req, res) => {
+    const senderId = getUserIdFromToken(req.headers.authorization);
+    if (!senderId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { recipient_id, sender_name, body, url } = req.body || {};
+    const recipientKey = String(recipient_id || "");
+    if (!recipientKey || recipientKey === String(senderId)) {
+      return res.status(400).json({ error: "Invalid recipient" });
+    }
+
+    const preview = (body || "Sent you a message").slice(0, 180);
+    const chatUrl = url || `/chat-room.html?userId=${senderId}`;
+    const result = await sendPushToUser(recipientKey, {
+      title: sender_name || "New message",
+      body: preview,
+      url: chatUrl,
+      tag: `chat-${senderId}`,
+      icon: "https://www.zedmarket.app/icon-192.png",
+    });
+    res.json({ ok: true, ...result });
   });
 
   app.post("/api/push/notify", async (req, res) => {
