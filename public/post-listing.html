@@ -96,19 +96,49 @@
   let coords = null;
   let locationLabel = "";
   let gettingLocation = false;
+  let sellingType = localStorage.getItem("zm_selling_type") || "";
+  let shopLocationLabel = "";
+  let homeLocationLabel = "";
+  let listingFrom = null;
 
   function loadSavedListingLocation() {
     try {
+      shopLocationLabel = localStorage.getItem("zm_shop_location_label") || "";
+      homeLocationLabel = localStorage.getItem("zm_home_selling_label")
+        || localStorage.getItem("zm_user_location_label")
+        || "";
       const raw = localStorage.getItem("zm_home_location");
       if (raw) {
         const parsed = JSON.parse(raw);
         if (isValidCoords(parsed)) coords = parsed;
       }
-      const savedLabel = localStorage.getItem("zm_user_location_label");
-      if (savedLabel) locationLabel = savedLabel;
+      if (sellingType === "shop" && shopLocationLabel) {
+        locationLabel = shopLocationLabel;
+        listingFrom = "shop";
+      } else if (sellingType === "home" && homeLocationLabel) {
+        locationLabel = homeLocationLabel;
+        listingFrom = "home";
+      } else if (sellingType === "both") {
+        locationLabel = "";
+        listingFrom = null;
+      } else {
+        locationLabel = shopLocationLabel || homeLocationLabel || "";
+      }
     } catch {
       /* ignore */
     }
+  }
+
+  function applyListingFrom(from) {
+    listingFrom = from;
+    locationLabel = from === "shop" ? shopLocationLabel : homeLocationLabel;
+    document.querySelectorAll("[data-from]").forEach((el) =>
+      el.classList.toggle("active", el.dataset.from === from)
+    );
+    const locInput = document.getElementById("locationInput");
+    if (locInput) locInput.value = locationLabel;
+    const locBtn = document.getElementById("locButton");
+    if (locBtn && locationLabel) locBtn.textContent = `📍 ${locationLabel}`;
   }
 
   loadSavedListingLocation();
@@ -166,6 +196,14 @@
         <div class="label">Description</div>
         <textarea class="field-input" id="descInput" placeholder="Describe condition, age, reason for selling..."></textarea>
 
+        ${sellingType === "both" ? `
+        <div class="label">Where is this item?</div>
+        <div class="chip-row" id="listingFromRow">
+          <div class="chip" data-from="shop">At my shop</div>
+          <div class="chip" data-from="home">From home</div>
+        </div>
+        ` : ""}
+
         <div class="label">Location</div>
         <div class="loc-button" id="locButton">📍 Use my current location</div>
         <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" style="margin-top:8px;" />
@@ -190,6 +228,12 @@
       locationLabel = e.target.value.trim();
     });
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+
+    if (sellingType === "both") {
+      document.querySelectorAll("[data-from]").forEach((el) =>
+        el.addEventListener("click", () => applyListingFrom(el.dataset.from))
+      );
+    }
 
     if (locationLabel) {
       const locInput = document.getElementById("locationInput");
@@ -345,6 +389,10 @@
 
     if (!title || !price) { alert("Title and price are required."); return; }
     if (!condition) { alert("Please select whether the item is New or Pre-owned."); return; }
+    if (sellingType === "both" && !listingFrom) {
+      alert("Please choose whether this item is at your shop or from home.");
+      return;
+    }
     const manualLocation = document.getElementById("locationInput")?.value.trim() || "";
     if (!coords && manualLocation) {
       locationLabel = manualLocation;
@@ -378,6 +426,7 @@
       photos: photos.map(p => p.url).filter(Boolean),
       location_label: locationLabel,
     };
+    if (listingFrom) body.listing_from = listingFrom;
     if (coords) {
       body.latitude = coords.lat;
       body.longitude = coords.lng;

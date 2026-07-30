@@ -17,50 +17,68 @@
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #111111; --subtext: #5C5955; --black: #111111;
-    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27; --warn-bg: #FFF3E0; --warn-text: #7A3E00;
+    --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27; --orange: #FF7A1A;
   }
   body.dark {
     --bg: #121212; --card: #1E1E1E; --border: #333333;
     --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
-    --thumb-bg: #2A2A2A;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
   .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
   .back-button {
-    width: 40px; height: 40px; padding: 0;
-    background: none; border: none; cursor: pointer;
+    width: 40px; height: 40px; padding: 0; background: none; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .back-button svg {
-    width: 22px; height: 22px; stroke: var(--gold); fill: none;
-    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-  }
+  .back-button svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
   .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
   .content { padding: 20px; max-width: 560px; margin: 0 auto; }
+  .step-subtitle { font-size: 14px; color: var(--subtext); margin-bottom: 24px; }
+  .step-row { display: flex; gap: 8px; margin-bottom: 28px; }
+  .step-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--border); }
+  .step-dot.active { background: var(--orange); }
+  .step-dot.done { background: var(--gold); }
   .step-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
   .subtitle { font-size: 13px; color: var(--subtext); margin-bottom: 20px; line-height: 1.4; }
   .label { font-size: 12px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase; }
-  .skip-hint { font-size: 11px; color: var(--subtext); margin-top: -12px; margin-bottom: 18px; font-style: italic; }
-  .field-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 14px; }
+  .field-input, .field-select {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; margin-bottom: 18px; font-size: 14px; color: var(--text);
+  }
   .dob-row { display: flex; gap: 8px; margin-bottom: 18px; }
   .dob-select {
     flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 10px; font-size: 14px; color: var(--text);
   }
   .dob-select.dob-year { flex: 1.3; }
-  .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    flex: 1 1 calc(33.333% - 6px); min-width: 96px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 8px; font-size: 11px; text-align: center; cursor: pointer; line-height: 1.3;
+  }
+  .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+  .location-fields { display: none; }
+  .location-fields.show { display: block; }
+  .fields-divider {
+    font-size: 12px; font-weight: 700; color: var(--subtext); text-transform: uppercase;
+    margin: 4px 0 12px; letter-spacing: 0.03em;
+  }
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .submit-btn {
+    flex: 1; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px;
+    color: #fff; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
   .submit-btn:disabled { opacity: 0.7; }
-
+  .back-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 18px;
+    color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer;
+  }
   .form-banner {
-    display: none;
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    line-height: 1.4;
+    display: none; border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600;
+    margin-bottom: 16px; line-height: 1.4;
   }
   .form-banner.error { background: #FBE7E8; color: var(--price-red); border: 1px solid #F0C1C4; }
   .form-banner.success { background: #E7F5EA; color: #1E7A38; border: 1px solid #BFE6C9; }
@@ -79,49 +97,132 @@
   <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <div class="header-title">Register Your Shop</div>
 </div>
-<div class="content" id="content"></div>
+<div class="content">
+  <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Your name</div>
+  <div class="step-row">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+  </div>
+  <div class="form-banner" id="formBanner"></div>
+
+  <div class="step-panel active" id="step1">
+    <div class="step-title">Your name</div>
+    <div class="subtitle">Enter the full name on your account.</div>
+    <div class="label">Full Name</div>
+    <input class="field-input" id="fullNameInput" placeholder="e.g. Robert Banda" autocomplete="name" />
+    <button type="button" class="submit-btn" id="next1Btn">Next</button>
+  </div>
+
+  <div class="step-panel" id="step2">
+    <div class="step-title">Your location</div>
+    <div class="subtitle">City and province where you sell from.</div>
+    <div class="label">City</div>
+    <input class="field-input" id="cityInput" placeholder="e.g. Lusaka" />
+    <div class="label">Province</div>
+    <select class="field-select" id="provinceInput">
+      <option value="">Select province</option>
+    </select>
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back2Btn">Back</button>
+      <button type="button" class="submit-btn" id="next2Btn">Next</button>
+    </div>
+  </div>
+
+  <div class="step-panel" id="step3">
+    <div class="step-title">Date of birth</div>
+    <div class="subtitle">You must be at least 18 years old to register a shop.</div>
+    <div class="label">Date of Birth</div>
+    <div id="dobPickerWrap"></div>
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back3Btn">Back</button>
+      <button type="button" class="submit-btn" id="next3Btn">Next</button>
+    </div>
+  </div>
+
+  <div class="step-panel" id="step4">
+    <div class="step-title">Where do you sell?</div>
+    <div class="subtitle">Choose where you sell. If you pick both, we ask when you post each listing.</div>
+    <div class="chip-row">
+      <div class="chip" data-type="shop">I have a shop</div>
+      <div class="chip" data-type="home">I sell from home</div>
+      <div class="chip" data-type="both">Both shop &amp; home</div>
+    </div>
+    <div class="location-fields" id="shopFields">
+      <div class="fields-divider">Shop location</div>
+      <div class="label">Shop Name</div>
+      <input class="field-input" id="shopNameInput" placeholder="e.g. Robert's Electronics" />
+      <div class="label">Shop Address / Area</div>
+      <input class="field-input" id="shopAddressInput" placeholder="e.g. Cairo Road, near Shoprite" />
+    </div>
+    <div class="location-fields" id="homeFields">
+      <div class="fields-divider">Home location</div>
+      <div class="label">Home Area / Address</div>
+      <input class="field-input" id="homeAddressInput" placeholder="e.g. Kabulonga, near mall" />
+    </div>
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back4Btn">Back</button>
+      <button type="button" class="submit-btn" id="submitBtn">Submit for Review</button>
+    </div>
+  </div>
+</div>
+
 <script src="/js/dob-picker.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const token = localStorage.getItem("zm_token");
-  const content = document.getElementById("content");
   const DOB_IDS = { dayId: "dobDay", monthId: "dobMonth", yearId: "dobYear" };
+  const PROVINCES = [
+    "Central", "Copperbelt", "Eastern", "Luapula", "Lusaka", "Muchinga",
+    "Northern", "North-Western", "Southern", "Western",
+  ];
 
-  document.getElementById("backBtn").addEventListener("click", () => history.back());
+  const token = localStorage.getItem("zm_token");
+  if (!token) window.location.href = "/login.html";
+
+  let step = 1;
+  let sellingType = "";
+
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  document.getElementById("fullNameInput").value = user?.name || user?.display_name || "";
+  document.getElementById("provinceInput").innerHTML =
+    `<option value="">Select province</option>${PROVINCES.map((p) => `<option value="${p}">${p}</option>`).join("")}`;
+  document.getElementById("dobPickerWrap").innerHTML = dobPickerMarkup(DOB_IDS);
+  populateDobPicker(DOB_IDS);
+
+  const formBanner = document.getElementById("formBanner");
+  const stepSubtitle = document.getElementById("stepSubtitle");
+  const subtitles = {
+    1: "Step 1 of 4 — Your name",
+    2: "Step 2 of 4 — Your location",
+    3: "Step 3 of 4 — Date of birth",
+    4: "Step 4 of 4 — Where you sell",
+  };
 
   function showError(message) {
-    const banner = document.getElementById("formBanner");
-    if (!banner) return;
-    banner.textContent = message;
-    banner.className = "form-banner error show";
-    banner.scrollIntoView({ behavior: "smooth", block: "center" });
+    formBanner.textContent = message;
+    formBanner.className = "form-banner error show";
+    formBanner.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   function showSuccess(message) {
-    const banner = document.getElementById("formBanner");
-    if (!banner) return;
-    banner.textContent = message;
-    banner.className = "form-banner success show";
-    banner.scrollIntoView({ behavior: "smooth", block: "center" });
+    formBanner.textContent = message;
+    formBanner.className = "form-banner success show";
+  }
+  function clearBanner() {
+    formBanner.className = "form-banner";
   }
 
-  function render() {
-    const user = JSON.parse(localStorage.getItem("zm_user") || "null");
-    const defaultName = user?.name || user?.display_name || "";
-    content.innerHTML = `
-      <div class="step-title">Shop Details</div>
-      <div class="subtitle">Set up your shop to start selling on ZedMarket. We need your name and date of birth for verification.</div>
-      <div class="form-banner" id="formBanner"></div>
-      <div class="label">Full Name</div>
-      <input class="field-input" id="fullNameInput" placeholder="e.g. Robert Banda" value="${defaultName.replace(/"/g, "&quot;")}" />
-      <div class="label">Date of Birth</div>
-      ${dobPickerMarkup(DOB_IDS)}
-      <div class="label">Shop Name (optional)</div>
-      <input class="field-input" id="shopNameInput" placeholder="e.g. Robert's Electronics" />
-      <div class="skip-hint">Leave shop name blank to use your account name — you can add one later anytime.</div>
-      <button class="submit-btn" id="submitBtn">Submit for Review</button>
-    `;
-    populateDobPicker(DOB_IDS);
-    document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+  function updateStepUI() {
+    [1, 2, 3, 4].forEach((n) => {
+      document.getElementById(`step${n}`).classList.toggle("active", step === n);
+      const dot = document.getElementById(`dot${n}`);
+      if (dot) {
+        dot.classList.toggle("active", step === n);
+        dot.classList.toggle("done", step > n);
+      }
+    });
+    stepSubtitle.textContent = subtitles[step];
+    clearBanner();
   }
 
   function isValidDateOfBirth(dob) {
@@ -136,25 +237,115 @@
     return birth <= minAgeDate;
   }
 
-  async function handleSubmit() {
-    const fullName = document.getElementById("fullNameInput").value.trim();
-    const dateOfBirth = getDobPickerValue(DOB_IDS);
-    const shopName = document.getElementById("shopNameInput").value.trim();
-    if (!fullName) {
+  function buildShopLabel(shopName, shopAddress, city, province) {
+    return [shopName, shopAddress, city, province].filter(Boolean).join(", ");
+  }
+
+  function buildHomeLabel(homeAddress, city, province) {
+    return [homeAddress, city, province].filter(Boolean).join(", ");
+  }
+
+  function updateSellingTypeFields() {
+    const showShop = sellingType === "shop" || sellingType === "both";
+    const showHome = sellingType === "home" || sellingType === "both";
+    document.getElementById("shopFields").classList.toggle("show", showShop);
+    document.getElementById("homeFields").classList.toggle("show", showHome);
+  }
+
+  function saveListingLocation(city, province, sellingTypeVal, shopName, shopAddress, homeAddress) {
+    localStorage.setItem("zm_selling_type", sellingTypeVal);
+    localStorage.setItem("zm_shop_city", city);
+    localStorage.setItem("zm_shop_province", province);
+
+    const shopLabel = buildShopLabel(shopName, shopAddress, city, province);
+    const homeLabel = buildHomeLabel(homeAddress, city, province);
+
+    if (sellingTypeVal === "shop") {
+      localStorage.setItem("zm_shop_location_label", shopLabel);
+      localStorage.setItem("zm_user_location_label", shopLabel);
+      localStorage.removeItem("zm_home_selling_label");
+    } else if (sellingTypeVal === "home") {
+      localStorage.setItem("zm_home_selling_label", homeLabel);
+      localStorage.setItem("zm_user_location_label", homeLabel);
+      localStorage.removeItem("zm_shop_location_label");
+    } else if (sellingTypeVal === "both") {
+      localStorage.setItem("zm_shop_location_label", shopLabel);
+      localStorage.setItem("zm_home_selling_label", homeLabel);
+      localStorage.setItem("zm_user_location_label", homeLabel);
+    }
+  }
+
+  document.querySelectorAll("[data-type]").forEach((el) => {
+    el.addEventListener("click", () => {
+      sellingType = el.dataset.type;
+      document.querySelectorAll("[data-type]").forEach((c) => c.classList.toggle("active", c.dataset.type === sellingType));
+      updateSellingTypeFields();
+    });
+  });
+
+  document.getElementById("next1Btn").addEventListener("click", () => {
+    if (!document.getElementById("fullNameInput").value.trim()) {
       showError("Please enter your full name.");
       return;
     }
-    if (!dateOfBirth) {
-      showError("Please enter your date of birth.");
+    step = 2;
+    updateStepUI();
+  });
+
+  document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
+  document.getElementById("next2Btn").addEventListener("click", () => {
+    if (!document.getElementById("cityInput").value.trim() || !document.getElementById("provinceInput").value) {
+      showError("Please enter your city and province.");
       return;
     }
-    if (!isValidDateOfBirth(dateOfBirth)) {
-      showError("You must be at least 18 years old to register a shop.");
+    step = 3;
+    updateStepUI();
+  });
+
+  document.getElementById("back3Btn").addEventListener("click", () => { step = 2; updateStepUI(); });
+  document.getElementById("next3Btn").addEventListener("click", () => {
+    const dob = getDobPickerValue(DOB_IDS);
+    if (!dob || !isValidDateOfBirth(dob)) {
+      showError("Please enter a valid date of birth. You must be at least 18.");
       return;
     }
+    step = 4;
+    updateStepUI();
+  });
+
+  document.getElementById("back4Btn").addEventListener("click", () => { step = 3; updateStepUI(); });
+
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const fullName = document.getElementById("fullNameInput").value.trim();
+    const city = document.getElementById("cityInput").value.trim();
+    const province = document.getElementById("provinceInput").value;
+    const dateOfBirth = getDobPickerValue(DOB_IDS);
+    const shopName = document.getElementById("shopNameInput").value.trim();
+    const shopAddress = document.getElementById("shopAddressInput").value.trim();
+    const homeAddress = document.getElementById("homeAddressInput").value.trim();
+
+    if (!sellingType) {
+      showError("Please choose where you sell — shop, home, or both.");
+      return;
+    }
+    if ((sellingType === "shop" || sellingType === "both") && (!shopName || !shopAddress)) {
+      showError("Please enter your shop name and shop address.");
+      return;
+    }
+    if ((sellingType === "home" || sellingType === "both") && !homeAddress) {
+      showError("Please enter your home area or address.");
+      return;
+    }
+
+    saveListingLocation(city, province, sellingType, shopName, shopAddress, homeAddress);
+    const shopLabel = buildShopLabel(shopName, shopAddress, city, province);
+    const homeLabel = buildHomeLabel(homeAddress, city, province);
+    const locationLabel = sellingType === "shop" ? shopLabel : sellingType === "home" ? homeLabel : shopLabel;
+
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
     btn.textContent = "Submitting…";
+
     try {
       const res = await fetch(`${API_URL}/auth/register-shop`, {
         method: "POST",
@@ -162,29 +353,38 @@
         body: JSON.stringify({
           name: fullName,
           date_of_birth: dateOfBirth,
-          shop_name: shopName || null
-        })
+          city,
+          province,
+          selling_type: sellingType,
+          shop_name: sellingType === "shop" || sellingType === "both" ? shopName : null,
+          shop_address: sellingType === "shop" || sellingType === "both" ? shopAddress : null,
+          home_address: sellingType === "home" || sellingType === "both" ? homeAddress : null,
+          shop_location_label: sellingType === "shop" || sellingType === "both" ? shopLabel : null,
+          home_location_label: sellingType === "home" || sellingType === "both" ? homeLabel : null,
+          location_label: locationLabel,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         showError(data.error || "Could not submit registration.");
         return;
       }
-      showSuccess("Submitted — your shop registration is under review. You will be notified once approved.");
+      showSuccess("Submitted — your shop registration is under review.");
       setTimeout(() => { window.location.href = "/my-shop.html"; }, 1800);
-    } catch (e) {
+    } catch {
       showError("Could not connect to the server.");
     } finally {
       btn.disabled = false;
       btn.textContent = "Submit for Review";
     }
-  }
+  });
 
-  if (!token) {
-    window.location.href = "/login.html";
-  } else {
-    render();
-  }
+  document.getElementById("backBtn").addEventListener("click", () => {
+    if (step === 1) history.back();
+    else { step -= 1; updateStepUI(); }
+  });
+
+  updateStepUI();
 </script>
 </body>
 </html>
