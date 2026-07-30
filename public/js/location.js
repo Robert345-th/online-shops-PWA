@@ -2,8 +2,18 @@
   const GEO_OPTIONS = {
     enableHighAccuracy: false,
     timeout: 20000,
-    maximumAge: 120000,
+    maximumAge: 60000,
   };
+
+  function isValidCoords(coords) {
+    return (
+      coords &&
+      typeof coords.lat === "number" &&
+      typeof coords.lng === "number" &&
+      !Number.isNaN(coords.lat) &&
+      !Number.isNaN(coords.lng)
+    );
+  }
 
   function getDeviceCoords(options) {
     return new Promise((resolve, reject) => {
@@ -17,6 +27,25 @@
         { ...GEO_OPTIONS, ...(options || {}) }
       );
     });
+  }
+
+  async function requestDeviceCoords(forceFresh) {
+    const freshOpts = forceFresh
+      ? { maximumAge: 0, timeout: 30000, enableHighAccuracy: true }
+      : {};
+
+    try {
+      return await getDeviceCoords(freshOpts);
+    } catch (err) {
+      if (err && (err.code === 2 || err.code === 3)) {
+        return await getDeviceCoords({
+          maximumAge: 0,
+          timeout: 30000,
+          enableHighAccuracy: false,
+        });
+      }
+      throw err;
+    }
   }
 
   async function reverseGeocodeLabel(lat, lng) {
@@ -60,8 +89,34 @@
     }
   }
 
+  function watchLocationPermission(onChange) {
+    if (!navigator.permissions) return;
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((status) => {
+        status.onchange = () => onChange(status.state);
+      })
+      .catch(() => {});
+  }
+
+  function readSavedCoords(storageKey) {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return isValidCoords(parsed) ? parsed : null;
+    } catch {
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+  }
+
+  window.isValidCoords = isValidCoords;
   window.getDeviceCoords = getDeviceCoords;
+  window.requestDeviceCoords = requestDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
   window.getLocationPermissionState = getLocationPermissionState;
+  window.watchLocationPermission = watchLocationPermission;
+  window.readSavedCoords = readSavedCoords;
   window.showLocHint = showLocHint;
 })();
