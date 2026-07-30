@@ -218,6 +218,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
@@ -348,6 +349,7 @@
       const card = document.getElementById(`card-${item.id}`);
       if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
     });
+    observeLazyImages(feed);
   }
 
   function photoPlaceholder(size) {
@@ -360,7 +362,7 @@
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">
-          ${img ? `<img src="${img}" alt="${item.title}" loading="lazy" />` : photoPlaceholder(40)}
+          ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
         </div>
         <div class="card-info">
           <div class="price">K${item.price}</div>
@@ -463,6 +465,7 @@
     if (feed.classList.contains("error")) feed.textContent = t("feed_error");
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
   });
+  window.addEventListener("lowdatachange", () => renderFeed());
   if (savedUser) {
     authBtn.addEventListener("click", () => {
       window.location.href = "/my-shop.html";

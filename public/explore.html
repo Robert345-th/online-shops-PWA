@@ -124,6 +124,7 @@
   <a href="/my-shop.html" class="nav-item"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div>My Shop</div></a>
 </div>
 
+<script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
@@ -177,6 +178,7 @@
       return;
     }
     feed.innerHTML = `<div class="grid">${items.map(renderCard).join("")}</div>`;
+    observeLazyImages(feed);
   }
 
   function photoPlaceholder(size) {
@@ -187,7 +189,7 @@
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
     return `
       <div class="card">
-        <div class="thumb">${img ? `<img src="${img}" alt="${item.title}" />` : photoPlaceholder(32)}</div>
+        <div class="thumb">${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(32)}</div>
         <div class="card-info">
           <div class="price">K${item.price}</div>
           <div class="title">${item.title}</div>

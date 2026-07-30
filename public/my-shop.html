@@ -144,6 +144,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   function myShopBrand() {
@@ -294,6 +295,7 @@
       const manageBtn = document.getElementById(`manage-${item.id}`);
       if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
     });
+    observeLazyImages(app);
   }
 
   function photoPlaceholder(size) {
@@ -312,7 +314,7 @@
       <div class="row ${item.payment_disabled ? "disabled" : ""}">
         <div class="row-main" id="rowmain-${item.id}">
           <div class="thumb">
-            ${img ? `<img src="${img}" alt="${item.title}" />` : photoPlaceholder(24)}
+            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
             ${item.is_boosted ? `<div class="boost-badge">🚀</div>` : ""}
           </div>
           <div class="row-info">

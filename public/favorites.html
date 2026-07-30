@@ -73,6 +73,7 @@
 <div id="content"><div class="center-box"><div class="spinner"></div></div></div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");
@@ -106,6 +107,7 @@
         const card = document.getElementById(`fav-${item.id}`);
         if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
       });
+      observeLazyImages(content);
     } catch (e) {
       content.innerHTML = `<div class="center-box"><div class="error-text">Could not load favorites.</div></div>`;
     }
@@ -120,7 +122,7 @@
     return `
       <div class="card" id="fav-${item.id}">
         <div class="thumb">
-          ${img ? `<img src="${img}" alt="${item.title}" />` : photoPlaceholder(32)}
+          ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(32)}
         </div>
         <div class="info">
           <div class="price">K${item.price}</div>

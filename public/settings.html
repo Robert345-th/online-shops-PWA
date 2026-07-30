@@ -105,6 +105,17 @@
     </label>
   </div>
 
+  <div class="row">
+    <div>
+      <div class="row-title" data-i18n="low_data">Low-Data Mode</div>
+      <div class="row-sub" data-i18n="low_data_sub">Smaller images, lazy loading, and less background data use</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="lowDataToggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <div class="section-label" data-i18n="section_rewards">Rewards</div>
   <div class="row" id="referralsRow">
     <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg><span data-i18n="invite_friends">Invite Friends</span></div>
@@ -173,6 +184,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script>
   initLangPicker("langRow");
 
@@ -192,6 +204,12 @@
   darkModeToggle.addEventListener("change", () => {
     localStorage.setItem("zm_dark_mode", darkModeToggle.checked);
     document.body.classList.toggle("dark", darkModeToggle.checked);
+  });
+
+  const lowDataToggle = document.getElementById("lowDataToggle");
+  lowDataToggle.checked = isLowData();
+  lowDataToggle.addEventListener("change", () => {
+    setLowData(lowDataToggle.checked);
   });
 
   let deferredInstallPrompt = null;

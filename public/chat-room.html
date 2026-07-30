@@ -135,6 +135,7 @@
   <div class="menu-box" id="messageActionsBox"></div>
 </div>
 
+<script src="/js/data-saver.js"></script>
 <script>
   function setVH() {
     document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
@@ -253,7 +254,7 @@
     document.getElementById("headerName").textContent = nameToShow || "Chat";
     const avatar = document.getElementById("headerAvatar");
     if (otherUser?.shop_photo_url) {
-      avatar.innerHTML = `<img src="${otherUser.shop_photo_url}" />`;
+      avatar.innerHTML = zmImg(otherUser.shop_photo_url, { preset: "avatar" });
     } else if (nameToShow) {
       avatar.textContent = nameToShow.charAt(0).toUpperCase();
     }
@@ -313,6 +314,7 @@
       const audioEl = document.getElementById(`audio-${msg.id}`);
       if (audioEl) audioEl.addEventListener("click", () => handlePlayAudio(msg.id, msg.audio_url));
     });
+    observeLazyImages(messagesList);
   }
 
   function renderBubble(msg) {
@@ -325,7 +327,7 @@
 
     let inner;
     if (msg.photo_url) {
-      inner = `<div class="photo-bubble bubble ${isMine ? "mine" : "theirs"}" id="photo-${msg.id}" style="padding:3px;"><img class="chat-photo" src="${msg.photo_url}" /></div>`;
+      inner = `<div class="photo-bubble bubble ${isMine ? "mine" : "theirs"}" id="photo-${msg.id}" style="padding:3px;">${zmImg(msg.photo_url, { preset: "chat", className: "chat-photo", defer: true })}</div>`;
     } else if (msg.audio_url) {
       inner = `
         <div class="audio-bubble bubble ${isMine ? "mine" : "theirs"}" id="audio-${msg.id}">
@@ -342,7 +344,7 @@
   }
 
   function openViewer(url) {
-    document.getElementById("viewerImg").src = url;
+    document.getElementById("viewerImg").src = optimizeImageUrl(url, "full");
     document.getElementById("viewerOverlay").classList.add("open");
   }
   document.getElementById("viewerBackBtn").addEventListener("click", () => {
@@ -358,6 +360,7 @@
     }
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     currentAudio = new Audio(audioUrl);
+    currentAudio.preload = isLowData() ? "none" : "auto";
     playingId = messageId;
     renderMessages();
     currentAudio.play();
@@ -651,7 +654,7 @@
     setTimeout(updateComposerVisibility, 300);
     loadOtherUser();
     loadMessages(true);
-    pollTimer = setInterval(() => loadMessages(false), POLL_INTERVAL);
+    pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
   }
 </script>
 </body>
