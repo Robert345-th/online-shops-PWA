@@ -457,35 +457,17 @@
   async function requestLocation(saveHome, forceFresh) {
     try {
       const coords = await requestDeviceCoords(!!forceFresh);
-      return await applyCoords(coords, saveHome);
-    } catch {
+      const applied = await applyCoords(coords, saveHome);
+      return applied ? { ok: true } : { ok: false, code: 2 };
+    } catch (err) {
       if (!saveHome) myCoords = null;
       renderFeed();
-      return false;
+      return { ok: false, code: err && err.code != null ? err.code : -1 };
     }
   }
 
   function shouldShowLocBanner() {
     return sessionStorage.getItem("zm_loc_banner_off") !== "1";
-  }
-
-  function switchToHomeArea() {
-    document.getElementById("locHome").classList.add("active");
-    document.getElementById("locCurrent").classList.remove("active");
-    sessionStorage.setItem("zm_loc_banner_off", "1");
-    hideLocBanner();
-    loadHomeLocation();
-  }
-
-  function showLocBanner() {
-    if (!shouldShowLocBanner()) return;
-    const banner = document.getElementById("locBanner");
-    const btn = document.getElementById("locAllowBtn");
-    if (banner) banner.hidden = false;
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = t("loc_allow");
-    }
   }
 
   function hideLocBanner() {
@@ -498,28 +480,52 @@
     renderFeed();
   }
 
-  async function syncLocationAccess() {
-    const saved = readSavedCoords("zm_home_location");
-    if (saved) {
-      myCoords = saved;
-      hideLocBanner();
-      renderFeed();
-    }
+  function switchToHomeArea(rememberDecline) {
+    document.getElementById("locHome").classList.add("active");
+    document.getElementById("locCurrent").classList.remove("active");
+    if (rememberDecline) sessionStorage.setItem("zm_loc_banner_off", "1");
+    hideLocBanner();
+    loadHomeLocation();
+  }
 
+  function showLocBanner(force) {
+    if (!force && !shouldShowLocBanner()) return;
+    const banner = document.getElementById("locBanner");
+    const btn = document.getElementById("locAllowBtn");
+    if (banner) banner.hidden = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t("loc_allow");
+    }
+  }
+
+  function setLocCurrentLoading(loading) {
+    const label = document.querySelector("#locCurrent span");
+    if (!label) return;
+    label.textContent = loading ? t("loc_getting") : t("loc_current");
+  }
+
+  async function handleUseCurrentLocation() {
+    document.getElementById("locCurrent").classList.add("active");
+    document.getElementById("locHome").classList.remove("active");
+    sessionStorage.removeItem("zm_loc_banner_off");
+    setLocCurrentLoading(true);
+
+    const result = await requestLocation(false, true);
     const state = await getLocationPermissionState();
+    setLocCurrentLoading(false);
+
+    if (result.ok) {
+      hideLocBanner();
+      return;
+    }
+
     if (state === "granted") {
-      const ok = await requestLocation(true, true);
-      if (ok) return;
-      switchToHomeArea();
+      switchToHomeArea(true);
       return;
     }
 
-    if (state === "prompt" && shouldShowLocBanner() && !myCoords) {
-      showLocBanner();
-      return;
-    }
-
-    switchToHomeArea();
+    showLocBanner(true);
   }
 
   async function handleAllowLocationTap() {
@@ -528,35 +534,49 @@
     document.getElementById("locHome").classList.remove("active");
     if (btn) {
       btn.disabled = true;
-      btn.textContent = t("loc_getting") || "Getting location…";
+      btn.textContent = t("loc_getting");
     }
-    const ok = await requestLocation(true, true);
-    if (!ok) switchToHomeArea();
+
+    const result = await requestLocation(true, true);
+    const state = await getLocationPermissionState();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = t("loc_allow");
+    }
+
+    if (result.ok) {
+      hideLocBanner();
+      return;
+    }
+
+    if (state === "granted") {
+      switchToHomeArea(true);
+      return;
+    }
+
+    showLocBanner(true);
+  }
+
+  function initLocationOnOpen() {
+    loadHomeLocation();
+    if (myCoords) {
+      hideLocBanner();
+      return;
+    }
+    getLocationPermissionState().then((state) => {
+      if (state === "prompt" && shouldShowLocBanner()) showLocBanner(false);
+    });
   }
 
   document.getElementById("locHome").addEventListener("click", () => {
-    switchToHomeArea();
+    switchToHomeArea(false);
   });
-  document.getElementById("locCurrent").addEventListener("click", async () => {
-    document.getElementById("locCurrent").classList.add("active");
-    document.getElementById("locHome").classList.remove("active");
-    const ok = await requestLocation(false, true);
-    if (!ok) switchToHomeArea();
-  });
-
+  document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
   document.getElementById("locAllowBtn").addEventListener("click", handleAllowLocationTap);
 
   watchLocationPermission((state) => {
-    if (state === "granted") syncLocationAccess();
-    else switchToHomeArea();
-  });
-
-  window.addEventListener("pageshow", () => {
-    syncLocationAccess();
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") syncLocationAccess();
+    if (state === "granted") handleUseCurrentLocation();
   });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
@@ -609,6 +629,7 @@
   window.addEventListener("pageshow", () => {
     refreshAuthState();
     syncLoggedInServices();
+    initLocationOnOpen();
   });
   window.addEventListener("langchange", () => {
     refreshAuthState();
@@ -621,7 +642,7 @@
 
   renderChips();
   loadListings();
-  syncLocationAccess();
+  initLocationOnOpen();
 </script>
 </body>
 </html>
