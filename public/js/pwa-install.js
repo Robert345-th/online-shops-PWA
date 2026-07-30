@@ -15,16 +15,6 @@
       window.matchMedia("(display-mode: standalone)").matches;
   }
 
-  function isAndroidChrome() {
-    if (typeof window.isAndroidChrome === "function") return window.isAndroidChrome();
-    const ua = navigator.userAgent;
-    if (!/Android/i.test(ua)) return false;
-    if (/SamsungBrowser|EdgA|OPR|Firefox|UCBrowser|MiuiBrowser/i.test(ua)) return false;
-    if (/wv\)|;\s*wv\s|WebView/i.test(ua)) return false;
-    if (/FBAN|FBAV|Instagram|Line\//i.test(ua)) return false;
-    return /Chrome\/\d+/i.test(ua);
-  }
-
   function hideInstallElements(ids) {
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -103,12 +93,8 @@
   }
 
   function showInstallBanner() {
-    if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1") return;
+    if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1" || !isIOS()) return;
     if (document.getElementById("pwaInstallBanner")) return;
-
-    const ios = isIOS();
-    const androidNeedsChrome = isAndroid() && !isAndroidChrome();
-    if (!ios && !androidNeedsChrome) return;
 
     const banner = document.createElement("div");
     banner.id = "pwaInstallBanner";
@@ -130,18 +116,15 @@
     banner.innerHTML = `
       <img src="https://www.zedmarket.app/icon-192.png" alt="" width="40" height="40" style="border-radius:10px;flex-shrink:0;" />
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="${androidNeedsChrome ? "install_android_banner_text" : "install_banner_text"}">${androidNeedsChrome ? "Install ZedMarket on your home screen" : "Install ZedMarket on your home screen"}</div>
-        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${androidNeedsChrome ? "install_android_banner_sub" : "install_banner_sub"}">${androidNeedsChrome ? "Open in Chrome first — then tap Install app" : "Two taps in Safari — no App Store needed"}</div>
+        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="install_banner_text">Install ZedMarket on your home screen</div>
+        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="install_banner_sub">Two taps in Safari — no App Store needed</div>
       </div>
-      <button type="button" id="pwaInstallBannerBtn" style="background:#F5C518;color:#111;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;" data-i18n="${androidNeedsChrome ? "install_android_banner_btn" : "install_banner_btn"}">${androidNeedsChrome ? "Open in Chrome" : "Install"}</button>
+      <button type="button" id="pwaInstallBannerBtn" style="background:#F5C518;color:#111;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;" data-i18n="install_banner_btn">Install</button>
       <button type="button" id="pwaInstallBannerDismiss" aria-label="Dismiss" style="background:none;border:none;color:#C9BFAF;font-size:20px;line-height:1;cursor:pointer;padding:0 2px;">×</button>`;
     document.body.appendChild(banner);
 
     if (typeof applyTranslations === "function") applyTranslations(banner);
-    document.getElementById("pwaInstallBannerBtn").addEventListener("click", () => {
-      if (androidNeedsChrome) redirectToChrome();
-      else promptPwaInstall();
-    });
+    document.getElementById("pwaInstallBannerBtn").addEventListener("click", promptPwaInstall);
     document.getElementById("pwaInstallBannerDismiss").addEventListener("click", () => {
       localStorage.setItem(DISMISS_KEY, "1");
       banner.remove();

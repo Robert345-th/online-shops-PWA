@@ -398,37 +398,34 @@
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
+  function refreshAuthState() {
+    const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+    const token = localStorage.getItem("zm_token");
+    if (user && token) {
+      authBtn.textContent = t("hi_user", { name: user.name });
+      authBtn.onclick = () => { window.location.href = "/settings.html"; };
+    } else {
+      authBtn.textContent = t("login_signup");
+      authBtn.onclick = () => { window.location.href = "/login.html"; };
+    }
+  }
+
   const savedUser = JSON.parse(localStorage.getItem("zm_user") || "null");
-  if (savedUser) {
+  if (savedUser && localStorage.getItem("zm_token")) {
     startPresenceHeartbeat();
     syncPushSubscription();
     initIncomingCallListener();
   }
-  function updateAuthBtn() {
-    if (savedUser) {
-      authBtn.textContent = t("hi_user", { name: savedUser.name });
-    } else {
-      authBtn.textContent = t("login_signup");
-    }
-  }
-  updateAuthBtn();
+  refreshAuthState();
+  window.addEventListener("pageshow", refreshAuthState);
   window.addEventListener("langchange", () => {
-    updateAuthBtn();
+    refreshAuthState();
     renderChips();
     if (feed.classList.contains("empty")) feed.textContent = t("feed_empty");
     if (feed.classList.contains("error")) feed.textContent = t("feed_error");
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
   });
   window.addEventListener("lowdatachange", () => renderFeed());
-  if (savedUser) {
-    authBtn.addEventListener("click", () => {
-      window.location.href = "/my-shop.html";
-    });
-  } else {
-    authBtn.addEventListener("click", () => {
-      window.location.href = "/login.html";
-    });
-  }
 
   renderChips();
   loadListings();
