@@ -466,10 +466,6 @@
     }
   }
 
-  function shouldShowLocBanner() {
-    return sessionStorage.getItem("zm_loc_banner_off") !== "1";
-  }
-
   function hideLocBanner() {
     const banner = document.getElementById("locBanner");
     if (banner) banner.hidden = true;
@@ -480,23 +476,11 @@
     renderFeed();
   }
 
-  function switchToHomeArea(rememberDecline) {
+  function switchToHomeArea() {
     document.getElementById("locHome").classList.add("active");
     document.getElementById("locCurrent").classList.remove("active");
-    if (rememberDecline) sessionStorage.setItem("zm_loc_banner_off", "1");
     hideLocBanner();
     loadHomeLocation();
-  }
-
-  function showLocBanner(force) {
-    if (!force && !shouldShowLocBanner()) return;
-    const banner = document.getElementById("locBanner");
-    const btn = document.getElementById("locAllowBtn");
-    if (banner) banner.hidden = false;
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = t("loc_allow");
-    }
   }
 
   function setLocCurrentLoading(loading) {
@@ -508,66 +492,28 @@
   async function handleUseCurrentLocation() {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
-    sessionStorage.removeItem("zm_loc_banner_off");
+    hideLocBanner();
     setLocCurrentLoading(true);
 
     const result = await requestLocation(false, true);
-    const state = await getLocationPermissionState();
     setLocCurrentLoading(false);
 
-    if (result.ok) {
-      hideLocBanner();
-      return;
-    }
+    if (result.ok) return;
 
-    if (state === "prompt") {
-      showLocBanner(true);
-      return;
-    }
-
-    switchToHomeArea(true);
+    switchToHomeArea();
   }
 
   async function handleAllowLocationTap() {
-    const btn = document.getElementById("locAllowBtn");
-    document.getElementById("locCurrent").classList.add("active");
-    document.getElementById("locHome").classList.remove("active");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = t("loc_getting");
-    }
-
-    const result = await requestLocation(true, true);
-    const state = await getLocationPermissionState();
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = t("loc_allow");
-    }
-
-    if (result.ok) {
-      hideLocBanner();
-      return;
-    }
-
-    if (state === "prompt") {
-      showLocBanner(true);
-      return;
-    }
-
-    switchToHomeArea(true);
+    await handleUseCurrentLocation();
   }
 
   function initLocationOnOpen() {
     loadHomeLocation();
-    getLocationPermissionState().then((state) => {
-      if (state === "granted" || myCoords) hideLocBanner();
-      else hideLocBanner();
-    });
+    hideLocBanner();
   }
 
   document.getElementById("locHome").addEventListener("click", () => {
-    switchToHomeArea(false);
+    switchToHomeArea();
   });
   document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
   document.getElementById("locAllowBtn").addEventListener("click", handleAllowLocationTap);
