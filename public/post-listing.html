@@ -148,6 +148,7 @@
 
         <div class="label">Location</div>
         <div class="loc-button" id="locButton">📍 Use my current location</div>
+        <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" style="margin-top:8px;" />
 
         <button class="submit-btn" id="submitBtn">Post Listing</button>
       </div>`;
@@ -165,6 +166,9 @@
     });
     document.getElementById("photoInput").addEventListener("change", handlePhotoSelect);
     document.getElementById("locButton").addEventListener("click", handleUseLocation);
+    document.getElementById("locationInput").addEventListener("input", (e) => {
+      locationLabel = e.target.value.trim();
+    });
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   }
 
@@ -329,7 +333,14 @@
 
     if (!title || !price) { alert("Title and price are required."); return; }
     if (!condition) { alert("Please select whether the item is New or Pre-owned."); return; }
-    if (!coords) { alert('Please tap "Use my location" before posting.'); return; }
+    const manualLocation = document.getElementById("locationInput")?.value.trim() || "";
+    if (!coords && manualLocation) {
+      locationLabel = manualLocation;
+    }
+    if (!coords && !locationLabel) {
+      alert('Please add your location — tap "Use my location" or type your area.');
+      return;
+    }
     if (photos.some(p => p.uploading)) { alert("Photos are still uploading."); return; }
 
     const cat = selectedCategory();
@@ -353,10 +364,12 @@
       category_id: categoryId,
       condition,
       photos: photos.map(p => p.url).filter(Boolean),
-      latitude: coords.lat,
-      longitude: coords.lng,
       location_label: locationLabel,
     };
+    if (coords) {
+      body.latitude = coords.lat;
+      body.longitude = coords.lng;
+    }
 
     if (cat === "Cars") {
       body.car_details = { make: carMake, model: carModel, year: carYear ? parseInt(carYear) : null, mileage: carMileage ? parseInt(carMileage) : null };
