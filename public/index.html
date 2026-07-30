@@ -206,7 +206,6 @@
 <script src="/js/pwa-install.js"></script>
 <script src="/js/presence.js"></script>
 <script src="/js/push-notifications.js"></script>
-<script src="/js/voice-call.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
@@ -429,7 +428,6 @@
     if (!isLoggedIn()) return;
     startPresenceHeartbeat();
     syncPushSubscription();
-    initIncomingCallListener();
   }
 
   refreshAuthState();

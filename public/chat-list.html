@@ -80,7 +80,6 @@
   .row-preview-line { display: flex; align-items: center; gap: 4px; min-width: 0; margin-top: 2px; }
   .row-preview { font-size: 12px; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
   .row-preview.typing { color: #4CAF50; font-style: italic; font-weight: 600; }
-  .row-preview.calling { color: #25d366; font-style: italic; font-weight: 700; }
   .read-tick { font-size: 11px; color: var(--subtext); flex-shrink: 0; line-height: 1; }
   .read-tick.read { color: #53BDEB; }
   .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
@@ -172,7 +171,6 @@
 <script src="/js/presence.js"></script>
 <script src="/js/chat-receipts.js"></script>
 <script src="/js/push-notifications.js"></script>
-<script src="/js/voice-call.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const content = document.getElementById("content");
@@ -438,7 +436,6 @@
     } catch (e) {}
   });
 
-  let incomingCallerId = null;
   let supportContactId = null;
   const displayNameCache = new Map();
 
@@ -496,40 +493,9 @@
     });
   }
 
-  window.addEventListener("voicecall", (e) => {
-    const d = e.detail || {};
-    if (d.type === "incoming") {
-      incomingCallerId = String(d.callerId || d.peerUserId || "");
-      highlightIncomingCallRow(incomingCallerId, d.callerName || d.peerName);
-    } else if (["ended", "declined", "missed", "connected", "rejected"].includes(d.type)) {
-      clearIncomingCallRow(incomingCallerId);
-      incomingCallerId = null;
-    }
-  });
-
-  function highlightIncomingCallRow(callerId, callerName) {
-    if (!callerId) return;
-    const previewEl = document.getElementById(`preview-${callerId}`);
-    if (previewEl) {
-      previewEl.textContent = t("call_list_incoming", "{name} is calling…", { name: callerName || t("call_someone", "Someone") });
-      previewEl.classList.add("calling");
-      previewEl.classList.remove("typing");
-    }
-  }
-
-  function clearIncomingCallRow(callerId) {
-    if (!callerId) return;
-    const previewEl = document.getElementById(`preview-${callerId}`);
-    if (previewEl) {
-      previewEl.classList.remove("calling");
-      previewEl.textContent = previewCache.get(callerId) || previewEl.textContent;
-    }
-  }
-
   if (user) {
     initChatSettings();
     startPresenceHeartbeat();
-    initIncomingCallListener();
     loadConversations();
     listPollTimer = setInterval(async () => {
       if (conversationsCache.length) await refreshConversationsQuiet();
