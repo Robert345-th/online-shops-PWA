@@ -411,7 +411,7 @@
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
-    const distancePart = (item.distanceKm != null) ? `${item.distanceKm.toFixed(1)} km · ` : "";
+    const distancePart = (item.distanceKm != null) ? `${formatDistanceKm(item.distanceKm)} · ` : "";
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">

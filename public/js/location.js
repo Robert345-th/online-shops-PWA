@@ -130,6 +130,13 @@
     }
   }
 
+  function formatDistanceKm(km) {
+    if (km == null || Number.isNaN(km)) return "";
+    if (km < 1) return `${Math.max(1, Math.round(km * 1000))} m`;
+    if (km < 10) return `${km.toFixed(1)} km`;
+    return `${Math.round(km)} km`;
+  }
+
   window.isValidCoords = isValidCoords;
   window.getDeviceCoords = getDeviceCoords;
   window.requestUserLocationCoords = requestUserLocationCoords;
@@ -138,5 +145,6 @@
   window.getLocationPermissionState = getLocationPermissionState;
   window.watchLocationPermission = watchLocationPermission;
   window.readSavedCoords = readSavedCoords;
+  window.formatDistanceKm = formatDistanceKm;
   window.showLocHint = showLocHint;
 })();
