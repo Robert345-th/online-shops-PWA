@@ -299,6 +299,13 @@
     if (entry.kind === "outgoing") return `${phoneIcon}${t("call_log_outgoing", "Outgoing voice call")}${entry.duration ? ` · ${formatDuration(entry.duration)}` : ""}`;
     if (entry.kind === "incoming") return `${phoneIcon}${t("call_log_incoming", "Incoming voice call")}${entry.duration ? ` · ${formatDuration(entry.duration)}` : ""}`;
     if (entry.kind === "ended") return `${phoneIcon}${t("call_log_ended", "Voice call")}${entry.duration ? ` · ${formatDuration(entry.duration)}` : ""}`;
+    if (entry.kind === "location_end") {
+      const url = `https://www.google.com/maps?q=${entry.lat},${entry.lng}`;
+      const label = entry.mine
+        ? t("call_log_location_end_mine", "You shared your location after the call")
+        : t("call_log_location_end", "Location shared after the call");
+      return `${phoneIcon}${label} · <a href="${url}" target="_blank" rel="noopener">${t("call_open_map", "Open map")}</a>`;
+    }
     if (entry.kind === "location") {
       const url = `https://www.google.com/maps?q=${entry.lat},${entry.lng}`;
       return `${phoneIcon}${t("call_log_location", "Location shared")} · <a href="${url}" target="_blank" rel="noopener">${t("call_open_map", "Open map")}</a>`;
@@ -377,8 +384,8 @@
     if (d.type === "ended") {
       addCallLogEvent({ kind: d.duration > 0 ? "ended" : "outgoing", duration: d.duration || 0 });
     }
-    if (d.type === "location_received" && d.lat != null && d.lng != null) {
-      addCallLogEvent({ kind: "location", lat: d.lat, lng: d.lng });
+    if (d.type === "location_shared_on_end" && d.lat != null && d.lng != null) {
+      addCallLogEvent({ kind: "location_end", lat: d.lat, lng: d.lng, mine: !!d.mine });
     }
   }
 

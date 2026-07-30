@@ -7,7 +7,6 @@
   };
   const RING_TIMEOUT_MS = 45000;
   const POLL_MS = 1200;
-  const LOCATION_SEND_MS = 8000;
 
   let pc = null;
   let localStream = null;
@@ -16,9 +15,6 @@
   let pollTimer = null;
   let durationTimer = null;
   let ringTimer = null;
-  let locationSendTimer = null;
-  let locationWatchId = null;
-  let locationChannel = null;
   let callSeconds = 0;
   let isCaller = false;
   let peerName = "";
@@ -28,8 +24,6 @@
   let pendingOffer = null;
   let pollInFlight = false;
   let listenerStarted = false;
-  let sharingLocation = false;
-  let peerLocation = null;
   let ringAudioCtx = null;
   let ringOscillator = null;
   let ringGain = null;
@@ -159,23 +153,6 @@
       }
       .vc-name { font-size: 26px; font-weight: 600; color: #e9edef; }
       .vc-status { font-size: 15px; color: #8696a0; min-height: 22px; }
-      .vc-location {
-        font-size: 13px; color: #53bdeb; margin-top: 4px; max-width: 280px;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      }
-      .vc-location a { color: #53bdeb; text-decoration: none; }
-      .vc-tools { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-      .vc-tool-btn {
-        display: flex; flex-direction: column; align-items: center; gap: 6px;
-        background: none; border: none; color: #e9edef; cursor: pointer; min-width: 72px;
-      }
-      .vc-tool-icon {
-        width: 52px; height: 52px; border-radius: 26px; background: rgba(255,255,255,0.12);
-        display: flex; align-items: center; justify-content: center;
-      }
-      .vc-tool-icon.on { background: #25d366; }
-      .vc-tool-icon svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2; }
-      .vc-tool-label { font-size: 11px; color: #8696a0; }
       .vc-actions { display: flex; gap: 48px; align-items: center; justify-content: center; width: 100%; }
       .vc-actions.single { justify-content: center; }
       .vc-btn {
@@ -199,9 +176,7 @@
         <div class="vc-avatar vc-pulse" id="vcAvatar">?</div>
         <div class="vc-name" id="vcName"></div>
         <div class="vc-status" id="vcStatus"></div>
-        <div class="vc-location" id="vcLocation" style="display:none"></div>
       </div>
-      <div class="vc-tools" id="vcTools" style="display:none"></div>
       <div class="vc-actions single" id="vcActions"></div>
       <audio id="voiceCallRemoteAudio" autoplay playsinline></audio>
     `;
@@ -209,133 +184,35 @@
     remoteAudio = document.getElementById("voiceCallRemoteAudio");
   }
 
-  function updateLocationDisplay() {
-    const el = document.getElementById("vcLocation");
-    if (!el) return;
-    if (!peerLocation) {
-      el.style.display = "none";
-      return;
-    }
-    const mapsUrl = `https://www.google.com/maps?q=${peerLocation.lat},${peerLocation.lng}`;
-    el.style.display = "block";
-    el.innerHTML = `<a href="${mapsUrl}" target="_blank" rel="noopener">${tr("call_peer_location", "Their location")} · ${peerLocation.lat.toFixed(4)}, ${peerLocation.lng.toFixed(4)}</a>`;
-  }
-
-  function renderConnectedTools() {
-    const tools = document.getElementById("vcTools");
-    if (!tools) return;
-    tools.style.display = "flex";
-    tools.innerHTML = `
-      <button class="vc-tool-btn" id="vcShareLocationBtn" type="button">
-        <span class="vc-tool-icon ${sharingLocation ? "on" : ""}" id="vcShareLocationIcon">
-          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        </span>
-        <span class="vc-tool-label">${sharingLocation ? tr("call_sharing_location", "Sharing location") : tr("call_share_location", "Share location")}</span>
-      </button>
-      <button class="vc-tool-btn" id="vcOpenMyLocationBtn" type="button">
-        <span class="vc-tool-icon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-        </span>
-        <span class="vc-tool-label">${tr("call_my_location", "My location")}</span>
-      </button>
-    `;
-    document.getElementById("vcShareLocationBtn").addEventListener("click", toggleShareLocation);
-    document.getElementById("vcOpenMyLocationBtn").addEventListener("click", openMyLocation);
-  }
-
-  function hideConnectedTools() {
-    const tools = document.getElementById("vcTools");
-    if (tools) tools.style.display = "none";
-    const loc = document.getElementById("vcLocation");
-    if (loc) loc.style.display = "none";
-  }
-
-  async function openMyLocation() {
-    if (!navigator.geolocation) {
-      alert(tr("call_location_unavailable", "Location is not available on this device."));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, "_blank");
-      },
-      () => alert(tr("call_location_denied", "Location permission is needed to share your position.")),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }
-
-  function sendLocationPayload(lat, lng) {
-    const payload = { lat, lng, at: Date.now() };
-    if (locationChannel?.readyState === "open") {
-      locationChannel.send(JSON.stringify(payload));
-    }
-    if (activeCallId) {
-      api(`/${activeCallId}/location`, "POST", { lat, lng }).catch(() => {});
-    }
-    emitCallEvent("location_sent", { lat, lng, peerUserId, peerName });
-  }
-
-  function bindLocationChannel(channel) {
-    locationChannel = channel;
-    channel.onmessage = (event) => {
-      try {
-        peerLocation = JSON.parse(event.data);
-        updateLocationDisplay();
-        emitCallEvent("location_received", { ...peerLocation, peerUserId, peerName });
-      } catch { /* ignore */ }
-    };
-  }
-
-  function setupDataChannel() {
-    if (!pc) return;
-    if (isCaller) {
-      bindLocationChannel(pc.createDataChannel("location", { ordered: true }));
-    } else {
-      pc.ondatachannel = (event) => {
-        if (event.channel.label === "location") bindLocationChannel(event.channel);
-      };
-    }
-  }
-
-  function stopLocationSharing() {
-    sharingLocation = false;
-    if (locationWatchId != null) {
-      navigator.geolocation.clearWatch(locationWatchId);
-      locationWatchId = null;
-    }
-    if (locationSendTimer) {
-      clearInterval(locationSendTimer);
-      locationSendTimer = null;
-    }
-  }
-
-  async function toggleShareLocation() {
-    if (sharingLocation) {
-      stopLocationSharing();
-      renderConnectedTools();
-      return;
-    }
-    if (!navigator.geolocation) {
-      alert(tr("call_location_unavailable", "Location is not available on this device."));
-      return;
-    }
-    sharingLocation = true;
-    renderConnectedTools();
-    const pushLocation = () => {
+  function shareLocationOnCallEnd() {
+    if (!navigator.geolocation || !peerUserId) return Promise.resolve();
+    const pid = peerUserId;
+    const pname = peerName;
+    return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
-        (pos) => sendLocationPayload(pos.coords.latitude, pos.coords.longitude),
-        () => {},
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            await api("/share-location", "POST", {
+              target_user_id: pid,
+              lat,
+              lng,
+            });
+          } catch { /* ignore */ }
+          emitCallEvent("location_shared_on_end", {
+            lat,
+            lng,
+            peerUserId: pid,
+            peerName: pname,
+            mine: true,
+          });
+          resolve();
+        },
+        () => resolve(),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 120000 }
       );
-    };
-    pushLocation();
-    locationWatchId = navigator.geolocation.watchPosition(
-      (pos) => sendLocationPayload(pos.coords.latitude, pos.coords.longitude),
-      () => alert(tr("call_location_denied", "Location permission is needed to share your position.")),
-      { enableHighAccuracy: true, maximumAge: 5000 }
-    );
-    locationSendTimer = setInterval(pushLocation, LOCATION_SEND_MS);
+    });
   }
 
   function setOverlay(name, status, mode) {
@@ -350,13 +227,6 @@
     statusEl.textContent = status;
     avatar.textContent = (name || "?").charAt(0).toUpperCase();
     overlay.classList.add("open");
-
-    if (mode === "connected") {
-      renderConnectedTools();
-      updateLocationDisplay();
-    } else {
-      hideConnectedTools();
-    }
 
     if (mode === "incoming") {
       actions.classList.remove("single");
@@ -469,7 +339,6 @@
         endCall(true);
       }
     };
-    setupDataChannel();
   }
 
   function startPolling() {
@@ -551,6 +420,10 @@
     if (ev.type === "ended") {
       if (callState !== "idle") {
         stopRingtone();
+        const wasConnected = callState === "connected";
+        if (wasConnected) {
+          await shareLocationOnCallEnd();
+        }
         emitCallEvent("ended", {
           peerUserId: isCaller ? peerUserId : callerUserId,
           peerName,
@@ -573,10 +446,14 @@
       return;
     }
 
-    if (ev.type === "location" && callState === "connected") {
-      peerLocation = { lat: ev.lat, lng: ev.lng, at: Date.now() };
-      updateLocationDisplay();
-      emitCallEvent("location_received", { ...peerLocation, peerUserId, peerName });
+    if (ev.type === "location") {
+      emitCallEvent("location_shared_on_end", {
+        lat: ev.lat,
+        lng: ev.lng,
+        peerUserId: ev.from_user_id || peerUserId || callerUserId,
+        peerName,
+        mine: false,
+      });
       return;
     }
 
@@ -600,9 +477,6 @@
     stopDurationTimer();
     clearRingTimer();
     stopRingtone();
-    stopLocationSharing();
-    locationChannel = null;
-    peerLocation = null;
     if (pc) {
       pc.close();
       pc = null;
@@ -628,7 +502,11 @@
   async function endCall(localOnly) {
     const callId = activeCallId;
     const duration = callSeconds;
-    if (!localOnly && callState === "connected") {
+    const wasConnected = callState === "connected";
+    if (wasConnected) {
+      await shareLocationOnCallEnd();
+    }
+    if (!localOnly && wasConnected) {
       emitCallEvent("ended", { peerUserId, peerName, duration, reason: "hangup" });
     }
     cleanup(true);

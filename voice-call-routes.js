@@ -144,6 +144,25 @@ function registerVoiceCallRoutes(app, getUserIdFromToken) {
     res.json({ ok: true });
   });
 
+  app.post("/api/calls/share-location", (req, res) => {
+    const userId = getUserIdFromToken(req.headers.authorization);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const { target_user_id, lat, lng } = req.body || {};
+    if (!target_user_id || typeof lat !== "number" || typeof lng !== "number") {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
+    mailboxPush(String(target_user_id), {
+      type: "location",
+      lat,
+      lng,
+      from_user_id: String(userId),
+      on_end: true,
+    });
+    res.json({ ok: true });
+  });
+
   app.post("/api/calls/:id/location", (req, res) => {
     const userId = getUserIdFromToken(req.headers.authorization);
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
