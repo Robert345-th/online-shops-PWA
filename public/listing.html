@@ -172,7 +172,9 @@
   </div>
 </div>
 
+<script src="/js/lang.js"></script>
 <script src="/js/data-saver.js"></script>
+<script src="/js/voice-call.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const REPORT_REASONS = ["Scam", "Fake item", "Abusive seller", "Other"];
@@ -396,8 +398,23 @@
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   }
   function handleCall() {
-    if (!listing.seller_phone) return;
-    window.location.href = `tel:${listing.seller_phone}`;
+    if (!currentUser) {
+      window.location.href = "/login.html";
+      return;
+    }
+    if (listing.seller_id === currentUser.id) {
+      alert("That's your listing — you can't call yourself.");
+      return;
+    }
+    const sellerName = listing.shop_name || listing.seller_name || "Seller";
+    if (listing.seller_id && window.startVoiceCall) {
+      startVoiceCall(listing.seller_id, sellerName).then((ok) => {
+        if (ok) return;
+        if (listing.seller_phone) window.location.href = `tel:${listing.seller_phone}`;
+      });
+      return;
+    }
+    if (listing.seller_phone) window.location.href = `tel:${listing.seller_phone}`;
   }
   function handleSMS() {
     if (!listing.seller_phone) return;
@@ -511,6 +528,8 @@
   });
 
   document.getElementById("safetyGotItBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.remove("open"));
+
+  if (currentUser && window.initIncomingCallListener) initIncomingCallListener();
 </script>
 </body>
 </html>

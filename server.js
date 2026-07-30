@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const { registerPushRoutes } = require("./push-routes");
+const { registerVoiceCallRoutes } = require("./voice-call-routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -113,6 +114,7 @@ app.put("/api/presence/settings", (req, res) => {
 });
 
 registerPushRoutes(app, getUserIdFromToken);
+registerVoiceCallRoutes(app, getUserIdFromToken);
 
 app.use(express.static(path.join(__dirname, "public")));
 
