@@ -79,6 +79,14 @@
   .modal-actions { display: flex; gap: 10px; }
   .modal-cancel-btn { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 13px; border-radius: 12px; text-align: center; color: var(--subtext); font-weight: 600; cursor: pointer; }
   .modal-delete-btn { flex: 1; background: var(--price-red); border: none; padding: 13px; border-radius: 12px; text-align: center; color: #fff; font-weight: 700; cursor: pointer; }
+
+  .loc-button {
+    width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px;
+    padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px;
+    cursor: pointer; margin-bottom: 8px;
+  }
+  .loc-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 14px; color: var(--text); }
+  .loc-save-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 13px; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -123,6 +131,14 @@
       <input type="checkbox" id="lowDataToggle" />
       <span class="slider"></span>
     </label>
+  </div>
+
+  <div class="section-label" data-i18n="section_location">Listing Location</div>
+  <div class="row" id="listingLocationRow">
+    <div>
+      <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span data-i18n="listing_location">My Listing Location</span></div>
+      <div class="row-sub" id="listingLocationSub" data-i18n="listing_location_not_set">Not set — tap to add</div>
+    </div>
   </div>
 
   <div class="section-label" data-i18n="section_rewards">Rewards</div>
@@ -179,6 +195,17 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="locationModal">
+  <div class="modal-box">
+    <div class="modal-title" style="color: var(--text);" data-i18n="listing_location">My Listing Location</div>
+    <div class="modal-warning" data-i18n="listing_location_help">Used as the default when you post listings.</div>
+    <button type="button" class="loc-button" id="settingsLocButton">📍 Use my current location</button>
+    <input class="loc-input" id="settingsLocationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
+    <button type="button" class="loc-save-btn" id="settingsLocSaveBtn" data-i18n="save">Save</button>
+    <button type="button" class="modal-cancel-btn" id="locationModalClose" style="width:100%; margin-top:10px;" data-i18n="cancel">Cancel</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="deleteModal">
   <div class="modal-box">
     <div class="modal-title">Delete Your Account?</div>
@@ -193,6 +220,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
   initLangPicker("langRow");
@@ -263,6 +291,97 @@
     }
   });
   loadDigestSetting();
+
+  let settingsCoords = null;
+  let settingsLocationLabel = "";
+  let settingsGettingLocation = false;
+
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+    ]);
+  }
+
+  function refreshListingLocationSub() {
+    const sub = document.getElementById("listingLocationSub");
+    const label = localStorage.getItem("zm_user_location_label");
+    sub.textContent = label || t("listing_location_not_set");
+  }
+  refreshListingLocationSub();
+
+  function openLocationModal() {
+    settingsCoords = null;
+    settingsLocationLabel = localStorage.getItem("zm_user_location_label") || "";
+    try {
+      const raw = localStorage.getItem("zm_home_location");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (isValidCoords(parsed)) settingsCoords = parsed;
+      }
+    } catch { /* ignore */ }
+    document.getElementById("settingsLocationInput").value = settingsLocationLabel;
+    document.getElementById("settingsLocButton").textContent = settingsLocationLabel
+      ? `📍 ${settingsLocationLabel}`
+      : "📍 Use my current location";
+    document.getElementById("locationModal").classList.add("open");
+  }
+
+  document.getElementById("listingLocationRow").addEventListener("click", () => {
+    if (!user || !token) { window.location.href = "/login.html"; return; }
+    openLocationModal();
+  });
+  document.getElementById("locationModalClose").addEventListener("click", () => {
+    document.getElementById("locationModal").classList.remove("open");
+  });
+
+  document.getElementById("settingsLocButton").addEventListener("click", async () => {
+    if (settingsGettingLocation) return;
+    settingsGettingLocation = true;
+    const btn = document.getElementById("settingsLocButton");
+    btn.textContent = t("loc_getting");
+    try {
+      const coords = await withTimeout(
+        getDeviceCoords({ maximumAge: 0, timeout: 10000, enableHighAccuracy: false }),
+        12000
+      );
+      if (!isValidCoords(coords)) throw new Error("invalid");
+      settingsCoords = coords;
+      let label;
+      try {
+        label = await withTimeout(reverseGeocodeLabel(coords.lat, coords.lng), 8000);
+      } catch {
+        label = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`;
+      }
+      settingsLocationLabel = label;
+      document.getElementById("settingsLocationInput").value = label;
+      btn.textContent = `📍 ${label}`;
+    } catch {
+      alert(t("listing_location_gps_fail"));
+      btn.textContent = "📍 Use my current location";
+    } finally {
+      settingsGettingLocation = false;
+    }
+  });
+
+  document.getElementById("settingsLocationInput").addEventListener("input", (e) => {
+    settingsLocationLabel = e.target.value.trim();
+  });
+
+  document.getElementById("settingsLocSaveBtn").addEventListener("click", () => {
+    const manual = document.getElementById("settingsLocationInput").value.trim();
+    if (!manual && !settingsCoords) {
+      alert(t("listing_location_required"));
+      return;
+    }
+    if (manual) settingsLocationLabel = manual;
+    if (settingsCoords && isValidCoords(settingsCoords)) {
+      localStorage.setItem("zm_home_location", JSON.stringify(settingsCoords));
+    }
+    localStorage.setItem("zm_user_location_label", settingsLocationLabel);
+    refreshListingLocationSub();
+    document.getElementById("locationModal").classList.remove("open");
+  });
 
   document.getElementById("referralsRow").addEventListener("click", () => {
     if (!user) { window.location.href = "/login.html"; return; }
