@@ -67,6 +67,7 @@
   .bubble.theirs { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
   .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; }
   .tick { font-size: 11px; color: var(--subtext); margin-bottom: 2px; }
+  .tick.read { color: #53BDEB; }
   .photo-bubble { max-width: 65%; border-radius: 16px; overflow: hidden; padding: 3px; cursor: pointer; }
   .chat-photo { width: 180px; height: 180px; border-radius: 12px; object-fit: cover; background: var(--border); display: block; }
   .audio-bubble { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 16px; min-width: 150px; cursor: pointer; }
@@ -369,7 +370,9 @@
       inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${msg.content}</div>`;
     }
 
-    const tick = isMine ? `<div class="tick">${msg.read_at ? "✓✓" : "✓"}</div>` : "";
+    const tick = isMine
+      ? `<div class="tick ${msg.read_at ? "read" : ""}">${msg.read_at ? "✓✓" : "✓"}</div>`
+      : "";
     return `<div class="bubble-row ${rowClass}" id="msg-${msg.id}">${inner}${tick}</div>`;
   }
 

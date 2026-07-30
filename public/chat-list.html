@@ -64,8 +64,11 @@
   }
   .row-info { flex: 1; min-width: 0; }
   .row-name { font-size: 14px; font-weight: 700; }
-  .row-preview { font-size: 12px; color: var(--subtext); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-preview-line { display: flex; align-items: center; gap: 4px; min-width: 0; margin-top: 2px; }
+  .row-preview { font-size: 12px; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
   .row-preview.typing { color: #4CAF50; font-style: italic; font-weight: 600; }
+  .read-tick { font-size: 11px; color: var(--subtext); flex-shrink: 0; line-height: 1; }
+  .read-tick.read { color: #53BDEB; }
   .row-side { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
   .row-time { font-size: 10px; color: var(--subtext); }
   .unread-badge {
@@ -95,6 +98,7 @@
 
 <script src="/js/lang.js"></script>
 <script src="/js/presence.js"></script>
+<script src="/js/chat-receipts.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const content = document.getElementById("content");
@@ -150,12 +154,19 @@
     }
   }
 
+  function buildPreviewText(conv) {
+    const isMine = conv.sender_id === user.id;
+    let preview = isMine ? `${t("you_prefix")}: ${conv.last_message || ""}` : (conv.last_message || "");
+    if (conv.last_photo_url) preview = isMine ? `${t("you_prefix")}: ${t("preview_photo")}` : t("preview_photo");
+    if (conv.last_audio_url) preview = isMine ? `${t("you_prefix")}: ${t("preview_voice")}` : t("preview_voice");
+    return preview;
+  }
+
   function renderRow(conv) {
     const isMine = conv.sender_id === user.id;
-    let preview = isMine ? `You: ${conv.last_message}` : conv.last_message;
-    if (conv.last_photo_url) preview = "📷 Photo";
-    if (conv.last_audio_url) preview = "🎤 Voice note";
+    const preview = buildPreviewText(conv);
     previewCache.set(conv.other_user_id, preview);
+    const read = isConversationLastMessageRead(conv);
 
     return `
       <div class="row" id="convrow-${conv.other_user_id}">
@@ -165,13 +176,67 @@
         </div>
         <div class="row-info">
           <div class="row-name">${conv.other_user_name}</div>
-          <div class="row-preview" id="preview-${conv.other_user_id}">${preview}</div>
+          <div class="row-preview-line">
+            <span class="read-tick ${read ? "read" : "sent"} list-tick" id="tick-${conv.other_user_id}" style="${isMine ? "" : "display:none;"}">${read ? "✓✓" : "✓"}</span>
+            <div class="row-preview" id="preview-${conv.other_user_id}">${preview}</div>
+          </div>
         </div>
         <div class="row-side">
           <div class="row-time">${formatTime(conv.last_sent_at)}</div>
           ${parseInt(conv.unread_count) > 0 ? `<div class="unread-badge">${conv.unread_count}</div>` : ""}
         </div>
       </div>`;
+  }
+
+  function updateRowFromConversation(conv) {
+    const id = conv.other_user_id;
+    const isMine = conv.sender_id === user.id;
+    const preview = buildPreviewText(conv);
+    previewCache.set(id, preview);
+
+    updateReadTickElement(
+      document.getElementById(`tick-${id}`),
+      isConversationLastMessageRead(conv),
+      isMine
+    );
+
+    const previewEl = document.getElementById(`preview-${id}`);
+    if (previewEl && !previewEl.classList.contains("typing")) {
+      previewEl.textContent = preview;
+    }
+
+    const timeEl = document.querySelector(`#convrow-${id} .row-time`);
+    if (timeEl) timeEl.textContent = formatTime(conv.last_sent_at);
+
+    const sideEl = document.querySelector(`#convrow-${id} .row-side`);
+    if (sideEl) {
+      const unread = parseInt(conv.unread_count) > 0;
+      let badge = sideEl.querySelector(".unread-badge");
+      if (unread) {
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.className = "unread-badge";
+          sideEl.appendChild(badge);
+        }
+        badge.textContent = conv.unread_count;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+  }
+
+  async function refreshConversationsQuiet() {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_URL}/messages/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const conversations = await res.json();
+      conversationsCache = conversations;
+      conversations.forEach(updateRowFromConversation);
+      await applyListPresence(conversations);
+    } catch (e) {}
   }
 
   async function applyListPresence(conversations) {
@@ -206,8 +271,11 @@
     startPresenceHeartbeat();
     loadConversations();
     listPollTimer = setInterval(async () => {
-      if (conversationsCache.length) await applyListPresence(conversationsCache);
-    }, 3000);
+      if (conversationsCache.length) await refreshConversationsQuiet();
+    }, 5000);
+    window.addEventListener("pageshow", () => {
+      if (conversationsCache.length) refreshConversationsQuiet();
+    });
     window.addEventListener("pagehide", stopPresenceHeartbeat);
   } else {
     loadConversations();
