@@ -29,6 +29,14 @@
     });
   }
 
+  function requestUserLocationCoords() {
+    return getDeviceCoords({
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 60000,
+    });
+  }
+
   async function requestDeviceCoords(forceFresh) {
     const freshOpts = forceFresh
       ? { maximumAge: 0, timeout: 30000, enableHighAccuracy: true }
@@ -113,6 +121,7 @@
 
   window.isValidCoords = isValidCoords;
   window.getDeviceCoords = getDeviceCoords;
+  window.requestUserLocationCoords = requestUserLocationCoords;
   window.requestDeviceCoords = requestDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
   window.getLocationPermissionState = getLocationPermissionState;

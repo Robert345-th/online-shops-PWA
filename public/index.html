@@ -184,17 +184,6 @@
   .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
   .loc-chip { flex: 1; text-align: center; }
 
-  .loc-banner {
-    display: flex; align-items: center; justify-content: center;
-    padding: 10px 12px; margin: 0 12px 10px;
-    background: var(--card); border: 1px solid var(--orange); border-radius: 12px;
-  }
-  .loc-banner[hidden] { display: none !important; }
-  .loc-banner-btn {
-    background: var(--orange); color: #fff; border: none; border-radius: 999px;
-    padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
-  }
-
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--card); border-top: 1px solid var(--border);
@@ -262,10 +251,6 @@
   <div class="loc-row" id="locRow">
     <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
     <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
-  </div>
-
-  <div class="loc-banner" id="locBanner" hidden>
-    <button type="button" class="loc-banner-btn" id="locAllowBtn" data-i18n="loc_allow">📍 Allow location</button>
   </div>
 
   <div class="chips-row" id="sortRow"></div>
@@ -445,42 +430,24 @@
 
   searchInput.addEventListener("input", renderFeed);
 
-  async function applyCoords(coords, saveHome) {
-    if (!isValidCoords(coords)) return false;
-    myCoords = coords;
-    if (saveHome) localStorage.setItem("zm_home_location", JSON.stringify(coords));
-    hideLocBanner();
-    renderFeed();
-    return true;
-  }
-
-  async function requestLocation(saveHome, forceFresh) {
+  async function requestUserLocation() {
     try {
-      const coords = await requestDeviceCoords(!!forceFresh);
-      const applied = await applyCoords(coords, saveHome);
-      return applied ? { ok: true } : { ok: false, code: 2 };
-    } catch (err) {
-      if (!saveHome) myCoords = null;
+      const coords = await requestUserLocationCoords();
+      if (!isValidCoords(coords)) return false;
+      myCoords = coords;
+      localStorage.setItem("zm_home_location", JSON.stringify(coords));
       renderFeed();
-      return { ok: false, code: err && err.code != null ? err.code : -1 };
+      return true;
+    } catch {
+      return false;
     }
-  }
-
-  function hideLocBanner() {
-    const banner = document.getElementById("locBanner");
-    if (banner) banner.hidden = true;
-  }
-
-  function loadHomeLocation() {
-    myCoords = readSavedCoords("zm_home_location");
-    renderFeed();
   }
 
   function switchToHomeArea() {
     document.getElementById("locHome").classList.add("active");
     document.getElementById("locCurrent").classList.remove("active");
-    hideLocBanner();
-    loadHomeLocation();
+    myCoords = readSavedCoords("zm_home_location");
+    renderFeed();
   }
 
   function setLocCurrentLoading(loading) {
@@ -492,35 +459,22 @@
   async function handleUseCurrentLocation() {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
-    hideLocBanner();
     setLocCurrentLoading(true);
 
-    const result = await requestLocation(false, true);
+    const ok = await requestUserLocation();
     setLocCurrentLoading(false);
 
-    if (result.ok) return;
+    if (ok) return;
 
     switchToHomeArea();
-  }
-
-  async function handleAllowLocationTap() {
-    await handleUseCurrentLocation();
   }
 
   function initLocationOnOpen() {
-    loadHomeLocation();
-    hideLocBanner();
+    switchToHomeArea();
   }
 
-  document.getElementById("locHome").addEventListener("click", () => {
-    switchToHomeArea();
-  });
+  document.getElementById("locHome").addEventListener("click", switchToHomeArea);
   document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
-  document.getElementById("locAllowBtn").addEventListener("click", handleAllowLocationTap);
-
-  watchLocationPermission((state) => {
-    if (state === "granted") hideLocBanner();
-  });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
