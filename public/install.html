@@ -37,7 +37,6 @@
     background: var(--card); border: 1px solid var(--border);
     border-radius: 16px; padding: 18px; margin-bottom: 14px;
   }
-  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--subtext); margin-bottom: 12px; letter-spacing: 0.04em; }
   .step { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
   .step:last-child { margin-bottom: 0; }
   .step-num {
@@ -47,18 +46,12 @@
   .step-text { font-size: 14px; line-height: 1.5; padding-top: 3px; }
   .btn {
     width: 100%; border: none; border-radius: 12px; padding: 14px;
-    font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 10px;
+    font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 16px;
   }
   .btn-primary { background: var(--black); color: var(--gold); }
-  .btn-secondary { background: var(--card); color: var(--text); border: 1.5px solid var(--border); }
   .btn-gold { background: var(--gold); color: var(--black); }
-  .note {
-    background: #FFF8E1; border: 1px solid #F0E0A0; border-radius: 12px;
-    padding: 12px 14px; font-size: 13px; line-height: 1.5; color: #6B5A00; margin-bottom: 14px;
-  }
-  .link-row { text-align: center; margin-top: 8px; }
+  .link-row { text-align: center; margin-top: 16px; }
   .link-row a { color: #A3131C; font-size: 13px; font-weight: 600; text-decoration: none; }
-  #installedBox { display: none; }
   #browserBox { display: none; }
 </style>
 </head>
@@ -72,48 +65,29 @@
   <div class="hero">
     <img src="https://www.zedmarket.app/icon-192.png" alt="ZedMarket" />
     <h1 data-i18n="install_page_title">Get ZedMarket on your phone</h1>
-    <p data-i18n="install_page_sub">Facebook can't install apps. Use one of these easy options instead.</p>
-  </div>
-
-  <div id="installedBox" class="note">
-    <span data-i18n="install_page_already">ZedMarket is already on your phone. Open it from your home screen, or tap "Open ZedMarket" in the Facebook menu.</span>
+    <p data-i18n="install_page_sub">Copy the link and paste it in Chrome.</p>
   </div>
 
   <div id="embeddedBox">
     <div class="card">
-      <div class="card-title" data-i18n="install_page_easiest">Easiest way</div>
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-text" data-i18n="install_page_step_copy">Tap <strong>Copy link</strong> below</div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-text" data-i18n="install_page_step_chrome">Open the <strong>Chrome</strong> app on your phone</div>
+        <div class="step-text" data-i18n="install_page_step_chrome">Open the <strong>Chrome</strong> app</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <div class="step-text" data-i18n="install_page_step_paste">Paste the link in the address bar and go</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-text" data-i18n="install_page_step_install">Tap <strong>Install App</strong> on the home page</div>
+        <div class="step-text" data-i18n="install_page_step_paste">Paste the link in the address bar, then tap <strong>Install App</strong></div>
       </div>
       <button class="btn btn-primary" id="copyLinkBtn" type="button" data-i18n="install_page_copy_btn">Copy link</button>
-      <button class="btn btn-secondary" id="openChromeBtn" type="button" data-i18n="inapp_open_browser_btn">Open in Chrome browser</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title" data-i18n="install_page_menu_way">From the Facebook menu</div>
-      <div class="step">
-        <div class="step-num">⋮</div>
-        <div class="step-text" data-i18n="install_page_menu_step">Tap the menu (⋮) at the top right → choose <strong>"Open in Chrome browser"</strong>. If you see <strong>"Open ZedMarket"</strong>, the app is already installed.</div>
-      </div>
     </div>
   </div>
 
   <div id="browserBox">
     <div class="card">
-      <div class="card-title" data-i18n="install_page_ready">Ready to install</div>
       <p style="font-size:14px;line-height:1.5;margin-bottom:14px;" data-i18n="install_page_ready_sub">You're in a browser that can install ZedMarket.</p>
       <button class="btn btn-gold" id="installBtn" type="button" data-i18n="install_app">Install App</button>
     </div>
@@ -137,23 +111,18 @@
   });
 
   function refreshLayout() {
-    const canInstallHere = installPromptReady;
-    document.getElementById("embeddedBox").style.display = canInstallHere ? "none" : "block";
-    document.getElementById("browserBox").style.display = canInstallHere ? "block" : "none";
+    document.getElementById("embeddedBox").style.display = installPromptReady ? "none" : "block";
+    document.getElementById("browserBox").style.display = installPromptReady ? "block" : "none";
     applyTranslations(document.body);
   }
 
   document.getElementById("copyLinkBtn").addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(SITE_URL);
-      alert(t("install_page_copied", "Link copied! Open Chrome, paste in the address bar, then tap Install App."));
+      alert(t("install_page_copied", "Link copied! Open Chrome and paste it in the address bar."));
     } catch {
       prompt(t("inapp_copy_link_prompt", "Copy this link and paste it in Chrome:"), SITE_URL);
     }
-  });
-
-  document.getElementById("openChromeBtn").addEventListener("click", () => {
-    if (typeof window.openInChrome === "function") window.openInChrome();
   });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: false });

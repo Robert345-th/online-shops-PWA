@@ -90,8 +90,8 @@
 
   async function promptPwaInstall() {
     if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) {
-      if (typeof window.showInAppBrowserGuide === "function") {
-        window.showInAppBrowserGuide();
+      if (typeof window.goToInstallHelp === "function") {
+        window.goToInstallHelp();
         return;
       }
     }
