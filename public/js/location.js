@@ -29,22 +29,12 @@
     });
   }
 
-  async function requestUserLocationCoords() {
-    try {
-      return await getDeviceCoords({
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 60000,
-      });
-    } catch (err) {
-      const permState = await getLocationPermissionState();
-      if (permState === "denied") throw err;
-      return await getDeviceCoords({
-        enableHighAccuracy: false,
-        maximumAge: 0,
-        timeout: 30000,
-      });
-    }
+  function requestUserLocationCoords() {
+    return getDeviceCoords({
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 60000,
+    });
   }
 
   async function requestDeviceCoords(forceFresh) {
