@@ -183,6 +183,8 @@
 
   .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
   .loc-chip { flex: 1; text-align: center; }
+  .loc-hint { font-size: 12px; padding: 0 12px 10px; line-height: 1.4; display: none; color: var(--subtext); }
+  .loc-hint.loc-hint-error { color: var(--price-red); }
 
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -252,6 +254,7 @@
     <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
     <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
   </div>
+  <div class="loc-hint" id="locHint"></div>
 
   <div class="chips-row" id="sortRow"></div>
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
@@ -267,6 +270,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
 <script src="/js/pwa-install.js"></script>
 <script src="/js/presence.js"></script>
@@ -334,7 +338,7 @@
     ).join("");
 
     sortRow.querySelectorAll("[data-sort]").forEach(el =>
-      el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
+      el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); updateLocHint(); })
     );
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
       el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); renderFeed(); })
@@ -429,21 +433,51 @@
 
   searchInput.addEventListener("input", renderFeed);
 
+  const locHint = document.getElementById("locHint");
+
+  function updateLocHint() {
+    if (myCoords) {
+      showLocHint(locHint, "", false);
+      return;
+    }
+    if (sortBy === "Nearest") {
+      showLocHint(locHint, "Tap “Use current location” to sort by distance.", false);
+    } else {
+      showLocHint(locHint, "", false);
+    }
+  }
+
+  async function applyCoords(coords, saveHome) {
+    myCoords = coords;
+    if (saveHome) localStorage.setItem("zm_home_location", JSON.stringify(coords));
+    showLocHint(locHint, "", false);
+    renderFeed();
+  }
+
+  async function requestLocation(saveHome) {
+    try {
+      const coords = await getDeviceCoords();
+      await applyCoords(coords, saveHome);
+    } catch (err) {
+      myCoords = null;
+      renderFeed();
+      showLocHint(locHint, locationErrorMessage(err), true);
+    }
+  }
+
   function loadHomeLocation() {
     const saved = localStorage.getItem("zm_home_location");
     if (saved) {
-      myCoords = JSON.parse(saved);
-      renderFeed();
-    } else if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          localStorage.setItem("zm_home_location", JSON.stringify(myCoords));
-          renderFeed();
-        },
-        () => {}
-      );
+      try {
+        myCoords = JSON.parse(saved);
+        renderFeed();
+        updateLocHint();
+        return;
+      } catch {
+        localStorage.removeItem("zm_home_location");
+      }
     }
+    requestLocation(true);
   }
 
   document.getElementById("locHome").addEventListener("click", () => {
@@ -454,15 +488,7 @@
   document.getElementById("locCurrent").addEventListener("click", () => {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          myCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          renderFeed();
-        },
-        () => {}
-      );
-    }
+    requestLocation(false);
   });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
@@ -528,6 +554,7 @@
   renderChips();
   loadListings();
   loadHomeLocation();
+  updateLocHint();
 </script>
 </body>
 </html>

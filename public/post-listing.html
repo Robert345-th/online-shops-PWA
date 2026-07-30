@@ -47,7 +47,8 @@
   .extra-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
   .extra-box-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
 
-  .loc-button { width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px; padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; margin-bottom: 20px; }
+  .loc-button { width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px; padding: 12px; text-align: center; color: var(--price-red); font-weight: 600; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
+  .loc-hint { font-size: 12px; color: var(--price-red); line-height: 1.4; margin-bottom: 12px; display: none; }
 
   .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
   .submit-btn:disabled { opacity: 0.7; }
@@ -69,6 +70,7 @@
 </script>
 <div id="app"></div>
 
+<script src="/js/location.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CLOUDINARY_CLOUD_NAME = "kstg72vx";
@@ -150,6 +152,7 @@
 
         <div class="label">Location</div>
         <div class="loc-button" id="locButton">📍 Use my current location</div>
+        <div class="loc-hint" id="locHint"></div>
         <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" style="margin-top:8px;" />
 
         <button class="submit-btn" id="submitBtn">Post Listing</button>
@@ -170,6 +173,7 @@
     document.getElementById("locButton").addEventListener("click", handleUseLocation);
     document.getElementById("locationInput").addEventListener("input", (e) => {
       locationLabel = e.target.value.trim();
+      showLocHint(document.getElementById("locHint"), "", false);
     });
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   }
@@ -298,34 +302,22 @@
     if (gettingLocation) return;
     gettingLocation = true;
     const btn = document.getElementById("locButton");
+    const hint = document.getElementById("locHint");
     btn.textContent = "Getting location…";
+    showLocHint(hint, "", false);
 
-    if (!navigator.geolocation) {
-      alert("Location is not supported on this device.");
-      gettingLocation = false;
-      btn.textContent = "📍 Use my current location";
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      coords = { lat: latitude, lng: longitude };
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        const data = await res.json();
-        const addr = data.address || {};
-        const label = [addr.suburb || addr.city_district || addr.town || addr.city, addr.state].filter(Boolean).join(", ");
-        locationLabel = label || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      } catch (e) {
-        locationLabel = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      }
+    try {
+      const { lat, lng } = await getDeviceCoords();
+      coords = { lat, lng };
+      locationLabel = await reverseGeocodeLabel(lat, lng);
       btn.textContent = `📍 ${locationLabel}`;
-      gettingLocation = false;
-    }, () => {
-      alert("Could not get your location.");
-      gettingLocation = false;
+    } catch (err) {
+      coords = null;
       btn.textContent = "📍 Use my current location";
-    });
+      showLocHint(hint, locationErrorMessage(err), true);
+    } finally {
+      gettingLocation = false;
+    }
   }
 
   async function handleSubmit() {

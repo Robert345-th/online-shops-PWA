@@ -27,7 +27,11 @@
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://zedmarket.app/manifest.json",
   "fallbackType": "customtabs",
-  "features": {},
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
   "alphaDependencies": {
     "enabled": false
   },
