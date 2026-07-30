@@ -259,6 +259,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
 <script src="/js/pwa-install.js"></script>
 <script src="/js/presence.js"></script>
@@ -266,12 +267,14 @@
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
-  const SORT_OPTIONS = ['Newest', 'Price: Low-High', 'Price: High-Low'];
+  const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
   const PAGE_SIZE = 20;
 
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
+  let myCoords = readSavedCoords("zm_home_location");
+  if (myCoords) sortBy = "Nearest";
 
   const feed = document.getElementById("feed");
   const sortRow = document.getElementById("sortRow");
@@ -301,6 +304,24 @@
   const authBtnText = document.getElementById("authBtnText");
   const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
   if (urlSearchQuery) searchInput.value = urlSearchQuery;
+
+  function loadMyCoords() {
+    myCoords = readSavedCoords("zm_home_location");
+  }
+
+  function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
   function renderChips() {
     sortRow.innerHTML = SORT_OPTIONS.map(o =>
@@ -342,9 +363,25 @@
       );
     }
 
+    if (myCoords) {
+      items = items.map(item => ({
+        ...item,
+        distanceKm: (item.latitude && item.longitude)
+          ? getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude))
+          : null
+      }));
+    }
+
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
 
-    if (sortBy === "Price: Low-High") {
+    if (sortBy === "Nearest" && myCoords) {
+      items.sort((a, b) => {
+        if (isBoosted(a) !== isBoosted(b)) return isBoosted(a) ? -1 : 1;
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      });
+    } else if (sortBy === "Price: Low-High") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(a.price) - parseFloat(b.price));
     } else if (sortBy === "Price: High-Low") {
       items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(b.price) - parseFloat(a.price));
@@ -374,6 +411,7 @@
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const distancePart = (item.distanceKm != null) ? `${item.distanceKm.toFixed(1)} km · ` : "";
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">
@@ -382,7 +420,7 @@
         <div class="card-info">
           <div class="price">K${item.price}</div>
           <div class="title">${item.title}</div>
-          <div class="loc">📍 ${item.location_label || ""}</div>
+          <div class="loc">📍 ${distancePart}${item.location_label || ""}</div>
         </div>
       </div>`;
   }
@@ -439,6 +477,8 @@
   window.addEventListener("pageshow", () => {
     refreshAuthState();
     syncLoggedInServices();
+    loadMyCoords();
+    renderFeed();
   });
   window.addEventListener("langchange", () => {
     refreshAuthState();
