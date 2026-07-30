@@ -1,7 +1,7 @@
 {
-  "name": "ZedMarket",
+  "name": "ZedMarket — Zed Market Zambia",
   "short_name": "ZedMarket",
-  "description": "Buy and sell locally on ZedMarket",
+  "description": "ZedMarket (Zed Market) — buy and sell locally in Zambia. Phones, cars, land, electronics, and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F4F1EC",

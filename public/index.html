@@ -5,7 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="/js/android-chrome.js"></script>
 <script src="/js/app-touch.js"></script>
-<title>ZedMarket</title>
+<title>ZedMarket | Zed Market — Buy &amp; Sell in Zambia</title>
+<meta name="description" content="ZedMarket (Zed Market) is Zambia's local marketplace app. Buy and sell phones, cars, land, electronics, and more across Zambia." />
+<meta name="keywords" content="ZedMarket, Zed Market, zed market, zedmarket, Zambia marketplace, buy and sell Zambia, online shop Zambia, classifieds Zambia" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.zedmarket.app/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ZedMarket" />
+<meta property="og:title" content="ZedMarket | Zed Market — Buy &amp; Sell in Zambia" />
+<meta property="og:description" content="ZedMarket (Zed Market) is Zambia's local marketplace. Buy and sell locally — phones, cars, land, electronics, and more." />
+<meta property="og:url" content="https://www.zedmarket.app/" />
+<meta property="og:image" content="https://www.zedmarket.app/icon-512.png" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="ZedMarket | Zed Market — Buy &amp; Sell in Zambia" />
+<meta name="twitter:description" content="ZedMarket (Zed Market) is Zambia's local marketplace app." />
+<meta name="twitter:image" content="https://www.zedmarket.app/icon-512.png" />
+<meta name="application-name" content="ZedMarket" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ZedMarket",
+  "alternateName": ["Zed Market", "Zed Market Zambia", "Zed Market App", "zedmarket.app"],
+  "url": "https://www.zedmarket.app/",
+  "description": "Zambia's local marketplace to buy and sell phones, cars, land, electronics, and more.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://www.zedmarket.app/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" type="image/png" href="https://www.zedmarket.app/icon-192.png" />
@@ -50,6 +80,7 @@
   .gear .icon { font-size: 26px; color: var(--gold); }
   .gear .label { color: #C9BFAF; font-size: 9px; margin-top: 2px; }
   .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
+  .brand-tagline { color: #C9BFAF; font-size: 10px; font-weight: 500; margin-top: 2px; line-height: 1.3; }
   .auth-line {
     color: var(--black);
     font-size: 12px;
@@ -158,6 +189,7 @@
       </button>
       <div>
         <div class="brand">ZedMarket</div>
+        <div class="brand-tagline">Zed Market — Zambia's buy &amp; sell marketplace</div>
         <button class="auth-line" id="authBtn">Login / Sign Up</button>
       </div>
     </div>
@@ -242,6 +274,8 @@
   });
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
+  const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
+  if (urlSearchQuery) searchInput.value = urlSearchQuery;
 
   function getDistanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
