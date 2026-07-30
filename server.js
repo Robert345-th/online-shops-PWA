@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const { registerPushRoutes } = require("./push-routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,6 +111,8 @@ app.put("/api/presence/settings", (req, res) => {
     show_last_seen: existing.showLastSeen !== false,
   });
 });
+
+registerPushRoutes(app, getUserIdFromToken);
 
 app.use(express.static(path.join(__dirname, "public")));
 
