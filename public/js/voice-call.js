@@ -1,8 +1,24 @@
 (function () {
   const PC_CONFIG = {
+    iceCandidatePoolSize: 10,
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443?transport=tcp",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
     ],
   };
   const RING_TIMEOUT_MS = 45000;
@@ -24,6 +40,8 @@
   let pendingOffer = null;
   let pollInFlight = false;
   let listenerStarted = false;
+  let pendingIceCandidates = [];
+  let disconnectTimer = null;
   let ringAudioCtx = null;
   let ringOscillator = null;
   let ringGain = null;
@@ -52,11 +70,24 @@
   }
 
   async function api(path, method, body) {
-    const res = await fetch(`/api/calls${path}`, {
-      method: method || "GET",
-      headers: authHeaders(body ? { "Content-Type": "application/json" } : {}),
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res;
+    try {
+      res = await fetch(`/api/calls${path}`, {
+        method: method || "GET",
+        headers: authHeaders(body ? { "Content-Type": "application/json" } : {}),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      const err = new Error("call_server_unavailable");
+      err.code = "call_server_unavailable";
+      throw err;
+    }
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const err = new Error("call_server_unavailable");
+      err.code = "call_server_unavailable";
+      throw err;
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const err = new Error(data.error || "call_api_error");
@@ -64,6 +95,22 @@
       throw err;
     }
     return data;
+  }
+
+  function flushPendingIceCandidates(callId) {
+    if (!callId || !pendingIceCandidates.length) return;
+    const batch = pendingIceCandidates.splice(0);
+    batch.forEach((candidate) => {
+      api(`/${callId}/ice`, "POST", { candidate }).catch(() => {});
+    });
+  }
+
+  function queueIceCandidate(candidate) {
+    if (activeCallId) {
+      api(`/${activeCallId}/ice`, "POST", { candidate }).catch(() => {});
+      return;
+    }
+    pendingIceCandidates.push(candidate);
   }
 
   function emitCallEvent(type, detail) {
@@ -325,18 +372,37 @@
       localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
     }
     pc.ontrack = (event) => {
-      if (remoteAudio && event.streams[0]) remoteAudio.srcObject = event.streams[0];
+      if (!remoteAudio || !event.streams[0]) return;
+      remoteAudio.srcObject = event.streams[0];
+      remoteAudio.play().catch(() => {});
     };
     pc.onicecandidate = (event) => {
-      if (event.candidate && activeCallId) {
-        api(`/${activeCallId}/ice`, "POST", { candidate: event.candidate }).catch(() => {});
-      }
+      if (event.candidate) queueIceCandidate(event.candidate);
     };
     pc.onconnectionstatechange = () => {
-      if (pc && (pc.connectionState === "failed" || pc.connectionState === "disconnected")) {
-        emitCallEvent("ended", { peerUserId, peerName, duration: callSeconds, reason: "disconnected" });
+      if (!pc) return;
+      if (pc.connectionState === "connected") {
+        if (disconnectTimer) {
+          clearTimeout(disconnectTimer);
+          disconnectTimer = null;
+        }
+        return;
+      }
+      if (pc.connectionState === "failed") {
+        emitCallEvent("ended", { peerUserId, peerName, duration: callSeconds, reason: "failed" });
         showBriefStatus(tr("call_ended", "Call ended"));
         endCall(true);
+        return;
+      }
+      if (pc.connectionState === "disconnected" && !disconnectTimer) {
+        disconnectTimer = setTimeout(() => {
+          disconnectTimer = null;
+          if (pc && pc.connectionState === "disconnected") {
+            emitCallEvent("ended", { peerUserId, peerName, duration: callSeconds, reason: "disconnected" });
+            showBriefStatus(tr("call_ended", "Call ended"));
+            endCall(true);
+          }
+        }, 8000);
       }
     };
   }
@@ -477,6 +543,11 @@
     stopDurationTimer();
     clearRingTimer();
     stopRingtone();
+    if (disconnectTimer) {
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
+    }
+    pendingIceCandidates = [];
     if (pc) {
       pc.close();
       pc = null;
@@ -542,7 +613,9 @@
       await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      await waitForIceGathering(pc);
       await api(`/${activeCallId}/answer`, "POST", { answer: pc.localDescription });
+      flushPendingIceCandidates(activeCallId);
       clearRingTimer();
       callState = "connected";
       setOverlay(peerName, formatDuration(0), "connected");
@@ -574,8 +647,9 @@
       emitCallEvent("outgoing", { peerUserId, peerName });
 
       createPeerConnection();
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({ offerToReceiveAudio: true });
       await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
 
       const data = await api("/start", "POST", {
         callee_id: targetUserId,
@@ -584,6 +658,7 @@
       });
 
       activeCallId = data.call_id;
+      flushPendingIceCandidates(activeCallId);
       document.getElementById("vcStatus").textContent = tr("call_ringing", "Ringing…");
       emitCallEvent("ringing", { peerUserId, peerName, callId: data.call_id });
       startPolling();
@@ -594,8 +669,26 @@
       else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         alert(tr("call_mic_denied", "Microphone access is needed for voice calls."));
       } else if (err.code === "busy") alert(tr("call_busy_self", "You are already on a call."));
+      else if (err.code === "call_server_unavailable") {
+        alert(tr("call_server_unavailable", "In-app calls are unavailable right now. Try again later or use the phone call option."));
+      }
       return false;
     }
+  }
+
+  function waitForIceGathering(pcInstance) {
+    if (pcInstance.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => {
+        pcInstance.removeEventListener("icegatheringstatechange", onChange);
+        resolve();
+      };
+      const onChange = () => {
+        if (pcInstance.iceGatheringState === "complete") done();
+      };
+      pcInstance.addEventListener("icegatheringstatechange", onChange);
+      setTimeout(done, 4000);
+    });
   }
 
   function initIncomingCallListener() {

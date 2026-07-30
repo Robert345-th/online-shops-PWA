@@ -400,23 +400,11 @@
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   }
   function handleCall() {
-    if (!currentUser) {
-      window.location.href = "/login.html";
+    if (!listing.seller_phone) {
+      alert("Seller phone number not available.");
       return;
     }
-    if (listing.seller_id === currentUser.id) {
-      alert("That's your listing — you can't call yourself.");
-      return;
-    }
-    const sellerName = listing.shop_name || listing.seller_name || "Seller";
-    if (listing.seller_id && window.startVoiceCall) {
-      startVoiceCall(listing.seller_id, sellerName).then((ok) => {
-        if (ok) return;
-        if (listing.seller_phone) window.location.href = `tel:${listing.seller_phone}`;
-      });
-      return;
-    }
-    if (listing.seller_phone) window.location.href = `tel:${listing.seller_phone}`;
+    window.location.href = `tel:${listing.seller_phone}`;
   }
   function handleSMS() {
     if (!listing.seller_phone) return;
