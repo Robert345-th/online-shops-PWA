@@ -183,8 +183,6 @@
 
   .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
   .loc-chip { flex: 1; text-align: center; }
-  .loc-hint { font-size: 12px; padding: 0 12px 10px; line-height: 1.4; display: none; color: var(--subtext); }
-  .loc-hint.loc-hint-error { color: var(--price-red); }
 
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -254,7 +252,6 @@
     <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
     <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
   </div>
-  <div class="loc-hint" id="locHint"></div>
 
   <div class="chips-row" id="sortRow"></div>
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
@@ -338,7 +335,7 @@
     ).join("");
 
     sortRow.querySelectorAll("[data-sort]").forEach(el =>
-      el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); updateLocHint(); })
+      el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
     );
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
       el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); renderFeed(); })
@@ -433,24 +430,9 @@
 
   searchInput.addEventListener("input", renderFeed);
 
-  const locHint = document.getElementById("locHint");
-
-  function updateLocHint() {
-    if (myCoords) {
-      showLocHint(locHint, "", false);
-      return;
-    }
-    if (sortBy === "Nearest") {
-      showLocHint(locHint, "Tap “Use current location” to sort by distance.", false);
-    } else {
-      showLocHint(locHint, "", false);
-    }
-  }
-
   async function applyCoords(coords, saveHome) {
     myCoords = coords;
     if (saveHome) localStorage.setItem("zm_home_location", JSON.stringify(coords));
-    showLocHint(locHint, "", false);
     renderFeed();
   }
 
@@ -458,10 +440,9 @@
     try {
       const coords = await getDeviceCoords();
       await applyCoords(coords, saveHome);
-    } catch (err) {
-      myCoords = null;
+    } catch {
+      if (!saveHome) myCoords = null;
       renderFeed();
-      showLocHint(locHint, locationErrorMessage(err), true);
     }
   }
 
@@ -470,14 +451,14 @@
     if (saved) {
       try {
         myCoords = JSON.parse(saved);
-        renderFeed();
-        updateLocHint();
-        return;
       } catch {
         localStorage.removeItem("zm_home_location");
+        myCoords = null;
       }
+    } else {
+      myCoords = null;
     }
-    requestLocation(true);
+    renderFeed();
   }
 
   document.getElementById("locHome").addEventListener("click", () => {
@@ -554,7 +535,6 @@
   renderChips();
   loadListings();
   loadHomeLocation();
-  updateLocHint();
 </script>
 </body>
 </html>

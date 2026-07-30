@@ -206,7 +206,6 @@
 
         <div class="label">Location</div>
         <div class="loc-button" id="locButton">${locationLabel ? `📍 ${locationLabel}` : "📍 Use my current location"}</div>
-        <div class="loc-hint" id="locHint"></div>
 
         <button class="submit-btn" id="submitBtn">Save Changes</button>
       </div>`;
@@ -380,18 +379,15 @@
     if (gettingLocation) return;
     gettingLocation = true;
     const btn = document.getElementById("locButton");
-    const hint = document.getElementById("locHint");
     btn.textContent = "Getting location…";
-    showLocHint(hint, "", false);
 
     try {
       const { lat, lng } = await getDeviceCoords();
       coords = { lat, lng };
       locationLabel = await reverseGeocodeLabel(lat, lng);
       btn.textContent = `📍 ${locationLabel}`;
-    } catch (err) {
+    } catch {
       btn.textContent = locationLabel ? `📍 ${locationLabel}` : "📍 Use my current location";
-      showLocHint(hint, locationErrorMessage(err), true);
     } finally {
       gettingLocation = false;
     }

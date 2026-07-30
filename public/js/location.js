@@ -5,22 +5,6 @@
     maximumAge: 120000,
   };
 
-  function locationErrorMessage(err) {
-    if (!err || err.code === "UNSUPPORTED") {
-      return "Location is not supported on this device. Type your area instead.";
-    }
-    switch (err.code) {
-      case 1:
-        return "Location is blocked. Allow it in phone Settings → Apps → ZedMarket → Permissions, or type your area below.";
-      case 2:
-        return "GPS signal not found. Turn on Location and try again, or type your area below.";
-      case 3:
-        return "Location took too long. Try again or type your area below.";
-      default:
-        return "Could not get your location. Type your area below instead.";
-    }
-  }
-
   function getDeviceCoords(options) {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -67,6 +51,5 @@
 
   window.getDeviceCoords = getDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
-  window.locationErrorMessage = locationErrorMessage;
   window.showLocHint = showLocHint;
 })();

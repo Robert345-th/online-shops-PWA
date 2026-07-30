@@ -152,7 +152,6 @@
 
         <div class="label">Location</div>
         <div class="loc-button" id="locButton">📍 Use my current location</div>
-        <div class="loc-hint" id="locHint"></div>
         <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" style="margin-top:8px;" />
 
         <button class="submit-btn" id="submitBtn">Post Listing</button>
@@ -173,7 +172,6 @@
     document.getElementById("locButton").addEventListener("click", handleUseLocation);
     document.getElementById("locationInput").addEventListener("input", (e) => {
       locationLabel = e.target.value.trim();
-      showLocHint(document.getElementById("locHint"), "", false);
     });
     document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   }
@@ -302,19 +300,16 @@
     if (gettingLocation) return;
     gettingLocation = true;
     const btn = document.getElementById("locButton");
-    const hint = document.getElementById("locHint");
     btn.textContent = "Getting location…";
-    showLocHint(hint, "", false);
 
     try {
       const { lat, lng } = await getDeviceCoords();
       coords = { lat, lng };
       locationLabel = await reverseGeocodeLabel(lat, lng);
       btn.textContent = `📍 ${locationLabel}`;
-    } catch (err) {
+    } catch {
       coords = null;
       btn.textContent = "📍 Use my current location";
-      showLocHint(hint, locationErrorMessage(err), true);
     } finally {
       gettingLocation = false;
     }
