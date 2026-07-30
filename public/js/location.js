@@ -29,11 +29,28 @@
     });
   }
 
-  function requestUserLocationCoords() {
+  async function requestForegroundPermissionAsync() {
+    if (!navigator.geolocation) return { status: "unsupported" };
+    if (navigator.permissions) {
+      try {
+        const result = await navigator.permissions.query({ name: "geolocation" });
+        if (result.state === "granted") return { status: "granted" };
+        if (result.state === "denied") return { status: "denied" };
+      } catch {
+        /* fall through */
+      }
+    }
+    return { status: "undetermined" };
+  }
+
+  async function requestUserLocationCoords() {
+    const { status } = await requestForegroundPermissionAsync();
+    if (status === "denied" || status === "unsupported") {
+      throw { code: 1 };
+    }
     return getDeviceCoords({
-      enableHighAccuracy: true,
       maximumAge: 0,
-      timeout: 60000,
+      timeout: 30000,
     });
   }
 
@@ -121,6 +138,7 @@
 
   window.isValidCoords = isValidCoords;
   window.getDeviceCoords = getDeviceCoords;
+  window.requestForegroundPermissionAsync = requestForegroundPermissionAsync;
   window.requestUserLocationCoords = requestUserLocationCoords;
   window.requestDeviceCoords = requestDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
