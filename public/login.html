@@ -71,33 +71,34 @@
   window.addEventListener("pageshow", applyDarkMode);
 </script>
 <div class="content">
-  <div class="title">Welcome Back</div>
-  <div class="subtitle">Log in to ZedMarket</div>
+  <div class="title" data-i18n="welcome_back">Welcome Back</div>
+  <div class="subtitle" data-i18n="login_subtitle">Log in to ZedMarket</div>
 
   <div class="form-banner error" id="errorBanner"></div>
   <div class="form-banner success" id="successBanner"></div>
 
-  <div class="label">Phone Number</div>
+  <div class="label" data-i18n="phone_number">Phone Number</div>
   <div class="phone-row">
     <div class="phone-prefix"><span>🇿🇲 +260</span></div>
     <input class="phone-input" id="phone" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" />
   </div>
 
-  <div class="label">Password</div>
+  <div class="label" data-i18n="password">Password</div>
   <input class="field-input" id="password" type="password" placeholder="Enter your password" />
 
   <div class="checkbox-row" id="showPasswordRow">
     <div class="checkbox" id="checkboxBox"></div>
-    <div class="checkbox-label">Show password</div>
+    <div class="checkbox-label" data-i18n="show_password">Show password</div>
   </div>
 
-  <a class="forgot-link" href="/forgot-password.html">Forgot Password?</a>
+  <a class="forgot-link" href="/forgot-password.html" data-i18n="forgot_password">Forgot Password?</a>
 
-  <button class="submit-btn" id="loginBtn">Log In</button>
+  <button class="submit-btn" id="loginBtn" data-i18n="login">Log In</button>
 
-  <a class="link" href="/signup.html">Don't have an account? Sign up</a>
+  <a class="link" href="/signup.html" data-i18n="no_account_signup">Don't have an account? Sign up</a>
 </div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const phoneInput = document.getElementById("phone");
@@ -154,7 +155,7 @@
     }
 
     loginBtn.disabled = true;
-    loginBtn.textContent = "Logging in…";
+    loginBtn.textContent = t("logging_in");
 
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -177,8 +178,11 @@
       showError("Could not connect to the server.");
     } finally {
       loginBtn.disabled = false;
-      loginBtn.textContent = "Log In";
+      loginBtn.textContent = t("login");
     }
+  });
+  window.addEventListener("langchange", () => {
+    if (!loginBtn.disabled) loginBtn.textContent = t("login");
   });
 </script>
 </body>

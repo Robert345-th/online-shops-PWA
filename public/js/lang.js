@@ -1,0 +1,350 @@
+(function () {
+  const LANG_KEY = "zm_lang";
+  const SUPPORTED = ["en", "bem", "ny"];
+
+  const STRINGS = {
+    en: {
+      back: "Go back",
+      settings: "Settings",
+      home: "Home",
+      my_shop: "My Shop",
+      login_signup: "Login / Sign Up",
+      hi_user: "Hi, {name}",
+      search_placeholder: "Search listings...",
+      install_app: "Install App",
+      loc_home: "Home area",
+      loc_current: "Use current location",
+      loading_listings: "Loading listings…",
+      feed_error: "Couldn't reach the market right now. Pull to refresh in a bit.",
+      feed_empty: "No listings match right now — be the first to post something.",
+      got_it: "Got it",
+      install_title: "Install ZedMarket",
+      chats: "Chats",
+      favorites: "Favorites",
+      wanted_board: "Wanted Board",
+      map_view: "Map View",
+      post_wanted: "+ Post What You Want",
+      wanted_explainer: "Post what you're looking for, and sellers who have it can message you directly.",
+      login: "Log In",
+      signup: "Sign Up",
+      logout: "Log Out",
+      cancel: "Cancel",
+      save: "Save",
+      loading: "Loading…",
+      log_in_to_see: "Log in to see your saved items.",
+      log_in_to_chat: "Log in to see your chats.",
+      log_in_to_shop: "Log in to see your shop.",
+      no_conversations: "No conversations yet.",
+      no_favorites: "No saved items yet.",
+      contact_support: "Contact Support",
+      welcome_back: "Welcome Back",
+      login_subtitle: "Log in to ZedMarket",
+      phone_number: "Phone Number",
+      password: "Password",
+      show_password: "Show password",
+      forgot_password: "Forgot Password?",
+      no_account_signup: "Don't have an account? Sign up",
+      logging_in: "Logging in…",
+      section_appearance: "Appearance",
+      section_language: "Language",
+      section_rewards: "Rewards",
+      section_notifications: "Notifications",
+      section_safety: "Safety",
+      section_support: "Support",
+      section_legal: "Legal",
+      section_account: "Account",
+      dark_mode: "Dark Mode",
+      dark_mode_sub: "Switch between light and dark theme",
+      invite_friends: "Invite Friends",
+      daily_digest: "Daily Digest",
+      daily_digest_sub: "Get notified about new listings in categories you've favorited",
+      report_user: "Report a User",
+      privacy_policy: "Privacy Policy",
+      delete_account: "Delete My Account",
+      logout_confirm: "Log Out?",
+      logout_confirm_sub: "Are you sure you want to log out?",
+      post_listing: "Post a Listing",
+      edit_listing: "Edit Listing",
+      save_changes: "Save Changes",
+      cat_all: "All",
+      cat_electronics: "Electronics",
+      cat_clothing: "Clothing",
+      cat_furniture: "Furniture",
+      cat_produce: "Produce",
+      cat_cars: "Cars",
+      cat_land: "Land",
+      sort_newest: "Newest",
+      sort_nearest: "Nearest",
+      sort_price_low: "Price: Low-High",
+      sort_price_high: "Price: High-Low",
+      lang_en: "English",
+      lang_bem: "IciBemba",
+      lang_ny: "Chinyanja",
+      register_shop: "Register My Shop",
+      post_item: "+ Post Item",
+    },
+    bem: {
+      back: "Buyeni",
+      settings: "Ukulungulula",
+      home: "Ing'anda",
+      my_shop: "Icito Lyandi",
+      login_signup: "Ingilani / Lembeni",
+      hi_user: "Mwaiseni, {name}",
+      search_placeholder: "Fwayafwayani ifintu...",
+      install_app: "Ikani App",
+      loc_home: "Pa ng'anda",
+      loc_current: "Ukushiya pa kashita",
+      loading_listings: "Ukuloda ifintu...",
+      feed_error: "Teti tukwate na market nomba. Efye mukonke fimbi.",
+      feed_empty: "Tapali ifintu nomba — mulecita ukuteka icintu cakulanda.",
+      got_it: "Natameni",
+      install_title: "Ikani ZedMarket",
+      chats: "Amalungu",
+      favorites: "Ifyo Mulefwaya",
+      wanted_board: "Ifyo Mulefwaya Ukushita",
+      map_view: "Imapu",
+      post_wanted: "+ Leleni Ifyo Mulefwaya",
+      wanted_explainer: "Leleni ifyo mulefwaya ukushita, abacita bakafwile ukubomfya mwe bene.",
+      login: "Ingilani",
+      signup: "Lembeni",
+      logout: "Fumyeni",
+      cancel: "Lekeni",
+      save: "Suneni",
+      loading: "Ukuloda...",
+      log_in_to_see: "Ingilani ukumona ifyo mulefwaya.",
+      log_in_to_chat: "Ingilani ukumona amalungu yenu.",
+      log_in_to_shop: "Ingilani ukumona icito lyenu.",
+      no_conversations: "Tapali amalungu nomba.",
+      no_favorites: "Tapali ifyo mulefwaya nomba.",
+      contact_support: "Landeni na Support",
+      welcome_back: "Mwaiseni Nomba",
+      login_subtitle: "Ingilani mu ZedMarket",
+      phone_number: "Nambala ya Foni",
+      password: "Password",
+      show_password: "Moneni password",
+      forgot_password: "Mwabuulwa Password?",
+      no_account_signup: "Tapali account? Lembeni",
+      logging_in: "Ukwingila...",
+      section_appearance: "Ukwaluka",
+      section_language: "Ululimi",
+      section_rewards: "Imilimo",
+      section_notifications: "Amakanshi",
+      section_safety: "Ubulungu",
+      section_support: "Ubufwishi",
+      section_legal: "Amatebulo",
+      section_account: "Account",
+      dark_mode: "Dark Mode",
+      dark_mode_sub: "Cintanshini pakati ka light na dark",
+      invite_friends: "Itani Abanandi",
+      daily_digest: "Daily Digest",
+      daily_digest_sub: "Amakanshi pa ifintu ifipya mu category mulefwaya",
+      report_user: "Lubeni Umuntu",
+      privacy_policy: "Privacy Policy",
+      delete_account: "Fumyeni Account",
+      logout_confirm: "Fumyeni?",
+      logout_confirm_sub: "Mulefwaya ukufuma?",
+      post_listing: "Teyeni Ifintu",
+      edit_listing: "Lungululeni Listing",
+      save_changes: "Suneni Ifyacintu",
+      cat_all: "Fyonse",
+      cat_electronics: "Electronics",
+      cat_clothing: "Ifwalo",
+      cat_furniture: "Ifipuna",
+      cat_produce: "Ifyakulima",
+      cat_cars: "Imotoka",
+      cat_land: "Ifishi",
+      sort_newest: "Ifya Nomba",
+      sort_nearest: "Pafupi",
+      sort_price_low: "Mutengo: Pansi-Pamulu",
+      sort_price_high: "Mutengo: Pamulu-Pansi",
+      lang_en: "English",
+      lang_bem: "IciBemba",
+      lang_ny: "Chinyanja",
+      register_shop: "Lembeshani Icito Lyandi",
+      post_item: "+ Teyeni Ifintu",
+    },
+    ny: {
+      back: "Bwererani",
+      settings: "Zokonzera",
+      home: "Nyumba",
+      my_shop: "Sitolo Wanga",
+      login_signup: "Lowani / Lembani",
+      hi_user: "Moni, {name}",
+      search_placeholder: "Sakani zinthu...",
+      install_app: "Ikani App",
+      loc_home: "Ku nyumba",
+      loc_current: "Gwiritsani ntchito malo pano",
+      loading_listings: "Ikukweza zinthu...",
+      feed_error: "Sitinathe kufika ku msika pano. Yesani kachiwiri.",
+      feed_empty: "Palibe zinthu pano — khazikitsani chinthu choyamba.",
+      got_it: "Ndazimva",
+      install_title: "Ikani ZedMarket",
+      chats: "Macheza",
+      favorites: "Zomwe Mukonda",
+      wanted_board: "Zomwe Mukufuna",
+      map_view: "Mapu",
+      post_wanted: "+ Lembani Zomwe Mukufuna",
+      wanted_explainer: "Lembani zomwe mukufuna, ndipo ogulitsa adzakuyankhani mwachidirect.",
+      login: "Lowani",
+      signup: "Lembani",
+      logout: "Tulukani",
+      cancel: "Lekani",
+      save: "Sungani",
+      loading: "Ikukweza...",
+      log_in_to_see: "Lowani kuona zomwe mukusunga.",
+      log_in_to_chat: "Lowani kuona macheza anu.",
+      log_in_to_shop: "Lowani kuona sitolo wanu.",
+      no_conversations: "Palibe macheza pano.",
+      no_favorites: "Palibe zomwe mukusunga pano.",
+      contact_support: "Lankhulani ndi Support",
+      welcome_back: "Takulandilani Bwino",
+      login_subtitle: "Lowani mu ZedMarket",
+      phone_number: "Nambala ya Foni",
+      password: "Password",
+      show_password: "Onetsani password",
+      forgot_password: "Mwaiwala Password?",
+      no_account_signup: "Palibe account? Lembani",
+      logging_in: "Ikulowetsa...",
+      section_appearance: "Maonekedwe",
+      section_language: "Chilankhulo",
+      section_rewards: "Mphotho",
+      section_notifications: "Zidziwitso",
+      section_safety: "Chitetezo",
+      section_support: "Thandizo",
+      section_legal: "Malamulo",
+      section_account: "Account",
+      dark_mode: "Dark Mode",
+      dark_mode_sub: "Sinthani pakati pa light ndi dark",
+      invite_friends: "Itanani Anzanu",
+      daily_digest: "Daily Digest",
+      daily_digest_sub: "Dziwitsani za zinthu zatsopano mu category mukonda",
+      report_user: "Nenani pa Wina",
+      privacy_policy: "Privacy Policy",
+      delete_account: "Chotsani Account",
+      logout_confirm: "Tulukani?",
+      logout_confirm_sub: "Mukufuna kutuluka?",
+      post_listing: "Ikani Chinthu",
+      edit_listing: "Sinthani Listing",
+      save_changes: "Sungani Zosintha",
+      cat_all: "Zonse",
+      cat_electronics: "Electronics",
+      cat_clothing: "Zovala",
+      cat_furniture: "Mipando",
+      cat_produce: "Zokolola",
+      cat_cars: "Magalimoto",
+      cat_land: "Minda",
+      sort_newest: "Zatsopano",
+      sort_nearest: "Pafupi",
+      sort_price_low: "Mtengo: Pansi-Kumwamba",
+      sort_price_high: "Mtengo: Kumwamba-Pansi",
+      lang_en: "English",
+      lang_bem: "IciBemba",
+      lang_ny: "Chinyanja",
+      register_shop: "Lembetsani Sitolo Wanga",
+      post_item: "+ Ikani Chinthu",
+    },
+  };
+
+  const CATEGORY_KEYS = {
+    All: "cat_all",
+    Electronics: "cat_electronics",
+    Clothing: "cat_clothing",
+    Furniture: "cat_furniture",
+    Produce: "cat_produce",
+    Cars: "cat_cars",
+    Land: "cat_land",
+  };
+
+  const SORT_KEYS = {
+    Newest: "sort_newest",
+    Nearest: "sort_nearest",
+    "Price: Low-High": "sort_price_low",
+    "Price: High-Low": "sort_price_high",
+  };
+
+  function getLang() {
+    const saved = localStorage.getItem(LANG_KEY);
+    return SUPPORTED.includes(saved) ? saved : "en";
+  }
+
+  function setLang(code) {
+    if (!SUPPORTED.includes(code)) return;
+    localStorage.setItem(LANG_KEY, code);
+    document.documentElement.lang = code === "en" ? "en" : code;
+  }
+
+  function t(key, vars) {
+    const lang = getLang();
+    let str = STRINGS[lang]?.[key] ?? STRINGS.en[key] ?? key;
+    if (vars) {
+      Object.keys(vars).forEach((k) => {
+        str = str.replace(new RegExp(`\\{${k}\\}`, "g"), vars[k]);
+      });
+    }
+    return str;
+  }
+
+  function tCat(category) {
+    return t(CATEGORY_KEYS[category] || category);
+  }
+
+  function tSort(sort) {
+    return t(SORT_KEYS[sort] || sort);
+  }
+
+  function applyTranslations(root) {
+    const scope = root || document;
+    scope.querySelectorAll("[data-i18n]").forEach((el) => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    scope.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    scope.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      el.setAttribute("aria-label", t(el.dataset.i18nAria));
+    });
+  }
+
+  function setLangAndApply(code) {
+    setLang(code);
+    applyTranslations();
+    window.dispatchEvent(new Event("langchange"));
+  }
+
+  function initLangPicker(containerId) {
+    const row = document.getElementById(containerId);
+    if (!row) return;
+    const current = getLang();
+    row.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lang === current);
+      btn.addEventListener("click", () => {
+        setLangAndApply(btn.dataset.lang);
+        row.querySelectorAll("[data-lang]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.lang === btn.dataset.lang);
+        });
+      });
+    });
+  }
+
+  function initLang() {
+    document.documentElement.lang = getLang() === "en" ? "en" : getLang();
+    applyTranslations();
+    window.addEventListener("pageshow", applyTranslations);
+  }
+
+  window.getLang = getLang;
+  window.setLang = setLang;
+  window.setLangAndApply = setLangAndApply;
+  window.t = t;
+  window.tCat = tCat;
+  window.tSort = tSort;
+  window.applyTranslations = applyTranslations;
+  window.initLang = initLang;
+  window.initLangPicker = initLangPicker;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initLang);
+  } else {
+    initLang();
+  }
+})();

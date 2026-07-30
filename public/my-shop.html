@@ -114,8 +114,8 @@
 <div id="app"></div>
 
 <div class="bottom-nav">
-  <a href="/index.html" class="nav-item"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></div><div>Home</div></a>
-  <a href="/my-shop.html" class="nav-item active"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div>My Shop</div></a>
+  <a href="/index.html" class="nav-item"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></div><div data-i18n="home">Home</div></a>
+  <a href="/my-shop.html" class="nav-item active"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div data-i18n="my_shop">My Shop</div></a>
 </div>
 
 <div class="modal-overlay" id="manageModal">
@@ -143,9 +143,12 @@
   </div>
 </div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const MY_SHOP_BRAND = '<div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>';
+  function myShopBrand() {
+    return `<div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>${t("my_shop")}</div>`;
+  }
   const ADMIN_BTN = '<button class="admin-btn" onclick="window.location.href=\'/admin.html\'"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>';
   const app = document.getElementById("app");
   const manageModal = document.getElementById("manageModal");
@@ -192,16 +195,16 @@
 
       render();
     } catch (e) {
-      app.innerHTML = `<div class="topbar">${MY_SHOP_BRAND}</div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;
+      app.innerHTML = `<div class="topbar">${myShopBrand()}</div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;
     }
   }
 
   function renderLoggedOut() {
     app.innerHTML = `
-      <div class="topbar">${MY_SHOP_BRAND}</div>
+      <div class="topbar">${myShopBrand()}</div>
       <div class="center-box">
-        <div class="empty-text">Log in to see your shop.</div>
-        <button class="login-btn" onclick="window.location.href='/index.html'">Log In</button>
+        <div class="empty-text">${t("log_in_to_shop")}</div>
+        <button class="login-btn" onclick="window.location.href='/index.html'">${t("login")}</button>
       </div>`;
   }
 
@@ -236,7 +239,7 @@
       app.innerHTML = `
         <div class="topbar">
           <div>
-            ${MY_SHOP_BRAND}
+            ${myShopBrand()}
             <div class="sub-brand">${user.name}</div>
           </div>
         </div>
@@ -256,7 +259,7 @@
     app.innerHTML = `
       <div class="topbar">
         <div>
-          ${MY_SHOP_BRAND}
+          ${myShopBrand()}
           <div class="sub-brand">${user.name} ${isVerifiedShop ? "· ✅ Verified Shop" : isPending ? "· ⏳ Pending" : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${daysLeft > 0 ? `⏳ Renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}` : "⚠️ Expires today"}</div>` : ""}
         </div>
