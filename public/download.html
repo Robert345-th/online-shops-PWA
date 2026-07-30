@@ -125,7 +125,7 @@
       </div>
     </div>
 
-    <a class="alt-link" href="/index.html" data-i18n="download_chrome_alt">Install from home page instead →</a>
+    <a class="alt-link" href="/index.html" data-i18n="download_chrome_alt">Browse ZedMarket on the web →</a>
   </div>
 
   <div id="iosBox">
@@ -169,12 +169,12 @@
       const res = await fetch(APK_URL, { method: "HEAD" });
       const size = parseInt(res.headers.get("content-length") || "0", 10);
       if (!res.ok || size < MIN_APK_BYTES) {
-        disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "APK is being prepared — use Chrome install below for now."));
+        disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "The Android app file is not uploaded yet. We are preparing it — check back soon."));
         return;
       }
       enableDownload(size);
     } catch {
-      disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "APK is being prepared — use Chrome install below for now."));
+      disableDownload(t("download_coming_soon", "Coming soon"), t("download_coming_sub", "The Android app file is not uploaded yet. We are preparing it — check back soon."));
     }
   }
 

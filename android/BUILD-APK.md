@@ -1,45 +1,59 @@
 # Build ZedMarket Android APK
 
-This creates `public/zedmarket.apk` for the download page at **https://zedmarket.app/download.html**.
+The download page (**https://zedmarket.app/download.html**) shows **Coming soon** until `public/zedmarket.apk` exists on the server (file must be at least 500 KB).
 
-## One-time setup (Windows)
+---
 
-1. Install **Java JDK 17+**  
-   Download: https://adoptium.net/temurin/releases/?version=17&os=windows&arch=x64  
+## Fastest way — PWABuilder (no Java on your PC)
 
-2. Install **Android command-line tools** (or Android Studio)  
-   Bubblewrap will prompt to download the SDK on first run.
+1. Open **https://www.pwabuilder.com/**
+2. Enter **https://zedmarket.app** and click **Start**
+3. Click **Package for stores** → **Android**
+4. Use package name: `app.zedmarket.twa`
+5. Download the **APK** (not AAB)
+6. Save it as `public/zedmarket.apk` in this repo
+7. Push to GitHub — Railway redeploys automatically
+8. Copy the **SHA-256 fingerprint** from PWABuilder into `public/.well-known/assetlinks.json`
 
-3. From the project root:
+---
+
+## GitHub Actions (build in the cloud)
+
+1. In GitHub: **Settings → Secrets → Actions** → add `APK_KEYSTORE_PASSWORD` (pick a strong password, save it somewhere safe)
+2. Go to **Actions → Build Android APK → Run workflow**
+3. When it finishes, the APK is pushed to `public/zedmarket.apk` and the download button turns on
+4. Copy the SHA-256 from the workflow log into `assetlinks.json` and push again
+
+---
+
+## Local build (Windows)
+
+1. Install **Java JDK 17+** — https://adoptium.net/temurin/releases/?version=17&os=windows&arch=x64
+2. From project root:
 
 ```cmd
 cd android
 npm install
 npx bubblewrap update --manifest twa-manifest.json
 npx bubblewrap build
+node copy-apk.js
 ```
 
-4. Copy the APK to the website:
-
-```cmd
-copy app-release-signed.apk ..\public\zedmarket.apk
-```
-
-5. Update **asset links** (so the app opens full-screen without a browser bar):
+3. Update **asset links**:
 
 ```cmd
 npx bubblewrap fingerprint list
 ```
 
-Copy the SHA-256 fingerprint into `public/.well-known/assetlinks.json`, then deploy.
+Copy the SHA-256 into `public/.well-known/assetlinks.json`, then deploy.
 
 ## Keystore
 
-- First build creates `android/android.keystore` — **back this up safely**.
-- Use the **same keystore** when you upload to Play Store later.
+- First build creates `android/android.keystore` — **back this up safely**
+- Use the **same keystore** when you upload to Play Store later
 
 ## Deploy
 
-Push to GitHub so Railway redeploys. Users can then download from:
+Push to GitHub so Railway redeploys. Users download from:
 
 **https://zedmarket.app/download.html**
