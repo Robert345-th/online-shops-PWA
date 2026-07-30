@@ -184,7 +184,10 @@
     });
 
     if (isStandalone()) hideInstallElements(elementIds);
-    window.addEventListener("appinstalled", () => hideInstallElements(elementIds));
+    window.addEventListener("appinstalled", () => {
+      hideInstallElements(elementIds);
+      document.querySelectorAll(".nav-download").forEach((el) => el.remove());
+    });
 
     if (opts.showBanner) showInstallBanner();
   }
