@@ -184,6 +184,17 @@
   .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
   .loc-chip { flex: 1; text-align: center; }
 
+  .loc-banner {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 12px; margin: 0 12px 10px;
+    background: var(--card); border: 1px solid var(--orange); border-radius: 12px;
+  }
+  .loc-banner[hidden] { display: none !important; }
+  .loc-banner-btn {
+    background: var(--orange); color: #fff; border: none; border-radius: 999px;
+    padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: var(--card); border-top: 1px solid var(--border);
@@ -251,6 +262,10 @@
   <div class="loc-row" id="locRow">
     <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
     <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
+  </div>
+
+  <div class="loc-banner" id="locBanner" hidden>
+    <button type="button" class="loc-banner-btn" id="locAllowBtn" data-i18n="loc_allow">📍 Allow location</button>
   </div>
 
   <div class="chips-row" id="sortRow"></div>
@@ -433,6 +448,7 @@
   async function applyCoords(coords, saveHome) {
     myCoords = coords;
     if (saveHome) localStorage.setItem("zm_home_location", JSON.stringify(coords));
+    hideLocBanner();
     renderFeed();
   }
 
@@ -440,10 +456,22 @@
     try {
       const coords = await getDeviceCoords();
       await applyCoords(coords, saveHome);
+      return true;
     } catch {
       if (!saveHome) myCoords = null;
       renderFeed();
+      return false;
     }
+  }
+
+  function showLocBanner() {
+    const banner = document.getElementById("locBanner");
+    if (banner) banner.hidden = false;
+  }
+
+  function hideLocBanner() {
+    const banner = document.getElementById("locBanner");
+    if (banner) banner.hidden = true;
   }
 
   function loadHomeLocation() {
@@ -466,11 +494,32 @@
     document.getElementById("locCurrent").classList.remove("active");
     loadHomeLocation();
   });
-  document.getElementById("locCurrent").addEventListener("click", () => {
+  document.getElementById("locCurrent").addEventListener("click", async () => {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
-    requestLocation(false);
+    await requestLocation(false);
+    if (!myCoords) showLocBanner();
   });
+
+  document.getElementById("locAllowBtn").addEventListener("click", async () => {
+    document.getElementById("locCurrent").classList.add("active");
+    document.getElementById("locHome").classList.remove("active");
+    await requestLocation(true);
+  });
+
+  async function initLocationAccess() {
+    loadHomeLocation();
+    if (myCoords) {
+      hideLocBanner();
+      return;
+    }
+    const state = await getLocationPermissionState();
+    if (state === "granted") {
+      await requestLocation(true);
+      return;
+    }
+    showLocBanner();
+  }
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
@@ -534,7 +583,7 @@
 
   renderChips();
   loadListings();
-  loadHomeLocation();
+  initLocationAccess();
 </script>
 </body>
 </html>

@@ -49,7 +49,19 @@
     el.classList.toggle("loc-hint-ok", !isError);
   }
 
+  async function getLocationPermissionState() {
+    if (!navigator.geolocation) return "unsupported";
+    if (!navigator.permissions) return "unknown";
+    try {
+      const result = await navigator.permissions.query({ name: "geolocation" });
+      return result.state;
+    } catch {
+      return "unknown";
+    }
+  }
+
   window.getDeviceCoords = getDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
+  window.getLocationPermissionState = getLocationPermissionState;
   window.showLocHint = showLocHint;
 })();
