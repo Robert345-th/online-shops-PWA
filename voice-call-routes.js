@@ -27,7 +27,12 @@ function expireStaleCalls() {
     if (call.status === "ringing" && now - call.createdAt > CALL_RING_MS) {
       call.status = "ended";
       mailboxPush(call.callerId, { type: "ended", call_id: id, reason: "timeout" });
-      mailboxPush(call.calleeId, { type: "missed", call_id: id });
+      mailboxPush(call.calleeId, {
+        type: "missed",
+        call_id: id,
+        caller_id: call.callerId,
+        caller_name: call.callerName,
+      });
       calls.delete(id);
     }
   }
@@ -136,6 +141,36 @@ function registerVoiceCallRoutes(app, getUserIdFromToken) {
     const other = userKey === call.callerId ? call.calleeId : call.callerId;
     mailboxPush(other, { type: "ended", call_id: call.id });
     calls.delete(call.id);
+    res.json({ ok: true });
+  });
+
+  app.post("/api/calls/:id/location", (req, res) => {
+    const userId = getUserIdFromToken(req.headers.authorization);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const call = calls.get(req.params.id);
+    if (!call || call.status !== "connected") {
+      return res.status(404).json({ error: "Call not active" });
+    }
+
+    const userKey = String(userId);
+    if (userKey !== call.callerId && userKey !== call.calleeId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { lat, lng } = req.body || {};
+    if (typeof lat !== "number" || typeof lng !== "number") {
+      return res.status(400).json({ error: "Invalid location" });
+    }
+
+    const other = userKey === call.callerId ? call.calleeId : call.callerId;
+    mailboxPush(other, {
+      type: "location",
+      call_id: call.id,
+      lat,
+      lng,
+      from_user_id: userKey,
+    });
     res.json({ ok: true });
   });
 
