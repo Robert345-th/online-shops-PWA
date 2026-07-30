@@ -97,8 +97,11 @@
   </div>
 
   <div class="section-label" data-i18n="section_appearance">Appearance</div>
-  <div class="row" id="installRow">
-    <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span data-i18n="install_app">Install App</span></div>
+  <div class="row" id="shareLinkRow">
+    <div>
+      <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span data-i18n="share_link">Share Link</span></div>
+      <div class="row-sub" data-i18n="share_link_sub">Share ZedMarket with friends</div>
+    </div>
   </div>
   <div class="row">
     <div>
@@ -191,12 +194,12 @@
 
 <script src="/js/lang.js"></script>
 <script src="/js/data-saver.js"></script>
-<script src="/js/pwa-install.js"></script>
 <script>
   initLangPicker("langRow");
 
   const API_URL = "https://online-shops-production.up.railway.app";
   const PRIVACY_POLICY_URL = "https://idyllic-tiramisu-d043e4.netlify.app/privacy-policy.html";
+  const SHARE_URL = "https://www.zedmarket.app";
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
 
@@ -219,7 +222,23 @@
     setLowData(lowDataToggle.checked);
   });
 
-  initPwaInstall({ rowIds: ["installRow"] });
+  document.getElementById("shareLinkRow").addEventListener("click", async () => {
+    const message = `${t("share_link_text", "Check out ZedMarket — Zambia's marketplace app!")} ${SHARE_URL}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "ZedMarket", text: message, url: SHARE_URL });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(message);
+      alert(t("share_link_copied", "Link copied — paste it wherever you'd like to share!"));
+    } catch (e) {
+      prompt(t("share_link_copy_prompt", "Copy this link:"), message);
+    }
+  });
 
   const digestToggle = document.getElementById("digestToggle");
   async function loadDigestSetting() {
