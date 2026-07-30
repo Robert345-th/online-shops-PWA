@@ -37,7 +37,8 @@
         timeout: 60000,
       });
     } catch (err) {
-      if (err && err.code === 1) throw err;
+      const permState = await getLocationPermissionState();
+      if (permState === "denied") throw err;
       return await getDeviceCoords({
         enableHighAccuracy: false,
         maximumAge: 0,
@@ -116,22 +117,6 @@
       .catch(() => {});
   }
 
-  function isAndroidDevice() {
-    return /Android/i.test(navigator.userAgent);
-  }
-
-  function isStandaloneApp() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  }
-
-  function openLocationPermissionSettings() {
-    if (!isAndroidDevice()) return;
-    const fallback = encodeURIComponent(window.location.href);
-    const pkg = isStandaloneApp() ? "app.zedmarket.twa" : "com.android.chrome";
-    window.location.href =
-      `intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;scheme=package;package=${pkg};S.browser_fallback_url=${fallback};end`;
-  }
-
   function readSavedCoords(storageKey) {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -151,7 +136,6 @@
   window.reverseGeocodeLabel = reverseGeocodeLabel;
   window.getLocationPermissionState = getLocationPermissionState;
   window.watchLocationPermission = watchLocationPermission;
-  window.openLocationPermissionSettings = openLocationPermissionSettings;
   window.readSavedCoords = readSavedCoords;
   window.showLocHint = showLocHint;
 })();

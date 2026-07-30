@@ -456,8 +456,6 @@
     label.textContent = loading ? t("loc_getting") : t("loc_current");
   }
 
-  let locRetryAfterGrant = false;
-
   async function handleUseCurrentLocation() {
     document.getElementById("locCurrent").classList.add("active");
     document.getElementById("locHome").classList.remove("active");
@@ -466,15 +464,7 @@
     const result = await requestUserLocation();
     setLocCurrentLoading(false);
 
-    if (result.ok) {
-      locRetryAfterGrant = false;
-      return;
-    }
-
-    if (result.code === 1) {
-      locRetryAfterGrant = true;
-      openLocationPermissionSettings();
-    }
+    if (result.ok) return;
 
     switchToHomeArea();
   }
@@ -485,16 +475,6 @@
 
   document.getElementById("locHome").addEventListener("click", switchToHomeArea);
   document.getElementById("locCurrent").addEventListener("click", handleUseCurrentLocation);
-
-  watchLocationPermission((state) => {
-    if (state === "granted" && locRetryAfterGrant) handleUseCurrentLocation();
-  });
-
-  window.addEventListener("pageshow", () => {
-    getLocationPermissionState().then((state) => {
-      if (state === "granted" && locRetryAfterGrant) handleUseCurrentLocation();
-    });
-  });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
