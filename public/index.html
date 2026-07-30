@@ -433,12 +433,13 @@
   async function requestUserLocation() {
     try {
       const coords = await requestUserLocationCoords();
-      if (!isValidCoords(coords)) return { ok: false };
+      if (!isValidCoords(coords)) return { ok: false, code: 2 };
       myCoords = coords;
+      localStorage.setItem("zm_home_location", JSON.stringify(coords));
       renderFeed();
       return { ok: true };
-    } catch {
-      return { ok: false };
+    } catch (err) {
+      return { ok: false, code: err && err.code != null ? err.code : -1 };
     }
   }
 
@@ -456,15 +457,14 @@
   }
 
   async function handleUseCurrentLocation() {
+    document.getElementById("locCurrent").classList.add("active");
+    document.getElementById("locHome").classList.remove("active");
     setLocCurrentLoading(true);
+
     const result = await requestUserLocation();
     setLocCurrentLoading(false);
 
-    if (result.ok) {
-      document.getElementById("locCurrent").classList.add("active");
-      document.getElementById("locHome").classList.remove("active");
-      return;
-    }
+    if (result.ok) return;
 
     switchToHomeArea();
   }
