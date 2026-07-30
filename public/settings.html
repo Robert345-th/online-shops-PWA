@@ -7,6 +7,10 @@
 <meta name="theme-color" content="#111111" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" type="image/png" href="https://www.zedmarket.app/icon-192.png" />
+<link rel="apple-touch-icon" href="https://www.zedmarket.app/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ZedMarket" />
 <style>
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
@@ -185,6 +189,7 @@
 
 <script src="/js/lang.js"></script>
 <script src="/js/data-saver.js"></script>
+<script src="/js/pwa-install.js"></script>
 <script>
   initLangPicker("langRow");
 
@@ -212,20 +217,7 @@
     setLowData(lowDataToggle.checked);
   });
 
-  let deferredInstallPrompt = null;
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-  });
-  document.getElementById("installRow").addEventListener("click", async () => {
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-    } else {
-      alert('To install: tap the ⋮ menu (top right of your browser) → "Add to Home screen" or "Install app".');
-    }
-  });
+  initPwaInstall({ rowIds: ["installRow"] });
 
   const digestToggle = document.getElementById("digestToggle");
   async function loadDigestSetting() {
