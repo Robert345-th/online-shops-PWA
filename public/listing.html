@@ -112,6 +112,12 @@
   .tip-row { display: flex; gap: 8px; margin-bottom: 10px; }
   .tip-bullet { color: var(--red-btn); font-weight: 700; }
   .tip-text { font-size: 13px; line-height: 1.4; flex: 1; }
+  .pay-safety-box {
+    background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 12px;
+    padding: 14px; margin-bottom: 16px; color: var(--warn-text); font-size: 14px;
+    font-weight: 700; line-height: 1.45; text-align: center;
+  }
+  .pay-safety-note { font-size: 13px; color: var(--subtext); line-height: 1.5; margin-bottom: 16px; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
   .error-text { color: var(--price-red); margin-bottom: 12px; }
@@ -162,6 +168,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="paySafetyModal">
+  <div class="modal-box">
+    <div class="modal-title">Before you contact the seller</div>
+    <div class="pay-safety-box">Do not pay until you see the item.</div>
+    <div class="pay-safety-note">Never send mobile money or any payment before you meet the seller and check the item in person. If someone pushes you to pay first, stop and walk away.</div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" id="paySafetyCancelBtn">Go Back</button>
+      <button type="button" class="modal-submit-btn" id="paySafetyUnderstandBtn">I Understand</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="safetyModal">
   <div class="modal-box">
     <div class="modal-title">🛡️ Meeting Safely</div>
@@ -196,6 +214,29 @@
   let reviewData = { reviews: [], average: 0, total: 0 };
   let myRating = 5;
   let selectedReason = "";
+  let pendingContactAction = null;
+
+  function isOwnListing() {
+    return currentUser && listing?.seller_id === currentUser.id;
+  }
+
+  function openPaySafetyModal(action) {
+    pendingContactAction = action;
+    document.getElementById("paySafetyModal").classList.add("open");
+  }
+
+  function closePaySafetyModal(clearAction = true) {
+    document.getElementById("paySafetyModal").classList.remove("open");
+    if (clearAction) pendingContactAction = null;
+  }
+
+  function requireContactSafety(action) {
+    if (isOwnListing()) {
+      action();
+      return;
+    }
+    openPaySafetyModal(action);
+  }
 
   if (!listingId) {
     app.innerHTML = `<div class="center-box"><div class="error-text">No listing specified.</div></div>`;
@@ -399,31 +440,39 @@
   });
 
   function handleWhatsApp() {
-    if (!listing.seller_phone) return;
-    const phone = listing.seller_phone.replace(/^0/, "260");
-    const message = encodeURIComponent(`Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`);
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+    requireContactSafety(() => {
+      if (!listing.seller_phone) return;
+      const phone = listing.seller_phone.replace(/^0/, "260");
+      const message = encodeURIComponent(`Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`);
+      window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+    });
   }
   function handleCall() {
-    if (!listing.seller_phone) {
-      alert("Seller phone number not available.");
-      return;
-    }
-    window.location.href = `tel:${listing.seller_phone}`;
+    requireContactSafety(() => {
+      if (!listing.seller_phone) {
+        alert("Seller phone number not available.");
+        return;
+      }
+      window.location.href = `tel:${listing.seller_phone}`;
+    });
   }
   function handleSMS() {
-    if (!listing.seller_phone) return;
-    const message = `Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`;
-    window.location.href = `sms:${listing.seller_phone}?body=${encodeURIComponent(message)}`;
+    requireContactSafety(() => {
+      if (!listing.seller_phone) return;
+      const message = `Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`;
+      window.location.href = `sms:${listing.seller_phone}?body=${encodeURIComponent(message)}`;
+    });
   }
   function handleMessage() {
     if (!currentUser) { window.location.href = "/login.html"; return; }
-    if (listing.seller_id === currentUser.id) {
+    if (isOwnListing()) {
       alert("That's your listing — you can't message yourself about your own listing.");
       return;
     }
-    const sellerName = listing.shop_name || listing.seller_name || "";
-    window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}`;
+    requireContactSafety(() => {
+      const sellerName = listing.shop_name || listing.seller_name || "";
+      window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}`;
+    });
   }
   async function handleShareMeetup() {
     const message = `I'm meeting ${listing.seller_name || "a seller"} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
@@ -523,6 +572,15 @@
   });
 
   document.getElementById("safetyGotItBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.remove("open"));
+  document.getElementById("paySafetyCancelBtn").addEventListener("click", () => closePaySafetyModal(true));
+  document.getElementById("paySafetyModal").addEventListener("click", (e) => {
+    if (e.target.id === "paySafetyModal") closePaySafetyModal(true);
+  });
+  document.getElementById("paySafetyUnderstandBtn").addEventListener("click", () => {
+    const action = pendingContactAction;
+    closePaySafetyModal(true);
+    if (action) action();
+  });
 </script>
 </body>
 </html>
