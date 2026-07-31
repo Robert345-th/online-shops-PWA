@@ -17,7 +17,18 @@
   }
 
   function isStandalone() {
-    return window.matchMedia("(display-mode: standalone)").matches;
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches
+    );
+  }
+
+  function isPlayStoreApp() {
+    if (isStandalone()) return true;
+    const ref = document.referrer || "";
+    if (/^android-app:\/\/app\.zedmarket\.twa/i.test(ref)) return true;
+    if (/[?&]utm_source=android\b/i.test(location.search)) return true;
+    return false;
   }
 
   function isSamsungBrowser() {
@@ -116,6 +127,7 @@
   }
 
   function maybeRedirectToChrome() {
+    if (isPlayStoreApp()) return;
     if (isStandalone() || isInstallPage() || isEmbeddedBrowser()) return;
     if (!needsChromeOnAndroid()) return;
     if (isBlockedPath()) return;
@@ -126,6 +138,7 @@
     openInChrome();
   }
 
+  window.isPlayStoreApp = isPlayStoreApp;
   window.openInChrome = openInChrome;
   window.buildChromeIntentUrl = buildChromeIntentUrl;
   window.isAndroidChrome = isAndroidChrome;
