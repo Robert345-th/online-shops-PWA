@@ -70,6 +70,7 @@
     padding: 8px 14px; font-size: 12px; cursor: pointer;
   }
   .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
+  .category-grid .chip { flex: 1 1 calc(50% - 4px); text-align: center; padding: 14px 10px; border-radius: 12px; font-size: 13px; }
 
   .extra-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 18px; }
   .extra-box-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
@@ -133,7 +134,7 @@
     <div class="header-title">Post a Listing</div>
   </div>
   <div class="content">
-    <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Photos</div>
+    <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Category</div>
     <div class="step-row">
       <div class="step-dot active" id="dot1"></div>
       <div class="step-dot" id="dot2"></div>
@@ -143,6 +144,14 @@
     <div class="form-banner" id="formBanner"></div>
 
     <div class="step-panel active" id="step1">
+      <div class="step-title">What are you selling?</div>
+      <div class="subtitle">Pick a category first — each type has its own fields so you can't mix them up.</div>
+      <div class="label">Category</div>
+      <div class="chip-row category-grid" id="categoryRow"></div>
+      <button type="button" class="submit-btn" id="next1Btn">Next</button>
+    </div>
+
+    <div class="step-panel" id="step2">
       <div class="step-title">Photos</div>
       <div class="subtitle">Add up to 5 photos. Good photos help your item sell faster.</div>
       <div class="label">Photos (<span id="photoCount">0</span>/5)</div>
@@ -151,21 +160,6 @@
           <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
         </label>
       </div>
-      <button type="button" class="submit-btn" id="next1Btn">Next</button>
-    </div>
-
-    <div class="step-panel" id="step2">
-      <div class="step-title">Item details</div>
-      <div class="subtitle">What are you selling and for how much?</div>
-      <div class="label">Title</div>
-      <input class="field-input" id="titleInput" placeholder="e.g. iPhone 11, 64GB" />
-      <div class="label">Price (ZMW)</div>
-      <input class="field-input" id="priceInput" type="number" placeholder="e.g. 1850" />
-      <div class="label">Condition</div>
-      <div class="chip-row" id="conditionRow">
-        <div class="chip" data-cond="New">New</div>
-        <div class="chip" data-cond="Pre-owned">Pre-owned</div>
-      </div>
       <div class="btn-row">
         <button type="button" class="back-btn" id="back2Btn">Back</button>
         <button type="button" class="submit-btn" id="next2Btn">Next</button>
@@ -173,10 +167,19 @@
     </div>
 
     <div class="step-panel" id="step3">
-      <div class="step-title">Category & description</div>
-      <div class="subtitle">Pick a category and describe your item.</div>
-      <div class="label">Category</div>
-      <div class="chip-row" id="categoryRow"></div>
+      <div class="step-title" id="detailsStepTitle">Item details</div>
+      <div class="subtitle" id="detailsStepSubtitle">Fill in the details for your item.</div>
+      <div class="label">Title</div>
+      <input class="field-input" id="titleInput" placeholder="e.g. iPhone 11, 64GB" />
+      <div class="label">Price (ZMW)</div>
+      <input class="field-input" id="priceInput" type="number" placeholder="e.g. 1850" />
+      <div id="conditionSection">
+        <div class="label">Condition</div>
+        <div class="chip-row" id="conditionRow">
+          <div class="chip" data-cond="New">New</div>
+          <div class="chip" data-cond="Pre-owned">Pre-owned</div>
+        </div>
+      </div>
       <div id="extraFields"></div>
       <div class="label">Description</div>
       <textarea class="field-input" id="descInput" placeholder="Describe condition, age, reason for selling..."></textarea>
@@ -227,7 +230,7 @@
 
   let step = 1;
   let photos = [];
-  let categoryId = CATEGORY_OPTIONS[0].id;
+  let categoryId = null;
   let condition = null;
   let landUnit = "acres";
   let coords = null;
@@ -241,10 +244,19 @@
   const formBanner = document.getElementById("formBanner");
   const stepSubtitle = document.getElementById("stepSubtitle");
   const subtitles = {
-    1: "Step 1 of 4 — Photos",
-    2: "Step 2 of 4 — Item details",
-    3: "Step 3 of 4 — Category & description",
+    1: "Step 1 of 4 — Category",
+    2: "Step 2 of 4 — Photos",
+    3: "Step 3 of 4 — Item details",
     4: "Step 4 of 4 — Location",
+  };
+
+  const CATEGORY_HINTS = {
+    Electronics: { title: "e.g. iPhone 11, 64GB", desc: "Describe specs, battery health, accessories included..." },
+    Clothing: { title: "e.g. Nike Air Max, size 42", desc: "Describe size, fit, brand, how often worn..." },
+    Furniture: { title: "e.g. 3-seater sofa, brown leather", desc: "Describe dimensions, material, condition..." },
+    Produce: { title: "e.g. Fresh tomatoes, 10kg", desc: "Describe freshness, quantity, pickup times..." },
+    Cars: { title: "e.g. Toyota Vitz 2015", desc: "Describe service history, condition, reason for selling..." },
+    Land: { title: "e.g. 2 acre plot, Kabulonga", desc: "Describe access road, utilities, nearby landmarks..." },
   };
 
   function showError(message) {
@@ -311,7 +323,22 @@
     });
     stepSubtitle.textContent = subtitles[step];
     clearBanner();
+    if (step === 3) applyDetailsStepForCategory();
     if (step === 4) applyLocationStepDefaults();
+  }
+
+  function applyDetailsStepForCategory() {
+    const cat = selectedCategory();
+    if (!cat) return;
+    document.getElementById("detailsStepTitle").textContent = `${cat} details`;
+    document.getElementById("detailsStepSubtitle").textContent = `Fill in the fields for ${cat.toLowerCase()} only.`;
+    const hints = CATEGORY_HINTS[cat] || CATEGORY_HINTS.Electronics;
+    document.getElementById("titleInput").placeholder = hints.title;
+    document.getElementById("descInput").placeholder = hints.desc;
+    document.getElementById("conditionSection").style.display =
+      cat === "Land" || cat === "Cars" ? "none" : "block";
+    renderExtraFields();
+    updateConditionChips();
   }
 
   function applyLocationStepDefaults() {
@@ -344,7 +371,6 @@
       el.addEventListener("click", () => {
         categoryId = parseInt(el.dataset.cat, 10);
         renderCategoryChips();
-        renderExtraFields();
       })
     );
   }
@@ -482,22 +508,26 @@
     }
   }
 
-  function validateStep2() {
-    const title = document.getElementById("titleInput").value.trim();
-    const price = document.getElementById("priceInput").value;
-    if (!title || !price) {
-      showError("Please enter a title and price.");
-      return false;
-    }
-    if (!condition) {
-      showError("Please select whether the item is New or Pre-owned.");
+  function validateStep1() {
+    if (!categoryId) {
+      showError("Please pick a category first.");
       return false;
     }
     return true;
   }
 
   function validateStep3() {
+    const title = document.getElementById("titleInput").value.trim();
+    const price = document.getElementById("priceInput").value;
+    if (!title || !price) {
+      showError("Please enter a title and price.");
+      return false;
+    }
     const cat = selectedCategory();
+    if (cat !== "Land" && cat !== "Cars" && !condition) {
+      showError("Please select whether the item is New or Pre-owned.");
+      return false;
+    }
     if (cat === "Cars") {
       const carMake = document.getElementById("carMake")?.value.trim() || "";
       const carModel = document.getElementById("carModel")?.value.trim() || "";
@@ -537,6 +567,11 @@
     const price = document.getElementById("priceInput").value;
     const description = document.getElementById("descInput").value.trim();
     const cat = selectedCategory();
+    const listingCondition = condition || (cat === "Cars" || cat === "Land" ? "Pre-owned" : null);
+    if (!listingCondition) {
+      showError("Please select whether the item is New or Pre-owned.");
+      return;
+    }
 
     let carMake, carModel, carYear, carMileage, landSize, landDeedStatus;
     if (cat === "Cars") {
@@ -555,7 +590,7 @@
       description,
       price: parseFloat(price),
       category_id: categoryId,
-      condition,
+      condition: listingCondition,
       photos: photos.map((p) => p.url).filter(Boolean),
       location_label: locationLabel,
     };
@@ -609,9 +644,8 @@
 
   function initWizard() {
     loadSavedListingLocation();
-    renderPhotoGrid();
     renderCategoryChips();
-    renderExtraFields();
+    renderPhotoGrid();
 
     document.querySelectorAll("[data-cond]").forEach((el) =>
       el.addEventListener("click", () => {
@@ -630,17 +664,17 @@
     });
 
     document.getElementById("next1Btn").addEventListener("click", () => {
-      if (photos.some((p) => p.uploading)) {
-        showError("Photos are still uploading. Please wait a moment.");
-        return;
-      }
+      if (!validateStep1()) return;
       step = 2;
       updateStepUI();
     });
 
     document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
     document.getElementById("next2Btn").addEventListener("click", () => {
-      if (!validateStep2()) return;
+      if (photos.some((p) => p.uploading)) {
+        showError("Photos are still uploading. Please wait a moment.");
+        return;
+      }
       step = 3;
       updateStepUI();
     });
