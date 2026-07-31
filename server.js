@@ -137,6 +137,14 @@ function apkIsReady() {
 
 registerPushRoutes(app, getUserIdFromToken);
 
+app.get("/.well-known/assetlinks.json", (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.type("application/json");
+  res.sendFile(path.join(__dirname, "public", ".well-known", "assetlinks.json"));
+});
+
 app.head("/zedmarket.apk", (req, res) => {
   if (!apkIsReady()) return res.status(404).end();
   res.setHeader("Content-Type", "application/vnd.android.package-archive");
