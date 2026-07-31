@@ -107,7 +107,7 @@
     <div class="label">Phone Number</div>
     <div class="phone-row">
       <div class="phone-prefix"><span>🇿🇲 +260</span></div>
-      <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456" maxlength="10" inputmode="tel" autocomplete="tel" />
+      <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456 or 977123456" maxlength="10" inputmode="tel" autocomplete="tel" />
     </div>
     <div class="phone-hint">Only <b>Airtel</b> allowed</div>
 
@@ -156,6 +156,7 @@
 </div>
 
 <script src="/js/location.js"></script>
+<script src="/js/phone.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
 
@@ -177,10 +178,6 @@
   }
   function clearError() {
     errorBanner.classList.remove("show");
-  }
-
-  function isValidZambianPhone(phone) {
-    return /^(0573\d{6}|0574\d{6}|077\d{7}|097\d{7})$/.test(phone);
   }
 
   function updateStepUI() {
@@ -262,7 +259,7 @@
   document.getElementById("next1Btn").addEventListener("click", () => {
     clearError();
     const name = document.getElementById("nameInput").value.trim();
-    const phone = document.getElementById("phoneInput").value.trim();
+    const phone = normalizeZambianPhone(document.getElementById("phoneInput").value);
     if (!name || !phone) {
       showError("Please enter your name and phone number.");
       return;
@@ -308,7 +305,7 @@
   signupBtn.addEventListener("click", async () => {
     clearError();
     const name = document.getElementById("nameInput").value.trim();
-    const phone = document.getElementById("phoneInput").value.trim();
+    const phone = normalizeZambianPhone(document.getElementById("phoneInput").value);
     const password = document.getElementById("passwordInput").value;
     const confirmPassword = document.getElementById("confirmPasswordInput").value;
     const referralCode = document.getElementById("referralInput").value.trim();
