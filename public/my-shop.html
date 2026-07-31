@@ -280,8 +280,8 @@
       </div>
 
       <div class="action-row">
-        <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">🖊️ Edit Shop Profile</button>
-        <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">👁️ View My Profile</button>
+        <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">Edit Shop Profile</button>
+        <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">View My Shop</button>
         ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? "⏳ Upgrade Pending" : "🏆 Upgrade to Shop"}</button>` : ""}
         ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">🔄 Renew Now</button>` : ""}
         ${user.is_admin ? ADMIN_BTN : ""}
