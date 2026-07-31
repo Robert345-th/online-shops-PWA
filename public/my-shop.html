@@ -203,7 +203,7 @@
   }
 
   async function loadData() {
-    if (!user) { renderLoggedOut(); return; }
+    if (!user || !token) { window.location.href = "/login.html"; return; }
 
     app.innerHTML = `<div class="center-box"><div>Loading…</div></div>`;
 

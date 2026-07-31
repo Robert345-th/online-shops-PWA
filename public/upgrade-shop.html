@@ -108,6 +108,8 @@
   let selectedPlan = null;
   let mySubscription = null;
   let paymentEnforced = false;
+  let payeePhone = "0778727201";
+  let payeeName = "Robert Zulu";
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -121,15 +123,21 @@
 
   async function init() {
     try {
-      const [subRes, pricesRes, statusRes] = await Promise.all([
+      const [subRes, pricesRes, statusRes, payeeRes] = await Promise.all([
         fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
         fetch(`${API_URL}/settings/plan-prices`),
         fetch(`${API_URL}/settings/payment-status`),
+        fetch(`${API_URL}/settings/payment-details`).catch(() => null),
       ]);
       mySubscription = await subRes.json();
       const prices = await pricesRes.json();
       const statusData = await statusRes.json();
       paymentEnforced = statusData.enforced === true;
+      if (payeeRes && payeeRes.ok) {
+        const payee = await payeeRes.json();
+        if (payee.phone) payeePhone = payee.phone;
+        if (payee.name) payeeName = payee.name;
+      }
       plans = ["General", "Cars", "Land"].map(category => ({
         category, price: prices[category], desc: PLAN_DESCRIPTIONS[category]
       }));
@@ -202,8 +210,8 @@
           <div class="instructions-box">
             <div class="instructions-title">How to Pay</div>
             <div class="instructions-text">1. Send K${selectedPlan.price} via MTN MoMo or Airtel Money to:</div>
-            <div class="phone-number">0778727201</div>
-            <div class="instructions-sub">Name: Robert Zulu</div>
+            <div class="phone-number">${payeePhone}</div>
+            <div class="instructions-sub">${t("pay_name")}: ${payeeName}</div>
             <div class="instructions-text">2. Copy the transaction reference from your confirmation SMS</div>
             <div class="instructions-text">3. Paste it below and submit</div>
           </div>

@@ -199,7 +199,7 @@
   <div class="modal-box">
     <div class="modal-title" style="color: var(--text);" data-i18n="listing_location">My Listing Location</div>
     <div class="modal-warning" data-i18n="listing_location_help">Used as the default when you post listings.</div>
-    <button type="button" class="loc-button" id="settingsLocButton">📍 Use my current location</button>
+    <button type="button" class="loc-button" id="settingsLocButton">Use my current location</button>
     <input class="loc-input" id="settingsLocationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
     <button type="button" class="loc-save-btn" id="settingsLocSaveBtn" data-i18n="save">Save</button>
     <button type="button" class="modal-cancel-btn" id="locationModalClose" style="width:100%; margin-top:10px;" data-i18n="cancel">Cancel</button>
@@ -322,8 +322,8 @@
     } catch { /* ignore */ }
     document.getElementById("settingsLocationInput").value = settingsLocationLabel;
     document.getElementById("settingsLocButton").textContent = settingsLocationLabel
-      ? `📍 ${settingsLocationLabel}`
-      : "📍 Use my current location";
+      ? settingsLocationLabel
+      : "Use my current location";
     document.getElementById("locationModal").classList.add("open");
   }
 
@@ -355,10 +355,10 @@
       }
       settingsLocationLabel = label;
       document.getElementById("settingsLocationInput").value = label;
-      btn.textContent = `📍 ${label}`;
+      btn.textContent = label;
     } catch {
       alert(t("listing_location_gps_fail"));
-      btn.textContent = "📍 Use my current location";
+      btn.textContent = "Use my current location";
     } finally {
       settingsGettingLocation = false;
     }

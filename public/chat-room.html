@@ -187,7 +187,12 @@
   const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
   const UPLOAD_PRESET = "online_shops_uploads";
   const POLL_INTERVAL = 3000;
-  const QUICK_REPLIES = ["✅ Still available", "💰 Price is negotiable", "❌ Sold, sorry", "📍 Where can we meet?"];
+  const QUICK_REPLIES = [
+    { key: "chat_q_available", fallback: "Still available" },
+    { key: "chat_q_negotiable", fallback: "Price is negotiable" },
+    { key: "chat_q_sold", fallback: "Sold, sorry" },
+    { key: "chat_q_meet", fallback: "Where can we meet?" },
+  ];
 
   function iconSvg(type, size = 20) {
     const icons = {
@@ -341,7 +346,7 @@
 
   function renderMessages() {
     if (!messages.length) {
-      messagesList.innerHTML = `<div class="empty-text">Say hello 👋</div>`;
+      messagesList.innerHTML = `<div class="empty-text">Say hello</div>`;
       return;
     }
     messagesList.innerHTML = messages.map(renderBubble).join("");
@@ -417,7 +422,10 @@
 
   function buildComposerOnce() {
     const quickWrap = document.getElementById("quickReplyWrap");
-    quickWrap.innerHTML = `<div class="quick-reply-row" id="quickReplyRow">${QUICK_REPLIES.map(r => `<div class="quick-reply-chip" data-reply="${r}">${r}</div>`).join("")}</div>`;
+    quickWrap.innerHTML = `<div class="quick-reply-row" id="quickReplyRow">${QUICK_REPLIES.map(r => {
+      const label = typeof t === "function" ? t(r.key) : r.fallback;
+      return `<div class="quick-reply-chip" data-reply="${label}">${label}</div>`;
+    }).join("")}</div>`;
     quickWrap.querySelectorAll("[data-reply]").forEach(el =>
       el.addEventListener("click", () => sendMessagePayload({ content: el.dataset.reply }))
     );

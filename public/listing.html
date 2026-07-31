@@ -182,7 +182,7 @@
 
 <div class="modal-overlay" id="safetyModal">
   <div class="modal-box">
-    <div class="modal-title">🛡️ Meeting Safely</div>
+    <div class="modal-title">Meeting Safely</div>
     <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Meet in a public place, like a mall, police station, or busy shopping area.</span></div>
     <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Never send payment before seeing and checking the item in person.</span></div>
     <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Bring a friend or family member with you if possible.</span></div>
@@ -303,7 +303,7 @@
         <div class="item-title">${listing.title}</div>
         <div class="badge-row">
           ${listing.category ? `<div class="badge">${listing.category}</div>` : ""}
-          ${listing.location_label ? `<div class="badge dist">📍 ${listing.location_label}</div>` : ""}
+          ${listing.location_label ? `<div class="badge dist">${listing.location_label}</div>` : ""}
         </div>
 
         ${listing.car_details ? `
@@ -327,8 +327,8 @@
         <div id="sellerRowWrap"></div>
 
         <div class="safety-row">
-          <div class="safety-btn" id="safetyOpenBtn">🛡️ Safety Tips</div>
-          <div class="safety-btn" id="shareMeetupBtn">📍 Share My Meetup</div>
+          <div class="safety-btn" id="safetyOpenBtn">Safety Tips</div>
+          <div class="safety-btn" id="shareMeetupBtn">Share My Meetup</div>
         </div>
       </div>
 
@@ -353,8 +353,8 @@
         <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
         <div class="seller-info">
           <div class="seller-name">${displayName}</div>
-          <div class="seller-sub">${listing.seller_account_type === "shop" ? "Verified Shop" : "Individual Seller"}</div>
-          ${reviewData.total > 0 ? `<div class="rating-text">⭐ ${reviewData.average} (${reviewData.total} review${reviewData.total === 1 ? "" : "s"})</div>` : ""}
+          <div class="seller-sub">${listing.seller_account_type === "shop" ? "Shop Seller" : "Individual Seller"}</div>
+          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} review${reviewData.total === 1 ? "" : "s"})</div>` : ""}
         </div>
         <button class="review-btn" id="rateSellerBtn">Rate Seller</button>
       </div>`;
@@ -494,7 +494,7 @@
   }
   function renderStars() {
     const row = document.getElementById("starsRow");
-    row.innerHTML = [1,2,3,4,5].map(s => `<span data-star="${s}">${s <= myRating ? "⭐" : "☆"}</span>`).join("");
+    row.innerHTML = [1,2,3,4,5].map(s => `<span data-star="${s}">${s <= myRating ? "★" : "☆"}</span>`).join("");
     row.querySelectorAll("[data-star]").forEach(el =>
       el.addEventListener("click", () => { myRating = parseInt(el.dataset.star); renderStars(); })
     );

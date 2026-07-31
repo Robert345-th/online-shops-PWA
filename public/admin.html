@@ -222,7 +222,6 @@
       ["Shop listing area", s.shop_location_label],
       ["Home listing area", s.home_location_label],
       ["Listing area", !s.shop_location_label && !s.home_location_label ? s.location_label : ""],
-      ["NRC number", s.nrc_number],
     ].filter(([, value]) => value);
 
     let html = detailRows.map(([label, value]) =>
@@ -441,7 +440,7 @@
             <div class="card-detail">Reason: ${r.reason}</div>
             ${r.matched_user_id
               ? `<div class="card-detail">Account status: ${r.matched_user_suspended ? "🔴 Already Suspended" : "🟢 Active"}</div>`
-              : `<div class="card-detail">⚠️ No matching account found for this number</div>`}
+              : `<div class="card-detail">No matching account found for this number</div>`}
             <div class="card-actions">
               <button class="approve-btn" data-dismiss-ureport="${r.id}">Dismiss</button>
               ${r.matched_user_id && !r.matched_user_suspended
@@ -527,8 +526,8 @@
             <div class="card-detail">Status: ${paymentStatus.grace_period_passed ? "🔴 Enforced (grace period ended)" : "🟡 Grace period active"}</div>
             <div class="card-detail">Grace period ends: ${new Date(paymentStatus.grace_period_end).toLocaleString()}</div>
             <div class="card-detail">Message sent: "${paymentStatus.warning_message}"</div>
-            <button class="approve-btn" style="margin-top:14px;width:100%;" id="extendBtn">⏳ Extend by 3 Days</button>
-            <button class="reject-btn" style="margin-top:8px;width:100%;" id="undoBtn">↩️ Undo (Reset to Free)</button>
+            <button class="approve-btn" style="margin-top:14px;width:100%;" id="extendBtn">Extend by 3 Days</button>
+            <button class="reject-btn" style="margin-top:8px;width:100%;" id="undoBtn">Undo (Reset to Free)</button>
           ` : `
             <div class="card-detail">Status: 🟢 Not announced yet — app is free for everyone.</div>
             <button class="reject-btn" style="margin-top:14px;width:100%;" id="announceOpenBtn">📢 Announce Payment Requirement</button>

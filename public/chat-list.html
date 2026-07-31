@@ -176,6 +176,9 @@
   const content = document.getElementById("content");
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  if (!user || !token) {
+    window.location.href = "/login.html";
+  }
   let conversationsCache = [];
   let listPollTimer = null;
   const previewCache = new Map();
@@ -260,15 +263,6 @@
   }
 
   async function loadConversations() {
-    if (!user) {
-      content.innerHTML = `
-        <div class="center-box">
-          <div class="empty-text">${t("log_in_to_chat")}</div>
-          <button class="login-btn" onclick="window.location.href='/login.html'">${t("login")}</button>
-        </div>`;
-      return;
-    }
-
     try {
       const res = await fetch(`${API_URL}/messages/conversations`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -496,20 +490,16 @@
     });
   }
 
-  if (user) {
-    initChatSettings();
-    startPresenceHeartbeat();
-    loadConversations();
-    listPollTimer = setInterval(async () => {
-      if (conversationsCache.length) await refreshConversationsQuiet();
-    }, 5000);
-    window.addEventListener("pageshow", () => {
-      if (conversationsCache.length) refreshConversationsQuiet();
-    });
-    window.addEventListener("pagehide", stopPresenceHeartbeat);
-  } else {
-    loadConversations();
-  }
+  initChatSettings();
+  startPresenceHeartbeat();
+  loadConversations();
+  listPollTimer = setInterval(async () => {
+    if (conversationsCache.length) await refreshConversationsQuiet();
+  }, 5000);
+  window.addEventListener("pageshow", () => {
+    if (conversationsCache.length) refreshConversationsQuiet();
+  });
+  window.addEventListener("pagehide", stopPresenceHeartbeat);
 </script>
 </body>
 </html>

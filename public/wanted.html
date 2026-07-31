@@ -139,11 +139,11 @@
         ${post.description ? `<div class="card-desc">${post.description}</div>` : ""}
         <div class="card-meta-row">
           ${post.category ? `<div class="badge">${post.category}</div>` : ""}
-          ${post.location_label ? `<div class="card-meta">📍 ${post.location_label}</div>` : ""}
+          ${post.location_label ? `<div class="card-meta">${post.location_label}</div>` : ""}
         </div>
         <div class="card-poster">Posted by ${post.poster_name}</div>
         ${isMine
-          ? `<button class="close-btn" id="action-${post.id}">✅ Mark as Found</button>`
+          ? `<button class="close-btn" id="action-${post.id}">Mark as Found</button>`
           : `<button class="respond-btn" id="action-${post.id}">💬 I Have This</button>`}
       </div>`;
   }
@@ -169,7 +169,7 @@
     } catch (e) {
       alert("Could not update post.");
       btn.disabled = false;
-      btn.textContent = "✅ Mark as Found";
+      btn.textContent = "Mark as Found";
     }
   }
 

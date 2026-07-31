@@ -100,7 +100,7 @@
     if (!confirmations.length) {
       content.innerHTML = `
         <div class="center-box">
-          <div class="empty-icon">✅</div>
+          <div class="empty-icon">—</div>
           <div class="empty-text">No purchases waiting for your confirmation.</div>
         </div>`;
       return;
@@ -124,7 +124,7 @@
         <div class="card-title">"${c.listing_title}"</div>
         <div class="card-sub">From ${c.shop_name || c.seller_name}</div>
         <div class="card-actions">
-          <button class="confirm-btn" id="confirm-${c.id}">✅ Yes, I bought this</button>
+          <button class="confirm-btn" id="confirm-${c.id}">Yes, I bought this</button>
           <button class="deny-btn" id="deny-${c.id}">Not me</button>
         </div>
       </div>`;
@@ -142,7 +142,7 @@
       if (!res.ok) {
         alert("Could not confirm this sale.");
         btn.disabled = false;
-        btn.textContent = "✅ Yes, I bought this";
+        btn.textContent = "Yes, I bought this";
         return;
       }
       confirmations = confirmations.filter(c => c.id !== id);
@@ -151,7 +151,7 @@
     } catch (e) {
       alert("Could not connect to the server.");
       btn.disabled = false;
-      btn.textContent = "✅ Yes, I bought this";
+      btn.textContent = "Yes, I bought this";
     }
   }
 

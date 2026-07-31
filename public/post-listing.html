@@ -201,7 +201,7 @@
         </div>
       </div>
       <div class="label">Location</div>
-      <div class="loc-button" id="locButton">📍 Use my current location</div>
+      <div class="loc-button" id="locButton">Use my current location</div>
       <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
       <div class="btn-row">
         <button type="button" class="back-btn" id="back4Btn">Back</button>
@@ -212,6 +212,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/shop-gate.js"></script>
 <script src="/js/location.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -307,7 +308,7 @@
     const locInput = document.getElementById("locationInput");
     if (locInput) locInput.value = locationLabel;
     const locBtn = document.getElementById("locButton");
-    if (locBtn && locationLabel) locBtn.textContent = `📍 ${locationLabel}`;
+    if (locBtn && locationLabel) locBtn.textContent = locationLabel;
   }
 
   function selectedCategory() {
@@ -354,7 +355,7 @@
     if (locInput && locationLabel) locInput.value = locationLabel;
     const locBtn = document.getElementById("locButton");
     if (locBtn && locationLabel) {
-      locBtn.textContent = coords ? `📍 ${locationLabel}` : `📍 ${locationLabel}`;
+      locBtn.textContent = locationLabel;
     }
   }
 
@@ -501,10 +502,10 @@
       coords = { lat, lng };
       locationLabel = await reverseGeocodeLabel(lat, lng);
       document.getElementById("locationInput").value = locationLabel;
-      btn.textContent = `📍 ${locationLabel}`;
+      btn.textContent = locationLabel;
     } catch {
       coords = null;
-      btn.textContent = "📍 Use my current location";
+      btn.textContent = "Use my current location";
     } finally {
       gettingLocation = false;
     }

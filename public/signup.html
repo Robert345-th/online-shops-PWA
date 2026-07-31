@@ -138,7 +138,7 @@
   <div class="step-panel" id="step3">
     <div class="label">Your Location</div>
     <div class="loc-hint">This is where your listings will show from. You can change it later when posting.</div>
-    <button type="button" class="loc-button" id="locButton">📍 Use my current location</button>
+    <button type="button" class="loc-button" id="locButton">Use my current location</button>
     <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
 
     <div class="checkbox-row" id="ageConfirmRow">
@@ -249,11 +249,11 @@
       }
       signupLocationLabel = label;
       document.getElementById("locationInput").value = label;
-      btn.textContent = `📍 ${label}`;
+      btn.textContent = label;
     } catch {
       signupCoords = null;
       showError("Could not get your location. Type your area below instead.");
-      btn.textContent = "📍 Use my current location";
+      btn.textContent = "Use my current location";
     } finally {
       gettingLocation = false;
     }

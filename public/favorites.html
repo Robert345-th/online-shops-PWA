@@ -86,16 +86,13 @@
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
   const content = document.getElementById("content");
 
-  async function loadFavorites() {
-    if (!user) {
-      content.innerHTML = `
-        <div class="center-box">
-          <div class="empty-text">${t("log_in_to_see")}</div>
-          <button class="login-btn" onclick="window.location.href='/login.html'">${t("login")}</button>
-        </div>`;
-      return;
-    }
+  if (!user || !token) {
+    window.location.href = "/login.html";
+  } else {
+    loadFavorites();
+  }
 
+  async function loadFavorites() {
     try {
       const res = await fetch(`${API_URL}/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -133,12 +130,11 @@
         <div class="info">
           <div class="price">K${item.price}</div>
           <div class="title">${item.title}</div>
-          <div class="loc">📍 ${item.location_label || ""}</div>
+          <div class="loc">${item.location_label || ""}</div>
         </div>
       </div>`;
   }
 
-  loadFavorites();
 </script>
 </body>
 </html>
