@@ -47,6 +47,12 @@
   .role-btn { flex: 1; background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; }
   .role-btn.active { border-color: var(--red-btn); background: var(--red-btn); color: #fff; }
 
+  .reason-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .reason-row:last-child { border-bottom: none; }
+  .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .radio-circle.active { border-color: var(--red-btn); }
+  .radio-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red-btn); }
+
   .phone-row { display: flex; margin-bottom: 20px; gap: 8px; }
   .phone-prefix { background: var(--black); border-radius: 10px; padding: 0 12px; display: flex; align-items: center; }
   .phone-prefix span { color: var(--gold); font-weight: 700; font-size: 13px; white-space: nowrap; }
@@ -85,7 +91,8 @@
   </div>
 
   <div class="label">What happened?</div>
-  <textarea class="text-area" id="reasonInput" placeholder="Describe the issue in detail..."></textarea>
+  <div id="reasonsList"></div>
+  <textarea class="text-area" id="reasonInput" placeholder="Add more details (optional)..." style="display:none;"></textarea>
 
   <button class="submit-btn" id="submitBtn">Submit Report</button>
 </div>
@@ -93,11 +100,37 @@
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");
+  const REPORT_REASONS = [
+    "Didn't receive item",
+    "Fake product",
+    "Asked for money outside app",
+    "Location doesn't match",
+    "Other",
+  ];
   let role = "";
+  let selectedReason = "";
 
   function isValidZambianPhone(phone) {
     return /^0(7|9)\d{8}$/.test(phone);
   }
+
+  function renderReasons() {
+    document.getElementById("reasonsList").innerHTML = REPORT_REASONS.map((r) =>
+      `<div class="reason-row" data-reason="${r}"><div class="radio-circle"><div class="radio-dot" style="display:none;"></div></div><span>${r}</span></div>`
+    ).join("");
+    document.querySelectorAll("[data-reason]").forEach((el) =>
+      el.addEventListener("click", () => {
+        selectedReason = el.dataset.reason;
+        document.querySelectorAll("[data-reason] .radio-circle").forEach((c) => c.classList.remove("active"));
+        document.querySelectorAll("[data-reason] .radio-dot").forEach((d) => { d.style.display = "none"; });
+        el.querySelector(".radio-circle").classList.add("active");
+        el.querySelector(".radio-dot").style.display = "block";
+        document.getElementById("reasonInput").style.display = selectedReason === "Other" ? "block" : "none";
+      })
+    );
+  }
+
+  renderReasons();
 
   document.querySelectorAll("[data-role]").forEach(el => {
     el.addEventListener("click", () => {
@@ -109,7 +142,7 @@
 
   document.getElementById("submitBtn").addEventListener("click", async () => {
     const phone = document.getElementById("phoneInput").value.trim();
-    const reason = document.getElementById("reasonInput").value.trim();
+    const details = document.getElementById("reasonInput").value.trim();
 
     if (!role) {
       alert("Please select whether this is a seller or buyer.");
@@ -119,10 +152,16 @@
       alert("Please enter a valid Zambian phone number (e.g. 0977123456).");
       return;
     }
-    if (!reason) {
+    if (!selectedReason) {
+      alert("Please select a reason.");
+      return;
+    }
+    if (selectedReason === "Other" && !details) {
       alert("Please describe what happened.");
       return;
     }
+
+    const reason = selectedReason === "Other" ? details : (details ? `${selectedReason}: ${details}` : selectedReason);
 
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;

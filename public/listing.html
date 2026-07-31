@@ -178,7 +178,13 @@
 <script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
-  const REPORT_REASONS = ["Scam", "Fake item", "Abusive seller", "Other"];
+  const REPORT_REASONS = [
+    "Didn't receive item",
+    "Fake product",
+    "Asked for money outside app",
+    "Location doesn't match",
+    "Other",
+  ];
   const params = new URLSearchParams(window.location.search);
   const listingId = params.get("id");
   const app = document.getElementById("app");

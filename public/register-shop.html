@@ -176,7 +176,6 @@
     "Central", "Copperbelt", "Eastern", "Luapula", "Lusaka", "Muchinga",
     "Northern", "North-Western", "Southern", "Western",
   ];
-
   const token = localStorage.getItem("zm_token");
   if (!token) window.location.href = "/login.html";
 
@@ -316,6 +315,11 @@
   document.getElementById("back4Btn").addEventListener("click", () => { step = 3; updateStepUI(); });
 
   document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (!sellingType) {
+      showError("Please choose where you sell — shop, home, or both.");
+      return;
+    }
+
     const fullName = document.getElementById("fullNameInput").value.trim();
     const city = document.getElementById("cityInput").value.trim();
     const province = document.getElementById("provinceInput").value;
@@ -324,10 +328,6 @@
     const shopAddress = document.getElementById("shopAddressInput").value.trim();
     const homeAddress = document.getElementById("homeAddressInput").value.trim();
 
-    if (!sellingType) {
-      showError("Please choose where you sell — shop, home, or both.");
-      return;
-    }
     if ((sellingType === "shop" || sellingType === "both") && (!shopName || !shopAddress)) {
       showError("Please enter your shop name and shop address.");
       return;
@@ -337,10 +337,11 @@
       return;
     }
 
-    saveListingLocation(city, province, sellingType, shopName, shopAddress, homeAddress);
     const shopLabel = buildShopLabel(shopName, shopAddress, city, province);
     const homeLabel = buildHomeLabel(homeAddress, city, province);
     const locationLabel = sellingType === "shop" ? shopLabel : sellingType === "home" ? homeLabel : shopLabel;
+
+    saveListingLocation(city, province, sellingType, shopName, shopAddress, homeAddress);
 
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
@@ -369,8 +370,8 @@
         showError(data.error || "Could not submit registration.");
         return;
       }
-      showSuccess("Submitted — your shop registration is under review.");
-      setTimeout(() => { window.location.href = "/my-shop.html"; }, 1800);
+      showSuccess("Submitted — your shop registration is under review. You can use the app while you wait.");
+      setTimeout(() => { window.location.href = "/index.html"; }, 1800);
     } catch {
       showError("Could not connect to the server.");
     } finally {

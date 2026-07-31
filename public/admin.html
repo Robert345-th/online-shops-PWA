@@ -73,6 +73,13 @@
   .doc-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
   .doc-section-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; color: var(--subtext); letter-spacing: 0.03em; }
   .view-link { margin-top: 6px; display: inline-block; font-size: 12px; color: var(--price-red); font-weight: 600; cursor: pointer; background: none; border: none; }
+  .shop-app-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .shop-app-row-main { min-width: 0; flex: 1; }
+  .view-btn {
+    background: var(--black); border: none; border-radius: 10px; padding: 10px 16px;
+    color: var(--gold); font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0;
+  }
+  .detail-scroll { max-height: 60vh; overflow-y: auto; margin-bottom: 14px; }
 
   .card-actions { display: flex; gap: 8px; margin-top: 10px; }
   .approve-btn { flex: 1; background: var(--green-btn); border: none; padding: 10px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
@@ -126,6 +133,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="shopAppModal">
+  <div class="modal-box">
+    <div class="modal-title">Shop Application</div>
+    <div class="modal-subtitle" id="shopAppModalSubtitle"></div>
+    <div class="detail-scroll" id="shopAppModalBody"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="shopAppCloseBtn">Close</button>
+      <button class="approve-btn" id="shopAppApproveBtn" style="flex:1;">Approve</button>
+      <button class="reject-btn" id="shopAppRejectBtn" style="flex:1;">Reject</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
     <div class="modal-title">Reject Shop Application</div>
@@ -151,6 +171,7 @@
   let paymentStatus = null;
   let broadcastTitle = "📢 ZedMarket";
   let rejectTargetId = null;
+  let viewShopTargetId = null;
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -184,12 +205,10 @@
     return type || "";
   }
 
-  function renderShopAppCard(s) {
-    const title = escHtml(s.shop_name || s.name);
+  function buildShopAppDetailHtml(s) {
     const phone = formatZambianPhone(s.phone);
     const sellingType = sellingTypeLabel(s.selling_type);
     const cityProvince = [s.city, s.province].filter(Boolean).join(", ");
-    const hasNrc = !!(s.nrc_number || s.nrc_photo_url || s.nrc_back_photo_url);
 
     const detailRows = [
       ["Name", s.name],
@@ -203,40 +222,57 @@
       ["Shop listing area", s.shop_location_label],
       ["Home listing area", s.home_location_label],
       ["Listing area", !s.shop_location_label && !s.home_location_label ? s.location_label : ""],
+      ["NRC number", s.nrc_number],
     ].filter(([, value]) => value);
 
-    const detailsHtml = detailRows.map(([label, value]) =>
+    let html = detailRows.map(([label, value]) =>
       `<div class="detail-row"><span class="detail-label">${escHtml(label)}:</span> ${escHtml(value)}</div>`
     ).join("");
 
-    let docsHtml = "";
-    if (hasNrc) {
-      docsHtml += `<div class="doc-section"><div class="doc-section-title">NRC document</div>`;
-      if (s.nrc_number) {
-        docsHtml += `<div class="detail-row"><span class="detail-label">NRC number:</span> ${escHtml(s.nrc_number)}</div>`;
-      }
-      if (s.nrc_photo_url) {
-        docsHtml += `<div class="detail-row" style="margin-top:10px;"><span class="detail-label">NRC front</span></div>`;
-        docsHtml += `<img class="doc-image" src="${escHtml(s.nrc_photo_url)}" alt="NRC front" />`;
-      }
-      if (s.nrc_back_photo_url) {
-        docsHtml += `<div class="detail-row" style="margin-top:10px;"><span class="detail-label">NRC back</span></div>`;
-        docsHtml += `<img class="doc-image" src="${escHtml(s.nrc_back_photo_url)}" alt="NRC back" />`;
-      }
-      docsHtml += `</div>`;
+    if (s.nrc_photo_url) {
+      html += `<div class="doc-section"><div class="doc-section-title">NRC photo</div>`;
+      html += `<img class="doc-image" src="${escHtml(s.nrc_photo_url)}" alt="NRC photo" />`;
+      html += `</div>`;
+    }
+    if (s.nrc_back_photo_url) {
+      html += `<div class="doc-section"><div class="doc-section-title">NRC back</div>`;
+      html += `<img class="doc-image" src="${escHtml(s.nrc_back_photo_url)}" alt="NRC back" />`;
+      html += `</div>`;
+    }
+    if (s.selfie_photo_url) {
+      html += `<div class="doc-section"><div class="doc-section-title">Selfie</div>`;
+      html += `<img class="doc-image" src="${escHtml(s.selfie_photo_url)}" alt="Selfie" />`;
+      html += `</div>`;
     }
 
+    return html || `<div class="detail-row">No details submitted.</div>`;
+  }
+
+  function renderShopAppListRow(s) {
+    const title = escHtml(s.shop_name || s.name);
+    const phone = formatZambianPhone(s.phone);
     return `
-      <div class="card">
-        <div class="card-name">${title}</div>
-        <div class="card-sub">${escHtml(s.name)} · ${escHtml(phone)}</div>
-        <div class="detail-grid">${detailsHtml || `<div class="detail-row">No extra details submitted.</div>`}</div>
-        ${docsHtml}
-        <div class="card-actions">
-          <button class="approve-btn" data-approve-shop="${s.id}">Approve</button>
-          <button class="reject-btn" data-reject-shop="${s.id}">Reject</button>
+      <div class="card shop-app-row">
+        <div class="shop-app-row-main">
+          <div class="card-name">${title}</div>
+          <div class="card-sub">${escHtml(s.name)} · ${escHtml(phone)}</div>
         </div>
+        <button type="button" class="view-btn" data-view-shop="${s.id}">View</button>
       </div>`;
+  }
+
+  function openShopAppDetail(id) {
+    const app = shopApps.find((s) => String(s.id) === String(id));
+    if (!app) return;
+    viewShopTargetId = app.id;
+    document.getElementById("shopAppModalSubtitle").textContent = `${app.name} · ${formatZambianPhone(app.phone)}`;
+    document.getElementById("shopAppModalBody").innerHTML = buildShopAppDetailHtml(app);
+    document.getElementById("shopAppModal").classList.add("open");
+  }
+
+  function closeShopAppDetail() {
+    document.getElementById("shopAppModal").classList.remove("open");
+    viewShopTargetId = null;
   }
 
   async function loadAll() {
@@ -420,10 +456,11 @@
     } else if (tab === "shopApps") {
       content.innerHTML = `<div class="list">${
         shopApps.length === 0 ? `<div class="empty-text">No pending shop applications.</div>` :
-        shopApps.map(s => renderShopAppCard(s)).join("")
+        shopApps.map(s => renderShopAppListRow(s)).join("")
       }</div>`;
-      content.querySelectorAll("[data-approve-shop]").forEach(el => el.addEventListener("click", () => approveShopApp(el.dataset.approveShop)));
-      content.querySelectorAll("[data-reject-shop]").forEach(el => el.addEventListener("click", () => openRejectModal(el.dataset.rejectShop)));
+      content.querySelectorAll("[data-view-shop]").forEach(el =>
+        el.addEventListener("click", () => openShopAppDetail(el.dataset.viewShop))
+      );
 
     } else if (tab === "nameRequests") {
       content.innerHTML = `<div class="list">${
@@ -594,6 +631,21 @@
     document.getElementById("rejectReasonInput").value = "";
     document.getElementById("rejectModal").classList.add("open");
   }
+  document.getElementById("shopAppCloseBtn").addEventListener("click", closeShopAppDetail);
+  document.getElementById("shopAppApproveBtn").addEventListener("click", async () => {
+    if (!viewShopTargetId) return;
+    await approveShopApp(viewShopTargetId);
+    closeShopAppDetail();
+  });
+  document.getElementById("shopAppRejectBtn").addEventListener("click", () => {
+    if (!viewShopTargetId) return;
+    openRejectModal(viewShopTargetId);
+    closeShopAppDetail();
+  });
+  document.getElementById("shopAppModal").addEventListener("click", (e) => {
+    if (e.target.id === "shopAppModal") closeShopAppDetail();
+  });
+
   document.getElementById("rejectCancelBtn").addEventListener("click", () => {
     document.getElementById("rejectModal").classList.remove("open");
     rejectTargetId = null;
