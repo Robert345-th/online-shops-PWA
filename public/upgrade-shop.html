@@ -91,6 +91,7 @@
 </script>
 <div id="app"><div class="center-box"><div class="spinner"></div></div></div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");
@@ -106,6 +107,7 @@
   let plans = [];
   let selectedPlan = null;
   let mySubscription = null;
+  let paymentEnforced = false;
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -119,12 +121,15 @@
 
   async function init() {
     try {
-      const [subRes, pricesRes] = await Promise.all([
+      const [subRes, pricesRes, statusRes] = await Promise.all([
         fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
-        fetch(`${API_URL}/settings/plan-prices`)
+        fetch(`${API_URL}/settings/plan-prices`),
+        fetch(`${API_URL}/settings/payment-status`),
       ]);
       mySubscription = await subRes.json();
       const prices = await pricesRes.json();
+      const statusData = await statusRes.json();
+      paymentEnforced = statusData.enforced === true;
       plans = ["General", "Cars", "Land"].map(category => ({
         category, price: prices[category], desc: PLAN_DESCRIPTIONS[category]
       }));
@@ -139,18 +144,18 @@
     if (mySubscription?.payment_status === "pending") {
       app.innerHTML = `
         <div class="center-box">
-          <div class="pending-title">⏳ Pending Review</div>
+          <div class="pending-title">${t("status_pending")}</div>
           <div class="pending-text">Your ${mySubscription.category} shop request is being reviewed. We'll notify you once approved.</div>
-          <button class="back-btn" onclick="history.back()">Go Back</button>
+          <button class="back-btn" onclick="history.back()">${t("go_back")}</button>
         </div>`;
       return;
     }
     if (mySubscription?.payment_status === "active") {
       app.innerHTML = `
         <div class="center-box">
-          <div class="pending-title">✅ Verified Shop</div>
+          <div class="pending-title">${t("verified_shop")}</div>
           <div class="pending-text">You already have an active ${mySubscription.category} shop subscription.</div>
-          <button class="back-btn" onclick="history.back()">Go Back</button>
+          <button class="back-btn" onclick="history.back()">${t("go_back")}</button>
         </div>`;
       return;
     }
@@ -160,14 +165,14 @@
         <div class="content">
           <div class="top-row">
             <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-            <div class="header-title">Upgrade to Shop</div>
+            <div class="header-title">${t("upgrade_shop")}</div>
           </div>
           <div class="step-row"><div class="step-dot active"></div><div class="step-dot"></div></div>
 
-          <div class="label">Choose a Plan</div>
+          <div class="label">${t("choose_plan")}</div>
           <div id="planList"></div>
 
-          <button class="next-btn" id="nextBtn">Next</button>
+          <button class="next-btn" id="nextBtn">${t("next")}</button>
         </div>`;
 
       renderPlanList();
@@ -178,7 +183,7 @@
         <div class="content">
           <div class="top-row">
             <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-            <div class="header-title">Upgrade to Shop</div>
+            <div class="header-title">${t("upgrade_shop")}</div>
           </div>
           <div class="step-row"><div class="step-dot active"></div><div class="step-dot active"></div></div>
 
@@ -187,6 +192,13 @@
             <div class="selected-plan-name">${selectedPlan.category} — K${selectedPlan.price}/month</div>
           </div>
 
+          ${!paymentEnforced ? `
+          <div class="warning-box" style="background:#E7F5EA;border:1px solid #BFE6C9;">
+            <div class="warning-text" style="color:#1E7A38;font-weight:700;margin-bottom:4px;">${t("free_launch_upgrade_title")}</div>
+            <div class="warning-text" style="color:#1E7A38;">${t("free_launch_upgrade_text")}</div>
+          </div>
+          <button class="submit-btn" id="submitBtn">${t("request_upgrade")}</button>
+          ` : `
           <div class="instructions-box">
             <div class="instructions-title">How to Pay</div>
             <div class="instructions-text">1. Send K${selectedPlan.price} via MTN MoMo or Airtel Money to:</div>
@@ -199,18 +211,23 @@
           <div class="label">Transaction Reference</div>
           <textarea class="field-textarea" id="transactionRefInput" placeholder="Paste your confirmation SMS here"></textarea>
           <div class="warning-box">
-            <div class="warning-text">⚠️ Submitting a fake or altered transaction reference is not allowed and may result in your account being blocked.</div>
+            <div class="warning-text">Submitting a fake or altered transaction reference is not allowed and may result in your account being blocked.</div>
           </div>
 
           <button class="submit-btn" id="submitBtn">Submit for Review</button>
+          `}
         </div>`;
 
       document.getElementById("backBtn").addEventListener("click", () => { step = "plan"; render(); });
-      document.getElementById("submitBtn").addEventListener("click", handleSubmit);
-      document.getElementById("transactionRefInput").addEventListener("input", (e) => {
-        const masked = maskBalance(e.target.value);
-        if (masked !== e.target.value) e.target.value = masked;
-      });
+      const submitBtn = document.getElementById("submitBtn");
+      if (submitBtn) submitBtn.addEventListener("click", handleSubmit);
+      const refInput = document.getElementById("transactionRefInput");
+      if (refInput) {
+        refInput.addEventListener("input", (e) => {
+          const masked = maskBalance(e.target.value);
+          if (masked !== e.target.value) e.target.value = masked;
+        });
+      }
     }
   }
 
@@ -231,8 +248,10 @@
   }
 
   async function handleSubmit() {
-    const transactionRef = document.getElementById("transactionRefInput").value.trim();
-    if (!transactionRef) {
+    const refInput = document.getElementById("transactionRefInput");
+    const transactionRef = refInput ? refInput.value.trim() : "";
+
+    if (paymentEnforced && !transactionRef) {
       alert("Please enter your MoMo/Airtel transaction reference.");
       return;
     }
@@ -245,7 +264,7 @@
       const res = await fetch(`${API_URL}/subscriptions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ category: selectedPlan.category, transaction_ref: transactionRef })
+        body: JSON.stringify({ category: selectedPlan.category, transaction_ref: transactionRef || null })
       });
       const data = await res.json();
 
@@ -260,7 +279,7 @@
       alert("Could not connect to the server.");
     } finally {
       btn.disabled = false;
-      btn.textContent = "Submit for Review";
+      btn.textContent = paymentEnforced ? "Submit for Review" : t("request_upgrade");
     }
   }
 

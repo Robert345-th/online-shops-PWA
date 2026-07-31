@@ -104,7 +104,8 @@
   .form-banner.show { display: block; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
-  .pending-icon { font-size: 48px; margin-bottom: 12px; }
+  .pending-icon { margin-bottom: 12px; color: var(--orange); display: flex; justify-content: center; }
+  .pending-icon svg { width: 48px; height: 48px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .pending-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
   .pending-text { font-size: 13px; color: var(--subtext); text-align: center; margin-bottom: 20px; }
   .pending-back-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
@@ -121,17 +122,17 @@
 
 <div id="pendingView" style="display:none;">
   <div class="center-box">
-    <div class="pending-icon">⏳</div>
-    <div class="pending-title">Shop Under Review</div>
+    <div class="pending-icon" id="pendingIcon"></div>
+    <div class="pending-title" id="pendingTitle"></div>
     <div class="pending-text" id="pendingMessage"></div>
-    <button class="pending-back-btn" onclick="window.location.href='/my-shop.html'">Go Back</button>
+    <button class="pending-back-btn" id="pendingActionBtn" type="button"></button>
   </div>
 </div>
 
 <div id="wizardView" style="display:none;">
   <div class="topbar">
     <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <div class="header-title">Post a Listing</div>
+    <div class="header-title" data-i18n="post_listing">Post a Listing</div>
   </div>
   <div class="content">
     <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Category</div>
@@ -210,6 +211,7 @@
   </div>
 </div>
 
+<script src="/js/lang.js"></script>
 <script src="/js/location.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -697,17 +699,73 @@
     updateStepUI();
   }
 
-  if (user?.account_type === "shop" && user?.shop_status !== "approved") {
-    document.getElementById("pendingMessage").textContent = user.shop_status === "rejected"
-      ? "Your shop application was not approved. Please contact support for more information."
-      : "Your shop is still being reviewed. You'll be notified once it's approved and you can start posting.";
-    document.getElementById("pendingView").style.display = "block";
-  } else if (!token) {
-    window.location.href = "/login.html";
-  } else {
-    document.getElementById("wizardView").style.display = "block";
-    initWizard();
+  function pendingIconSvg(type) {
+    const icons = {
+      pending: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+      register: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+      rejected: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    };
+    return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[type] || icons.register}</svg>`;
   }
+
+  function showBlockedView(state) {
+    const titleEl = document.getElementById("pendingTitle");
+    const messageEl = document.getElementById("pendingMessage");
+    const actionBtn = document.getElementById("pendingActionBtn");
+    const iconEl = document.getElementById("pendingIcon");
+
+    if (state === "pending") {
+      iconEl.innerHTML = pendingIconSvg("pending");
+      titleEl.textContent = t("gate_shop_pending_title");
+      messageEl.textContent = t("post_shop_pending_text");
+      actionBtn.textContent = t("go_back");
+      actionBtn.onclick = () => { window.location.href = "/my-shop.html"; };
+    } else if (state === "rejected") {
+      iconEl.innerHTML = pendingIconSvg("rejected");
+      titleEl.textContent = t("gate_shop_rejected_title");
+      messageEl.textContent = t("post_shop_rejected_text");
+      actionBtn.textContent = t("go_back");
+      actionBtn.onclick = () => { window.location.href = "/my-shop.html"; };
+    } else {
+      iconEl.innerHTML = pendingIconSvg("register");
+      titleEl.textContent = t("post_need_shop_title");
+      messageEl.textContent = t("post_need_shop_text");
+      actionBtn.textContent = t("register_shop");
+      actionBtn.onclick = () => { window.location.href = "/register-shop.html"; };
+    }
+
+    document.getElementById("pendingView").style.display = "block";
+  }
+
+  async function boot() {
+    if (!token) {
+      window.location.href = "/login.html";
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/auth/shop-status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const accountType = data.account_type || user?.account_type || "individual";
+      const shopStatus = data.shop_status || user?.shop_status || null;
+
+      if (accountType !== "shop" || shopStatus !== "approved") {
+        if (accountType === "shop" && shopStatus === "pending") showBlockedView("pending");
+        else if (accountType === "shop" && shopStatus === "rejected") showBlockedView("rejected");
+        else showBlockedView("register");
+        return;
+      }
+
+      document.getElementById("wizardView").style.display = "block";
+      initWizard();
+    } catch (e) {
+      showBlockedView("register");
+    }
+  }
+
+  boot();
 </script>
 </body>
 </html>

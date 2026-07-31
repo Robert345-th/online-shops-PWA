@@ -52,7 +52,8 @@
   .warning-btn { background: var(--orange); color: #fff; border: none; padding: 8px; width: 100%; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
-  .gate-icon { font-size: 48px; margin-bottom: 12px; }
+  .gate-icon { margin-bottom: 12px; color: var(--orange); display: flex; justify-content: center; }
+  .gate-icon svg { width: 48px; height: 48px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .gate-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
   .gate-text { font-size: 13px; color: var(--subtext); margin-bottom: 20px; line-height: 1.5; }
   .reason-box { background: var(--warn-bg); border-radius: 10px; padding: 12px; margin-bottom: 16px; width: 100%; text-align: left; }
@@ -71,7 +72,7 @@
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
-  .boost-badge { position: absolute; top: 2px; right: 2px; background: var(--orange); width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .boost-badge { position: absolute; top: 2px; right: 2px; background: var(--orange); min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; padding: 0 3px; }
   .row-info { flex: 1; min-width: 0; }
   .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
@@ -132,10 +133,10 @@
 <div class="modal-overlay" id="manageModal">
   <div class="modal-box">
     <div class="modal-title" id="manageModalTitle"></div>
-    <button class="modal-row" id="editListingBtn">✏️ Edit Listing</button>
-    <button class="modal-row" id="boostListingBtn">🚀 Boost Listing</button>
-    <button class="modal-row danger" id="markSoldBtn">✅ Mark as Sold Out</button>
-    <button class="modal-cancel-btn" id="manageCancelBtn">Cancel</button>
+    <button class="modal-row" id="editListingBtn"></button>
+    <button class="modal-row" id="boostListingBtn"></button>
+    <button class="modal-row danger" id="markSoldBtn"></button>
+    <button class="modal-cancel-btn" id="manageCancelBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -178,6 +179,24 @@
   let manageItem = null;
   let buyerPickerItem = null;
   let contacts = [];
+
+  function gateIcon(type) {
+    const icons = {
+      pending: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+      rejected: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+      register: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    };
+    return `<div class="gate-icon"><svg viewBox="0 0 24 24" aria-hidden="true">${icons[type] || icons.register}</svg></div>`;
+  }
+
+  function renewLabel(daysLeft) {
+    if (daysLeft <= 0) return t("expires_today");
+    return daysLeft === 1 ? t("renews_in_one") : t("renews_in", { days: daysLeft });
+  }
+
+  document.getElementById("editListingBtn").textContent = t("edit_listing");
+  document.getElementById("boostListingBtn").textContent = t("boost_listing");
+  document.getElementById("markSoldBtn").textContent = t("mark_sold");
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -231,22 +250,22 @@
       let gateHtml = "";
       if (isPendingShop) {
         gateHtml = `
-          <div class="gate-icon">⏳</div>
-          <div class="gate-title">Shop Under Review</div>
-          <div class="gate-text">We're reviewing your NRC and photo. You'll be notified once approved and can start selling.</div>`;
+          ${gateIcon("pending")}
+          <div class="gate-title">${t("gate_shop_pending_title")}</div>
+          <div class="gate-text">${t("gate_shop_pending_text")}</div>`;
       } else if (isRejectedShop) {
         gateHtml = `
-          <div class="gate-icon">❌</div>
-          <div class="gate-title">Registration Not Approved</div>
-          ${rejectionReason ? `<div class="reason-box"><div class="reason-label">Reason given:</div><div class="reason-text">${rejectionReason}</div></div>` : ""}
-          <div class="gate-text">You can fix the issue above and submit again.</div>
-          <button class="register-btn" onclick="window.location.href='/register-shop.html'">Try Again</button>`;
+          ${gateIcon("rejected")}
+          <div class="gate-title">${t("gate_shop_rejected_title")}</div>
+          ${rejectionReason ? `<div class="reason-box"><div class="reason-label">${t("reason_given")}</div><div class="reason-text">${rejectionReason}</div></div>` : ""}
+          <div class="gate-text">${t("gate_shop_rejected_text")}</div>
+          <button class="register-btn" onclick="window.location.href='/register-shop.html'">${t("gate_try_again")}</button>`;
       } else {
         gateHtml = `
-          <div class="gate-icon">🏪</div>
-          <div class="gate-title">Register Your Shop to Sell</div>
-          <div class="gate-text">You can browse and buy freely on ZedMarket. To post and sell items, register your shop with your NRC and a photo — it only takes a minute.</div>
-          <button class="register-btn" onclick="window.location.href='/register-shop.html'">Register My Shop</button>`;
+          ${gateIcon("register")}
+          <div class="gate-title">${t("gate_register_title")}</div>
+          <div class="gate-text">${t("gate_register_text")}</div>
+          <button class="register-btn" onclick="window.location.href='/register-shop.html'">${t("register_shop")}</button>`;
       }
 
       app.innerHTML = `
@@ -273,30 +292,30 @@
       <div class="topbar">
         <div>
           ${myShopBrand()}
-          <div class="sub-brand">${user.name} ${isVerifiedShop ? "· ✅ Verified Shop" : isPending ? "· ⏳ Pending" : ""}</div>
-          ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${daysLeft > 0 ? `⏳ Renews in ${daysLeft} day${daysLeft === 1 ? "" : "s"}` : "⚠️ Expires today"}</div>` : ""}
+          <div class="sub-brand">${user.name} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
+          ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
         </div>
-        <button class="sell-btn" onclick="window.location.href='/post-listing.html'">+ Sell</button>
+        <button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>
       </div>
 
       <div class="action-row">
-        <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">Edit Shop Profile</button>
-        <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">View My Shop</button>
-        ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? "⏳ Upgrade Pending" : "🏆 Upgrade to Shop"}</button>` : ""}
-        ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">🔄 Renew Now</button>` : ""}
+        <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">${t("edit_shop_profile")}</button>
+        <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">${t("view_my_shop")}</button>
+        ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? t("upgrade_pending") : t("upgrade_to_shop")}</button>` : ""}
+        ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${t("renew_now")}</button>` : ""}
         ${user.is_admin ? ADMIN_BTN : ""}
       </div>
 
       ${disabledCount > 0 ? `
         <div class="warning-banner">
-          <div class="warning-text">⚠️ ${disabledCount} listing${disabledCount === 1 ? " is" : "s are"} hidden from buyers because a subscription is needed. Subscribe to reactivate.</div>
-          <button class="warning-btn" onclick="window.location.href='/upgrade-shop.html'">Subscribe Now</button>
+          <div class="warning-text">${t("hidden_listings_warning", { count: disabledCount })}</div>
+          <button class="warning-btn" onclick="window.location.href='/upgrade-shop.html'">${t("subscribe_now")}</button>
         </div>` : ""}
 
       ${listings.length === 0 ? `
         <div class="center-box">
-          <div class="empty-text">You haven't posted anything yet.</div>
-          <button class="login-btn" onclick="window.location.href='/post-listing.html'">Post Your First Listing</button>
+          <div class="empty-text">${t("no_listings_yet")}</div>
+          <button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>
         </div>` : `
         <div class="list">${listings.map(renderRow).join("")}</div>`}
     `;
@@ -318,16 +337,16 @@
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
     let badge = `<div class="status-badge">${item.status}</div>`;
     if (item.payment_disabled) {
-      badge = `<div class="disabled-badge">🚫 Disabled — needs ${item.category} subscription</div>`;
+      badge = `<div class="disabled-badge">${t("disabled_needs_sub", { category: item.category })}</div>`;
     } else if (item.is_boosted) {
-      badge = `<div class="boosted-badge">🚀 Boosted</div>`;
+      badge = `<div class="boosted-badge">${t("boosted_label")}</div>`;
     }
     return `
       <div class="row ${item.payment_disabled ? "disabled" : ""}">
         <div class="row-main" id="rowmain-${item.id}">
           <div class="thumb">
             ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
-            ${item.is_boosted ? `<div class="boost-badge">🚀</div>` : ""}
+            ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
           </div>
           <div class="row-info">
             <div class="row-title">${item.title}</div>

@@ -343,14 +343,14 @@
     const tabs = [
       { key: "subscriptions", label: `Pending (${pending.length})` },
       { key: "users", label: `Users (${users.length})` },
-      { key: "reports", label: `🚩 Listing Reports (${reports.length})` },
-      { key: "userReports", label: `👤 User Reports (${userReports.length})` },
-      { key: "shopApps", label: `🏪 Shop Applications (${shopApps.length})` },
-      { key: "nameRequests", label: `🖊️ Name Requests (${nameRequests.length})` },
-      { key: "boostRequests", label: `🚀 Boost Requests (${boostRequests.length})` },
-      { key: "planPrices", label: `💵 Plan Prices` },
-      { key: "payment", label: `💰 Payment` },
-      { key: "broadcast", label: `📣 Broadcast` },
+      { key: "reports", label: `Listing Reports (${reports.length})` },
+      { key: "userReports", label: `User Reports (${userReports.length})` },
+      { key: "shopApps", label: `Shop Applications (${shopApps.length})` },
+      { key: "nameRequests", label: `Name Requests (${nameRequests.length})` },
+      { key: "boostRequests", label: `Boost Requests (${boostRequests.length})` },
+      { key: "planPrices", label: `Plan Prices` },
+      { key: "payment", label: `Payment` },
+      { key: "broadcast", label: `Broadcast` },
     ];
 
     app.innerHTML = `
@@ -395,7 +395,7 @@
         return u.name.toLowerCase().includes(q) || u.phone.includes(q);
       });
       content.innerHTML = `
-        <div class="search-box"><input class="search-input" id="userSearchInput" placeholder="🔍 Search by name or phone..." value="${userSearchText}" /></div>
+        <div class="search-box"><input class="search-input" id="userSearchInput" placeholder="Search by name or phone..." value="${userSearchText}" /></div>
         <div class="list">${
           filtered.length === 0 ? `<div class="empty-text">No users match your search.</div>` :
           filtered.map(u => `
@@ -436,7 +436,7 @@
         userReports.length === 0 ? `<div class="empty-text">No user reports.</div>` :
         userReports.map(r => `
           <div class="card">
-            <div class="card-name">${r.reported_role === "seller" ? "🏪 Seller" : "🛒 Buyer"}: ${formatZambianPhone(r.reported_phone)}</div>
+            <div class="card-name">${r.reported_role === "seller" ? "Seller" : "Buyer"}: ${formatZambianPhone(r.reported_phone)}</div>
             <div class="card-sub">Reported by ${r.reporter_name || "Unknown"}</div>
             <div class="card-detail">Reason: ${r.reason}</div>
             ${r.matched_user_id
@@ -554,7 +554,7 @@
           <input class="broadcast-title-input" id="broadcastTitleInput" value="${broadcastTitle}" />
           <div class="input-label">Message</div>
           <textarea class="broadcast-input" id="broadcastMessageInput" placeholder="Type your message..."></textarea>
-          <button class="reject-btn" style="margin-top:14px;width:100%;" id="sendBroadcastBtn">📣 Send to Everyone</button>
+          <button class="reject-btn" style="margin-top:14px;width:100%;" id="sendBroadcastBtn">Send to Everyone</button>
         </div>
       </div>`;
       document.getElementById("sendBroadcastBtn").addEventListener("click", handleSendBroadcast);
@@ -804,10 +804,10 @@
     }
   }
 
-  if (!user?.is_admin) {
-    app.innerHTML = `<div class="center-box"><div class="error-text">Admin access only.</div></div>`;
-  } else if (!token) {
+  if (!token) {
     window.location.href = "/login.html";
+  } else if (!user?.is_admin) {
+    app.innerHTML = `<div class="center-box"><div class="error-text">Admin access only.</div></div>`;
   } else {
     loadAll();
   }

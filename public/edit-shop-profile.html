@@ -64,7 +64,7 @@
 </script>
 <div class="topbar">
   <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-  <div class="header-title">Edit Shop Profile</div>
+  <div class="header-title" data-i18n="edit_shop_profile">Edit Shop Profile</div>
 </div>
 
 <div class="content">
@@ -96,5 +96,10 @@
   </div>
 </div>
 
+<script src="/js/lang.js"></script>
+<script>
+  const token = localStorage.getItem("zm_token");
+  if (!token) window.location.href = "/login.html";
+</script>
 </body>
 </html>

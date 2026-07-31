@@ -7,7 +7,6 @@
     "/signup.html",
     "/verify-otp.html",
     "/forgot-password.html",
-    "/shop-signup.html",
     "/register-shop.html",
     "/chat-room.html",
     "/chat-list.html",
