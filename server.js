@@ -47,6 +47,7 @@ app.use(express.json());
 
 app.use((req, res, next) => {
   if (req.hostname === "www.zedmarket.app") {
+    if (req.path === "/.well-known/assetlinks.json") return next();
     return res.redirect(301, `https://zedmarket.app${req.originalUrl}`);
   }
   next();
