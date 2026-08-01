@@ -67,9 +67,6 @@ jobs:
         working-directory: android
         run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade
 
-      - name: Patch Android theme to remove top white loading line
-        run: node android/patch-twa-project.js
-
       - name: Build signed APK
         working-directory: android
         env:

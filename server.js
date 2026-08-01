@@ -134,25 +134,6 @@ app.put("/api/presence/settings", (req, res) => {
 });
 
 const MIN_APK_BYTES = 500_000;
-const PUBLIC_DIR = path.join(__dirname, "public");
-const CRITICAL_HEAD =
-  '<meta name="theme-color" content="#111111">' +
-  '<meta name="color-scheme" content="dark">' +
-  '<style id="zm-critical">html{background:#111!important;color-scheme:dark}</style>';
-
-function injectCriticalHead(html) {
-  if (html.includes('id="zm-critical"')) return html;
-  html = html.replace(/<html([^>]*)>/i, (match, attrs) => {
-    if (/style=/i.test(attrs)) return match;
-    return `<html${attrs} style="background:#111111">`;
-  });
-  return html.replace(/<head>/i, `<head>${CRITICAL_HEAD}`);
-}
-
-function sendHtmlWithCritical(res, filePath) {
-  const html = injectCriticalHead(fs.readFileSync(filePath, "utf8"));
-  res.type("html").send(html);
-}
 
 function getApkPath() {
   return path.join(__dirname, "public", "zedmarket.apk");
@@ -191,22 +172,13 @@ app.get("/zedmarket.apk", (req, res) => {
   res.download(getApkPath(), "ZedMarket.apk");
 });
 
-app.use((req, res, next) => {
-  let reqPath = req.path.split("?")[0];
-  if (reqPath === "/") reqPath = "/index.html";
-  if (!reqPath.endsWith(".html")) return next();
-  const filePath = path.join(PUBLIC_DIR, reqPath);
-  if (!fs.existsSync(filePath)) return next();
-  sendHtmlWithCritical(res, filePath);
-});
-
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {
   if (req.path.startsWith("/api/")) {
     return res.status(404).json({ error: "Not found" });
   }
-  sendHtmlWithCritical(res, path.join(PUBLIC_DIR, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {
