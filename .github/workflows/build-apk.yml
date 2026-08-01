@@ -59,7 +59,7 @@ jobs:
 
       - name: Sync TWA project
         working-directory: android
-        run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade
+        run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation
 
       - name: Build signed APK
         working-directory: android
@@ -70,6 +70,18 @@ jobs:
 
       - name: Copy APK to public folder
         run: node android/copy-apk.js
+
+      - name: Verify APK was built
+        run: |
+          ls -la public/zedmarket.apk android/*.apk android/app/build/outputs/apk/release/ 2>/dev/null || true
+          test -s public/zedmarket.apk
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile("public/zedmarket.apk") as z:
+            blob = b"".join(z.read(n) for n in z.namelist() if n.endswith(".dex"))
+          for needle in (b"webview", b"customtabs", b"bubblewrap"):
+            print(needle.decode(), "FOUND" if needle in blob.lower() else "missing")
+          PY
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -89,5 +101,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/zedmarket.apk
-          git diff --staged --quiet || git commit -m "Update ZedMarket download APK."
+          if git diff --staged --quiet; then
+            echo "ERROR: APK on disk matches the old committed file. Build did not produce a new APK."
+            exit 1
+          fi
+          git commit -m "Update ZedMarket download APK v1.0.2."
           git push
