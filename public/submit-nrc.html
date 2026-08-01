@@ -207,6 +207,7 @@
   let selfieStream = null;
   let deadlineText = "";
   const uploadBoxMap = { front: "nrcFrontBox", back: "nrcBackBox" };
+  const uploading = { front: false, back: false, selfie: false };
 
   function openPhotoViewer(url) {
     if (!url) return;
@@ -229,14 +230,57 @@
     if (el) el.textContent = msg;
   }
 
+  async function compressImage(file, maxDim, quality) {
+    if (!file || !file.type.startsWith("image/")) return file;
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = objectUrl;
+      });
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+      const scale = Math.min(1, maxDim / Math.max(width, height));
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (!blob) return file;
+      return new File([blob], "nrc-photo.jpg", { type: "image/jpeg" });
+    } catch {
+      return file;
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   async function uploadPhoto(file) {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-    const data = await res.json();
-    if (!data.secure_url) throw new Error("Upload failed");
-    return data.secure_url;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120000);
+    try {
+      const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData, signal: controller.signal });
+      const data = await res.json();
+      if (!data.secure_url) throw new Error("Upload failed");
+      return data.secure_url;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function updateNextButtonState() {
+    const btn = document.getElementById("nextStepBtn");
+    if (!btn) return;
+    const busy = uploading.front || uploading.back;
+    btn.disabled = busy;
+    btn.textContent = busy ? t("uploading") : t("next");
   }
 
   function updateStepUI() {
@@ -300,9 +344,14 @@
     if (nrcBackUrl) setPreview("nrcBackBox", nrcBackUrl, false);
     if (selfieUrl) showSelfiePreview(selfieUrl, false);
     updateStepUI();
+    updateNextButtonState();
   }
 
   function goToStep2() {
+    if (uploading.front || uploading.back) {
+      showError(t("wait_for_upload"));
+      return;
+    }
     const nrcNumber = document.getElementById("nrcNumberInput").value.trim();
     if (!nrcNumber || !nrcFrontUrl || !nrcBackUrl) {
       showError(t("nrc_step1_missing"));
@@ -367,32 +416,40 @@
 
   async function handleFile(file) {
     if (!file) return;
+    const slot = activeUpload;
+    if (!slot) return;
+    const boxId = uploadBoxMap[slot];
     let localUrl = null;
-    const boxId = uploadBoxMap[activeUpload];
+    uploading[slot] = true;
+    updateNextButtonState();
 
     try {
-      localUrl = URL.createObjectURL(file);
+      const maxDim = slot === "selfie" ? 1000 : 1400;
+      const compressed = await compressImage(file, maxDim, 0.82);
+      localUrl = URL.createObjectURL(compressed);
       if (boxId) setPreview(boxId, localUrl, true);
-      else if (activeUpload === "selfie") showSelfiePreview(localUrl, true);
+      else if (slot === "selfie") showSelfiePreview(localUrl, true);
 
-      const url = await uploadPhoto(file);
-      if (activeUpload === "front") { nrcFrontUrl = url; setPreview("nrcFrontBox", url, false); }
-      else if (activeUpload === "back") { nrcBackUrl = url; setPreview("nrcBackBox", url, false); }
-      else if (activeUpload === "selfie") { selfieUrl = url; showSelfiePreview(url, false); }
+      const url = await uploadPhoto(compressed);
+      if (slot === "front") { nrcFrontUrl = url; setPreview("nrcFrontBox", url, false); }
+      else if (slot === "back") { nrcBackUrl = url; setPreview("nrcBackBox", url, false); }
+      else if (slot === "selfie") { selfieUrl = url; showSelfiePreview(url, false); }
     } catch {
       showError(t("upload_failed"));
       if (boxId) {
         const box = document.getElementById(boxId);
         box.classList.remove("has-photo");
         box.innerHTML = `<div class="upload-hint">${t("tap_to_upload")}</div>`;
-        if (activeUpload === "front") nrcFrontUrl = null;
-        if (activeUpload === "back") nrcBackUrl = null;
-      } else if (activeUpload === "selfie") {
+        if (slot === "front") nrcFrontUrl = null;
+        if (slot === "back") nrcBackUrl = null;
+      } else if (slot === "selfie") {
         selfieUrl = null;
         const wrap = document.getElementById("selfiePreview");
         if (wrap) wrap.classList.remove("show");
       }
     } finally {
+      uploading[slot] = false;
+      updateNextButtonState();
       if (localUrl) URL.revokeObjectURL(localUrl);
     }
   }
@@ -436,15 +493,21 @@
   function captureSelfieFrame() {
     const video = document.getElementById("selfieVideo");
     if (!video.videoWidth) return null;
+    const maxDim = 1000;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    width = Math.max(1, Math.round(width * scale));
+    height = Math.max(1, Math.round(height * scale));
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
-    ctx.translate(canvas.width, 0);
+    ctx.translate(width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, width, height);
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.82);
     });
   }
 
