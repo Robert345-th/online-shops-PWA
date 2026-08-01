@@ -106,6 +106,9 @@
     if (subscribed) {
       return `<div class="verified-badge subscribed">${t("verified_shop")}</div>`;
     }
+    if (profile.nrc_verified) {
+      return `<div class="verified-badge">${t("seller_id_verified", "ID Verified")}</div>`;
+    }
     if (approved) {
       return `<div class="verified-badge">${t("approved_shop")}</div>`;
     }

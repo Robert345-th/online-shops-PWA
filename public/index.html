@@ -159,6 +159,16 @@
   .sort-chip { padding: 6px 12px; font-size: 11px; }
   .sort-chip.active { background: var(--black); border-color: var(--black); color: var(--gold); font-weight: 600; }
   .grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; padding-bottom: 40px; }
+  .load-more-wrap { padding: 0 12px 80px; text-align: center; }
+  .load-more-btn {
+    background: var(--black); color: var(--gold); border: none;
+    padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .load-more-btn:disabled { opacity: 0.6; cursor: wait; }
+  .verified-chip {
+    display: inline-block; background: #1B7A4A; color: #fff;
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-top: 4px;
+  }
   .card {
     width: calc(50% - 5px);
     background: var(--card); border: 1px solid var(--border); border-radius: 14px;
@@ -251,6 +261,9 @@
 </div>
 
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
+<div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+  <button type="button" class="load-more-btn" id="loadMoreBtn" data-i18n="load_more">Load more</button>
+</div>
 
 <div class="bottom-nav">
   <a href="/index.html" class="nav-item active"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/></svg></div><div data-i18n="home">Home</div></a>
@@ -274,10 +287,15 @@
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
+  let serverOffset = 0;
+  let hasMore = true;
+  let loadingMore = false;
   let myCoords = readSavedCoords("zm_home_location");
   if (myCoords) sortBy = "Nearest";
 
   const feed = document.getElementById("feed");
+  const loadMoreWrap = document.getElementById("loadMoreWrap");
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
   const sortRow = document.getElementById("sortRow");
   const categoryRow = document.getElementById("categoryRow");
 
@@ -340,17 +358,48 @@
     );
   }
 
-  async function loadListings() {
+  async function loadListings(reset = true) {
+    if (loadingMore) return;
+    if (reset) {
+      serverOffset = 0;
+      hasMore = true;
+      feed.className = "loading";
+      feed.textContent = t("loading_listings");
+      loadMoreWrap.style.display = "none";
+    } else {
+      loadingMore = true;
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.textContent = t("loading");
+    }
     try {
-      const res = await fetch(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=0`);
+      const res = await fetch(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
       if (!res.ok) throw new Error("Server error " + res.status);
-      listings = await res.json();
+      const batch = await res.json();
+      listings = reset ? batch : listings.concat(batch);
+      serverOffset += batch.length;
+      hasMore = batch.length === PAGE_SIZE;
       renderFeed();
     } catch (e) {
-      feed.className = "error";
-      feed.textContent = t("feed_error");
+      if (reset) {
+        feed.className = "error";
+        feed.textContent = t("feed_error");
+      }
       console.error(e);
+    } finally {
+      loadingMore = false;
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = t("load_more");
+      }
     }
+  }
+
+  function updateLoadMoreButton() {
+    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("loading")) {
+      loadMoreWrap.style.display = "none";
+      return;
+    }
+    loadMoreWrap.style.display = "block";
   }
 
   function renderFeed() {
@@ -393,6 +442,7 @@
     if (!items.length) {
       feed.className = "empty";
       feed.textContent = t("feed_empty");
+      updateLoadMoreButton();
       return;
     }
 
@@ -404,6 +454,7 @@
       if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
     });
     observeLazyImages(feed);
+    updateLoadMoreButton();
   }
 
   function photoPlaceholder(size) {
@@ -422,6 +473,7 @@
           <div class="price">K${escHtml(item.price)}</div>
           <div class="title">${escHtml(item.title)}</div>
           <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
+          ${item.seller_nrc_verified ? `<div class="verified-chip">✓ ${t("seller_id_verified", "ID Verified")}</div>` : ""}
         </div>
       </div>`;
   }
@@ -490,8 +542,10 @@
   });
   window.addEventListener("lowdatachange", () => renderFeed());
 
+  loadMoreBtn.addEventListener("click", () => loadListings(false));
+
   renderChips();
-  loadListings();
+  loadListings(true);
 </script>
 </body>
 </html>

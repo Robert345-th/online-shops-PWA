@@ -245,6 +245,7 @@
   let shopLocationLabel = "";
   let homeLocationLabel = "";
   let listingFrom = null;
+  let copyPrefill = null;
 
   const formBanner = document.getElementById("formBanner");
   const stepSubtitle = document.getElementById("stepSubtitle");
@@ -328,8 +329,86 @@
     });
     stepSubtitle.textContent = subtitles[step];
     clearBanner();
-    if (step === 3) applyDetailsStepForCategory();
+    if (step === 3) {
+      applyDetailsStepForCategory();
+      applyCopyPrefillIfReady();
+    }
     if (step === 4) applyLocationStepDefaults();
+  }
+
+  function applyCopyPrefillIfReady() {
+    if (!copyPrefill) return;
+    const titleInput = document.getElementById("titleInput");
+    const descInput = document.getElementById("descInput");
+    const priceInput = document.getElementById("priceInput");
+    if (!titleInput || !priceInput) return;
+    titleInput.value = copyPrefill.title;
+    if (descInput) descInput.value = copyPrefill.description;
+    priceInput.value = copyPrefill.price;
+    if (copyPrefill.car_details) {
+      const d = copyPrefill.car_details;
+      const makeEl = document.getElementById("carMake");
+      const modelEl = document.getElementById("carModel");
+      const yearEl = document.getElementById("carYear");
+      const mileageEl = document.getElementById("carMileage");
+      if (makeEl) makeEl.value = d.make || "";
+      if (modelEl) modelEl.value = d.model || "";
+      if (yearEl) yearEl.value = d.year || "";
+      if (mileageEl) mileageEl.value = d.mileage || "";
+    }
+    if (copyPrefill.land_details) {
+      const d = copyPrefill.land_details;
+      const sizeEl = document.getElementById("landSize");
+      const deedEl = document.getElementById("landDeedStatus");
+      if (sizeEl) sizeEl.value = d.size || "";
+      if (deedEl) deedEl.value = d.title_deed_status || "";
+      if (d.size_unit) {
+        landUnit = d.size_unit;
+        document.querySelectorAll("[data-unit]").forEach((el) =>
+          el.classList.toggle("active", el.dataset.unit === landUnit)
+        );
+      }
+    }
+    copyPrefill = null;
+  }
+
+  function applyTemplateData(data) {
+    categoryId = data.category_id || CATEGORY_OPTIONS.find((c) => c.label === data.category)?.id || categoryId;
+    condition = data.condition || condition;
+    if (data.location_label) locationLabel = data.location_label;
+    photos = (data.photos || []).slice(0, MAX_PHOTOS).map((url) => ({ uri: url, url, uploading: false }));
+    copyPrefill = {
+      title: data.title || "",
+      description: data.description || "",
+      price: data.price || "",
+      car_details: data.car_details || null,
+      land_details: data.land_details || null,
+    };
+    step = 2;
+    renderCategoryChips();
+    updateStepUI();
+    renderPhotoGrid();
+  }
+
+  async function applyListingCopy(copyId) {
+    try {
+      const res = await fetch(`${API_URL}/listings/${copyId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        coords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+      }
+      applyTemplateData(data);
+    } catch (e) {}
+  }
+
+  function applySimilarTemplate(index) {
+    try {
+      const templates = JSON.parse(localStorage.getItem("zm_sold_templates") || "[]");
+      const data = templates[index];
+      if (!data) return;
+      applyTemplateData(data);
+    } catch (e) {}
   }
 
   function applyDetailsStepForCategory() {
@@ -778,6 +857,9 @@
 
       document.getElementById("wizardView").style.display = "block";
       initWizard();
+      const bootParams = new URLSearchParams(window.location.search);
+      if (bootParams.get("copy")) await applyListingCopy(bootParams.get("copy"));
+      else if (bootParams.has("similar")) applySimilarTemplate(parseInt(bootParams.get("similar"), 10));
     } catch (e) {
       showBlockedView("register");
     }

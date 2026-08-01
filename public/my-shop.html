@@ -39,6 +39,18 @@
   .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
 
   .action-row { display: flex; gap: 8px; padding: 12px; flex-wrap: wrap; }
+  .share-shop-btn {
+    background: var(--card); border: 1.5px solid var(--black); padding: 12px 14px;
+    border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer;
+  }
+  .sold-section { padding: 0 14px 8px; }
+  .sold-section-title { font-size: 12px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin-bottom: 8px; }
+  .sold-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .sold-chip {
+    flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; max-width: 180px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .edit-profile-btn {
     background: var(--card); border: 1.5px solid var(--black); padding: 12px 14px;
     border-radius: 10px; color: var(--black); font-weight: 700; font-size: 12px; cursor: pointer;
@@ -133,6 +145,7 @@
 <div class="modal-overlay" id="manageModal">
   <div class="modal-box">
     <div class="modal-title" id="manageModalTitle"></div>
+    <button class="modal-row" id="sellSimilarBtn"></button>
     <button class="modal-row" id="editListingBtn"></button>
     <button class="modal-row" id="boostListingBtn"></button>
     <button class="modal-row danger" id="markSoldBtn"></button>
@@ -195,6 +208,7 @@
     return daysLeft === 1 ? t("renews_in_one") : t("renews_in", { days: daysLeft });
   }
 
+  document.getElementById("sellSimilarBtn").textContent = t("sell_similar");
   document.getElementById("editListingBtn").textContent = t("edit_listing");
   document.getElementById("boostListingBtn").textContent = t("boost_listing");
   document.getElementById("markSoldBtn").textContent = t("mark_sold");
@@ -306,6 +320,7 @@
       <div class="action-row">
         <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">${t("edit_shop_profile")}</button>
         <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">${t("view_my_shop")}</button>
+        <button class="share-shop-btn" id="shareShopBtn">${t("share_shop")}</button>
         ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? t("upgrade_pending") : t("upgrade_to_shop")}</button>` : ""}
         ${isVerifiedShop && daysLeft !== null && daysLeft <= 5 ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${t("renew_now")}</button>` : ""}
         ${user.is_admin ? ADMIN_BTN : ""}
@@ -318,6 +333,8 @@
           <div class="warning-text">${t("hidden_listings_warning", { count: disabledCount })}</div>
           <button class="warning-btn" onclick="window.location.href='/upgrade-shop.html'">${t("subscribe_now")}</button>
         </div>` : ""}
+
+      ${renderSoldTemplatesSection()}
 
       ${listings.length === 0 ? `
         <div class="center-box">
@@ -333,7 +350,66 @@
       const manageBtn = document.getElementById(`manage-${item.id}`);
       if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
     });
+    document.getElementById("shareShopBtn")?.addEventListener("click", shareShop);
+    document.querySelectorAll("[data-similar]").forEach((el) => {
+      el.addEventListener("click", () => {
+        window.location.href = `/post-listing.html?similar=${el.dataset.similar}`;
+      });
+    });
     observeLazyImages(app);
+  }
+
+  function getSoldTemplates() {
+    try {
+      return JSON.parse(localStorage.getItem("zm_sold_templates") || "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSoldTemplate(item) {
+    if (!item) return;
+    const templates = getSoldTemplates().filter((t) => t.title !== item.title);
+    templates.unshift({
+      title: item.title,
+      description: item.description || "",
+      price: item.price,
+      category: item.category,
+      category_id: item.category_id,
+      condition: item.condition,
+      location_label: item.location_label || "",
+      photos: item.photos || [],
+      saved_at: Date.now(),
+    });
+    localStorage.setItem("zm_sold_templates", JSON.stringify(templates.slice(0, 5)));
+  }
+
+  function renderSoldTemplatesSection() {
+    const templates = getSoldTemplates();
+    if (!templates.length) return "";
+    return `
+      <div class="sold-section">
+        <div class="sold-section-title">${t("sell_similar_again")}</div>
+        <div class="sold-chip-row">
+          ${templates.map((item, index) => `<button type="button" class="sold-chip" data-similar="${index}">${item.title}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  async function shareShop() {
+    const shopName = user.shop_name || user.name || "My Shop";
+    const url = `${window.location.origin}/seller-profile.html?id=${user.id}`;
+    const text = `${shopName} on ZedMarket\n${url}`;
+    const waText = encodeURIComponent(text);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shopName, text: `${shopName} on ZedMarket`, url });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+    window.open(`https://wa.me/?text=${waText}`, "_blank");
   }
 
   function buildNrcBanner() {
@@ -401,6 +477,10 @@
   }
 
   document.getElementById("manageCancelBtn").addEventListener("click", () => { manageModal.classList.remove("open"); manageItem = null; });
+  document.getElementById("sellSimilarBtn").addEventListener("click", () => {
+    if (!manageItem) return;
+    window.location.href = `/post-listing.html?copy=${manageItem.id}`;
+  });
   document.getElementById("editListingBtn").addEventListener("click", () => { window.location.href = `/edit-listing.html?id=${manageItem.id}`; });
   document.getElementById("boostListingBtn").addEventListener("click", () => { window.location.href = `/boost-listing.html?id=${manageItem.id}`; });
   document.getElementById("markSoldBtn").addEventListener("click", () => { manageModal.classList.remove("open"); openBuyerPicker(manageItem); });
@@ -475,6 +555,8 @@
   document.getElementById("buyerCancelBtn").addEventListener("click", () => { buyerModal.classList.remove("open"); buyerPickerItem = null; });
 
   async function removeListing(id) {
+    const item = listings.find((i) => i.id === id);
+    if (item) saveSoldTemplate(item);
     try {
       const res = await fetch(`${API_URL}/listings/${id}`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) {
