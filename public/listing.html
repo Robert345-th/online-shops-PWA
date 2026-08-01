@@ -610,7 +610,7 @@
     }
     requireContactSafety(() => {
       const sellerName = listing.shop_name || listing.seller_name || "";
-      window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}`;
+      window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}&listingId=${listingId}`;
     });
   }
   async function handleShareMeetup() {

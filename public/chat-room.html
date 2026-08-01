@@ -68,6 +68,18 @@
 
   .blocked-banner { background: var(--price-red); padding: 8px; color: #fff; font-size: 11px; text-align: center; font-weight: 600; flex-shrink: 0; }
 
+  .listing-context {
+    display: none; flex-shrink: 0; margin: 10px 14px 0; padding: 10px 12px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    align-items: center; gap: 10px; cursor: pointer; text-decoration: none; color: inherit;
+  }
+  .listing-context.visible { display: flex; }
+  .listing-context img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: var(--border); flex-shrink: 0; }
+  .listing-context-text { flex: 1; min-width: 0; }
+  .listing-context-label { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--subtext); margin-bottom: 2px; }
+  .listing-context-title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .listing-context-price { font-size: 12px; font-weight: 700; color: var(--price-red); margin-top: 2px; }
+
   .messages-list { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; }
   .empty-text { text-align: center; color: var(--subtext); margin-top: 40px; }
   .bubble-row { display: flex; margin-bottom: 8px; align-items: flex-end; gap: 4px; }
@@ -143,6 +155,15 @@
 
 <div id="blockedBannerWrap"></div>
 
+<a class="listing-context" id="listingContextBanner" href="#">
+  <span id="listingContextPhoto"></span>
+  <span class="listing-context-text">
+    <div class="listing-context-label" data-i18n="chat_about_listing">About this listing</div>
+    <div class="listing-context-title" id="listingContextTitle"></div>
+    <div class="listing-context-price" id="listingContextPrice"></div>
+  </span>
+</a>
+
 <div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
 
 <div id="quickReplyWrap"></div>
@@ -213,9 +234,13 @@
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
   const nameFromLink = params.get("name");
+  const listingIdFromUrl = params.get("listingId");
   const isKnownSupportChat = params.get("support") === "1";
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  let activeListingId = listingIdFromUrl || null;
+  let activeListing = null;
 
   if (isKnownSupportChat) {
     document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
@@ -320,6 +345,57 @@
 
   let lastMessagesKey = "";
 
+  function listingPhotoUrl(listing) {
+    const photos = listing?.photos;
+    if (Array.isArray(photos) && photos[0]) return photos[0];
+    if (typeof photos === "string") {
+      try {
+        const parsed = JSON.parse(photos);
+        if (Array.isArray(parsed) && parsed[0]) return parsed[0];
+      } catch {}
+    }
+    return "https://zedmarket.app/icon-512.png";
+  }
+
+  function applyListingContext(listing) {
+    if (!listing || !listing.id) {
+      activeListing = null;
+      activeListingId = null;
+      document.getElementById("listingContextBanner").classList.remove("visible");
+      return;
+    }
+    activeListing = listing;
+    activeListingId = String(listing.id);
+    const banner = document.getElementById("listingContextBanner");
+    const photoWrap = document.getElementById("listingContextPhoto");
+    photoWrap.innerHTML = typeof zmImg === "function"
+      ? zmImg(listingPhotoUrl(listing), { preset: "thumb" })
+      : `<img src="${listingPhotoUrl(listing)}" alt="" />`;
+    document.getElementById("listingContextTitle").textContent = listing.title || t("chat_listing_fallback", "Listing");
+    document.getElementById("listingContextPrice").textContent = listing.price != null ? `K${listing.price}` : "";
+    banner.href = `/listing.html?id=${encodeURIComponent(activeListingId)}`;
+    banner.classList.add("visible");
+    if (typeof applyTranslations === "function") applyTranslations(banner);
+    observeLazyImages(banner);
+  }
+
+  async function loadListingContextFromApi() {
+    if (isKnownSupportChat) return;
+    const id = listingIdFromUrl || activeListingId;
+    if (!id) return;
+    try {
+      const res = await fetch(`${API_URL}/listings/${id}`);
+      if (!res.ok) return;
+      applyListingContext(await res.json());
+    } catch {}
+  }
+
+  document.getElementById("listingContextBanner").addEventListener("click", (e) => {
+    if (!activeListingId) return;
+    e.preventDefault();
+    window.location.href = `/listing.html?id=${encodeURIComponent(activeListingId)}`;
+  });
+
   async function loadMessages(showSpinner) {
     try {
       if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
@@ -329,6 +405,11 @@
       messages = data.messages || [];
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
+      if (data.listing_context) {
+        applyListingContext(data.listing_context);
+      } else if (!activeListing && listingIdFromUrl) {
+        await loadListingContextFromApi();
+      }
       renderBlockedBanner();
       renderMessages(false);
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
@@ -525,7 +606,7 @@
       const res = await fetch(`${API_URL}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ receiver_id: userId, ...payload })
+        body: JSON.stringify({ receiver_id: userId, ...(activeListingId ? { listing_id: activeListingId } : {}), ...payload })
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Could not send message."); return; }
