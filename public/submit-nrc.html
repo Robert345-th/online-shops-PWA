@@ -275,6 +275,28 @@
     }
   }
 
+  function formatNrcNumber(value) {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 9);
+    if (digits.length <= 6) return digits;
+    if (digits.length <= 8) return `${digits.slice(0, 6)}/${digits.slice(6)}`;
+    return `${digits.slice(0, 6)}/${digits.slice(6, 8)}/${digits.slice(8)}`;
+  }
+
+  function isValidNrcNumber(value) {
+    return /^\d{6}\/\d{2}\/\d{1}$/.test(String(value || "").trim());
+  }
+
+  function bindNrcNumberInput() {
+    const input = document.getElementById("nrcNumberInput");
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const formatted = formatNrcNumber(input.value);
+      if (input.value !== formatted) {
+        input.value = formatted;
+      }
+    });
+  }
+
   function updateNextButtonState() {
     const btn = document.getElementById("nextStepBtn");
     if (!btn) return;
@@ -306,7 +328,7 @@
         <div class="step-title">${t("nrc_step1_title")}</div>
         <div class="step-subtitle">${t("nrc_step1_subtitle")}</div>
         <label class="label" for="nrcNumberInput">${t("nrc_number")}</label>
-        <input class="input" id="nrcNumberInput" placeholder="e.g. 123456/10/1" />
+        <input class="input" id="nrcNumberInput" inputmode="numeric" autocomplete="off" placeholder="121904/09/1" maxlength="11" />
         <div class="label">${t("nrc_front")}</div>
         <div class="upload-box" id="nrcFrontBox"><div class="upload-hint">${t("tap_to_upload")}</div></div>
         <div class="label">${t("nrc_back")}</div>
@@ -340,6 +362,7 @@
       else window.location.href = "/my-shop.html";
     };
 
+    bindNrcNumberInput();
     if (nrcFrontUrl) setPreview("nrcFrontBox", nrcFrontUrl, false);
     if (nrcBackUrl) setPreview("nrcBackBox", nrcBackUrl, false);
     if (selfieUrl) showSelfiePreview(selfieUrl, false);
@@ -353,7 +376,11 @@
       return;
     }
     const nrcNumber = document.getElementById("nrcNumberInput").value.trim();
-    if (!nrcNumber || !nrcFrontUrl || !nrcBackUrl) {
+    if (!isValidNrcNumber(nrcNumber)) {
+      showError(t("nrc_number_invalid"));
+      return;
+    }
+    if (!nrcFrontUrl || !nrcBackUrl) {
       showError(t("nrc_step1_missing"));
       return;
     }
@@ -529,8 +556,8 @@
 
   async function handleSubmit() {
     const nrcNumber = document.getElementById("nrcNumberInput").value.trim();
-    if (!nrcNumber || !nrcFrontUrl || !nrcBackUrl || !selfieUrl) {
-      showError(t("submit_nrc_missing"));
+    if (!isValidNrcNumber(nrcNumber) || !nrcFrontUrl || !nrcBackUrl || !selfieUrl) {
+      showError(!isValidNrcNumber(nrcNumber) ? t("nrc_number_invalid") : t("submit_nrc_missing"));
       return;
     }
     const btn = document.getElementById("submitBtn");
