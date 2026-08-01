@@ -65,7 +65,7 @@ jobs:
 
       - name: Sync TWA project
         working-directory: android
-        run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation
+        run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade
 
       - name: Build signed APK
         working-directory: android
