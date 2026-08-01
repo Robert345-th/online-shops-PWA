@@ -1,5 +1,21 @@
 (function () {
   const REDIRECT_KEY = "zm_chrome_redirect";
+  const APP_SHELL_KEY = "zm_android_app";
+
+  function markAppShell() {
+    try {
+      sessionStorage.setItem(APP_SHELL_KEY, "1");
+      localStorage.setItem(APP_SHELL_KEY, "1");
+    } catch {}
+  }
+
+  if (/[?&]utm_source=android\b/i.test(location.search)) {
+    markAppShell();
+  }
+  if (/^android-app:\/\/app\.zedmarket\.twa/i.test(document.referrer || "")) {
+    markAppShell();
+  }
+
   const NO_AUTO_REDIRECT = [
     "/install.html",
     "/download.html",
@@ -24,6 +40,11 @@
   }
 
   function isPlayStoreApp() {
+    try {
+      if (sessionStorage.getItem(APP_SHELL_KEY) === "1" || localStorage.getItem(APP_SHELL_KEY) === "1") {
+        return true;
+      }
+    } catch {}
     if (isStandalone()) return true;
     const ref = document.referrer || "";
     if (/^android-app:\/\/app\.zedmarket\.twa/i.test(ref)) return true;
@@ -104,6 +125,7 @@
   }
 
   function openInChrome() {
+    if (isPlayStoreApp()) return;
     if (isEmbeddedBrowser()) {
       goToInstallHelp();
       return;
@@ -128,9 +150,8 @@
 
   function maybeRedirectToChrome() {
     if (isPlayStoreApp()) return;
-    if (isStandalone() || isInstallPage() || isEmbeddedBrowser()) return;
+    if (isStandalone() || isInstallPage() || isEmbeddedBrowser() || isBlockedPath()) return;
     if (!needsChromeOnAndroid()) return;
-    if (isBlockedPath()) return;
     if (isLoggedIn()) return;
     const stamp = `${location.pathname}${location.search}`;
     if (sessionStorage.getItem(REDIRECT_KEY) === stamp) return;

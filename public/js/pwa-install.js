@@ -10,9 +10,15 @@
     return /Android/i.test(navigator.userAgent);
   }
 
+  function isAppShell() {
+    return typeof window.isPlayStoreApp === "function" && window.isPlayStoreApp();
+  }
+
   function isStandalone() {
     return window.navigator.standalone === true ||
-      window.matchMedia("(display-mode: standalone)").matches;
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches ||
+      isAppShell();
   }
 
   function hideInstallElements(ids) {
@@ -89,6 +95,7 @@
   }
 
   async function promptPwaInstall() {
+    if (isAppShell()) return;
     if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) {
       if (typeof window.goToInstallHelp === "function") {
         window.goToInstallHelp();
@@ -113,7 +120,7 @@
   }
 
   function showInstallBanner() {
-    if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1") return;
+    if (isStandalone() || isAppShell() || localStorage.getItem(DISMISS_KEY) === "1") return;
     if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) return;
     if (document.getElementById("pwaInstallBanner")) return;
 
