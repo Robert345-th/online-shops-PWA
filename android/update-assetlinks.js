@@ -25,14 +25,33 @@ if (!match) {
   process.exit(1);
 }
 
-const fingerprint = match[1].replace(/:/g, "").toUpperCase();
+const fingerprint = match[1].trim().toUpperCase();
+const colonFingerprint = fingerprint.includes(":")
+  ? fingerprint
+  : fingerprint.match(/.{1,2}/g).join(":");
+
+let existing = [];
+if (fs.existsSync(assetlinksPath)) {
+  try {
+    existing = JSON.parse(fs.readFileSync(assetlinksPath, "utf8"))[0]?.target?.sha256_cert_fingerprints || [];
+  } catch {
+    existing = [];
+  }
+}
+
+const normalize = (fp) => fp.replace(/:/g, "").toUpperCase();
+const merged = [...existing];
+if (!merged.some((fp) => normalize(fp) === normalize(colonFingerprint))) {
+  merged.push(colonFingerprint);
+}
+
 const assetlinks = [
   {
     relation: ["delegate_permission/common.handle_all_urls"],
     target: {
       namespace: "android_app",
       package_name: "app.zedmarket.twa",
-      sha256_cert_fingerprints: [fingerprint],
+      sha256_cert_fingerprints: merged,
     },
   },
 ];
