@@ -71,11 +71,6 @@ jobs:
       - name: Copy APK to public folder
         run: node android/copy-apk.js
 
-      - name: Update asset links for full-screen TWA
-        env:
-          KEYSTORE_PASS: ${{ secrets.APK_KEYSTORE_PASSWORD }}
-        run: node android/update-assetlinks.js
-
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -89,10 +84,10 @@ jobs:
           path: android/app-release-bundle.aab
           if-no-files-found: warn
 
-      - name: Commit APK and asset links
+      - name: Commit APK
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/zedmarket.apk public/.well-known/assetlinks.json
-          git diff --staged --quiet || git commit -m "Update ZedMarket APK and Android app links."
+          git add public/zedmarket.apk
+          git diff --staged --quiet || git commit -m "Update ZedMarket download APK."
           git push

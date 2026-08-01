@@ -21,12 +21,12 @@
     "path": "./android.keystore",
     "alias": "zedmarket"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://zedmarket.app/manifest.json",
-  "fallbackType": "customtabs",
+  "fallbackType": "webview",
   "features": {
     "locationDelegation": {
       "enabled": true
