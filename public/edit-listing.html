@@ -92,9 +92,11 @@
 
 <div id="app"><div class="center-box"><div class="spinner"></div></div></div>
 
+<script src="/js/utils.js"></script>
 <script src="/js/lang.js"></script>
 <script src="/js/shop-gate.js"></script>
 <script src="/js/location.js"></script>
+<script src="/js/upload.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CLOUDINARY_CLOUD_NAME = "kstg72vx";
@@ -363,12 +365,16 @@
       uploadToCloudinary(file, uri);
     });
     renderPhotoGrid();
+    e.target.value = "";
   }
 
   async function uploadToCloudinary(file, uri) {
     try {
+      const compressed = window.compressImage
+        ? await compressImage(file, 1600, 0.82)
+        : file;
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressed);
       formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {

@@ -1,5 +1,7 @@
 const express = require("express");
+const compression = require("compression");
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
 const path = require("path");
 const { registerPushRoutes } = require("./push-routes");
 
@@ -15,8 +17,17 @@ const typingStore = new Map();
 
 function getUserIdFromToken(authHeader) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+  const token = authHeader.slice(7);
+  if (process.env.JWT_SECRET) {
+    try {
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      return payload.userId ?? payload.id ?? payload.user_id ?? payload.sub ?? null;
+    } catch {
+      return null;
+    }
+  }
   try {
-    const part = authHeader.slice(7).split(".")[1];
+    const part = token.split(".")[1];
     const json = Buffer.from(part.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString();
     const payload = JSON.parse(json);
     return payload.id ?? payload.userId ?? payload.user_id ?? payload.sub ?? null;
@@ -43,6 +54,7 @@ function presencePayload(entry, now) {
   return { online, last_seen: lastSeenIso, hidden: false };
 }
 
+app.use(compression());
 app.use(express.json());
 
 app.use((req, res, next) => {

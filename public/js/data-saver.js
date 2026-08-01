@@ -25,9 +25,12 @@
   }
 
   function optimizeImageUrl(url, preset) {
-    if (!url || !isLowData()) return url;
+    if (!url) return url;
     if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) return url;
-    const transform = PRESETS[preset] || PRESETS.card;
+    const sizes = { thumb: 240, card: 360, hero: 640, chat: 280, avatar: 64, map: 200, full: 960 };
+    const w = sizes[preset] || sizes.card;
+    const q = isLowData() ? "q_auto:low" : "q_auto:good";
+    const transform = `w_${w},c_limit,${q},f_auto`;
     const marker = `/upload/${transform}/`;
     if (url.includes(marker)) return url;
     return url.replace("/upload/", marker);
@@ -49,7 +52,7 @@
     const styleAttr = style ? ` style="${escapeAttr(style)}"` : "";
     const altAttr = alt ? ` alt="${escapeAttr(alt)}"` : ' alt=""';
 
-    if (defer && isLowData() && url) {
+    if (defer && url) {
       return `<img${cls}${styleAttr}${altAttr} loading="lazy" decoding="async" data-zm-src="${escapeAttr(src)}" src="${LAZY_PLACEHOLDER}" />`;
     }
     return `<img${cls}${styleAttr}${altAttr} loading="lazy" decoding="async" src="${escapeAttr(src)}" />`;

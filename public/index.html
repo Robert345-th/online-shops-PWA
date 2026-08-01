@@ -258,6 +258,7 @@
   <button type="button" id="installBtn" class="nav-item nav-install" aria-label="Install App"><div class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div data-i18n="nav_install">Install</div></button>
 </div>
 
+<script src="/js/utils.js"></script>
 <script src="/js/lang.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
@@ -418,9 +419,9 @@
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
         </div>
         <div class="card-info">
-          <div class="price">K${item.price}</div>
-          <div class="title">${item.title}</div>
-          <div class="loc">${distancePart}${item.location_label || ""}</div>
+          <div class="price">K${escHtml(item.price)}</div>
+          <div class="title">${escHtml(item.title)}</div>
+          <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
         </div>
       </div>`;
   }

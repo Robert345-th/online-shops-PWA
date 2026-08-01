@@ -167,7 +167,9 @@
 
 <div id="content"><div class="center-box" data-i18n="loading">Loading…</div></div>
 
+<script src="/js/utils.js"></script>
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script src="/js/presence.js"></script>
 <script src="/js/chat-receipts.js"></script>
 <script src="/js/push-notifications.js"></script>
@@ -490,16 +492,32 @@
     });
   }
 
+  function stopListPoll() {
+    if (listPollTimer) { clearInterval(listPollTimer); listPollTimer = null; }
+  }
+
+  function startListPoll() {
+    stopListPoll();
+    listPollTimer = setInterval(async () => {
+      if (conversationsCache.length) await refreshConversationsQuiet();
+    }, getPollInterval(5000));
+  }
+
   initChatSettings();
   startPresenceHeartbeat();
   loadConversations();
-  listPollTimer = setInterval(async () => {
-    if (conversationsCache.length) await refreshConversationsQuiet();
-  }, 5000);
+  startListPoll();
   window.addEventListener("pageshow", () => {
     if (conversationsCache.length) refreshConversationsQuiet();
   });
-  window.addEventListener("pagehide", stopPresenceHeartbeat);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopListPoll();
+    else startListPoll();
+  });
+  window.addEventListener("pagehide", () => {
+    stopPresenceHeartbeat();
+    stopListPoll();
+  });
 </script>
 </body>
 </html>

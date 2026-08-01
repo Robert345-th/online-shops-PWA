@@ -110,6 +110,22 @@ async function broadcastPush(payload) {
   return { sent };
 }
 
+const notifyRateLimit = new Map();
+const NOTIFY_RATE_MAX = 40;
+const NOTIFY_RATE_WINDOW_MS = 60_000;
+
+function checkNotifyRateLimit(senderId) {
+  const key = String(senderId);
+  const now = Date.now();
+  let entry = notifyRateLimit.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + NOTIFY_RATE_WINDOW_MS };
+    notifyRateLimit.set(key, entry);
+  }
+  entry.count += 1;
+  return entry.count <= NOTIFY_RATE_MAX;
+}
+
 function registerPushRoutes(app, getUserIdFromToken) {
   app.get("/api/push/vapid-public-key", (_req, res) => {
     res.json({ publicKey: getPublicKey() });
@@ -156,6 +172,9 @@ function registerPushRoutes(app, getUserIdFromToken) {
   app.post("/api/push/notify-message", async (req, res) => {
     const senderId = getUserIdFromToken(req.headers.authorization);
     if (!senderId) return res.status(401).json({ error: "Unauthorized" });
+    if (!checkNotifyRateLimit(senderId)) {
+      return res.status(429).json({ error: "Too many notifications. Try again shortly." });
+    }
 
     const { recipient_id, sender_name, body, url } = req.body || {};
     const recipientKey = String(recipient_id || "");

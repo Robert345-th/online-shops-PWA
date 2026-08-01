@@ -166,6 +166,7 @@
   <div class="menu-box" id="messageActionsBox"></div>
 </div>
 
+<script src="/js/utils.js"></script>
 <script src="/js/lang.js"></script>
 <script src="/js/presence.js"></script>
 <script src="/js/push-notifications.js"></script>
@@ -317,16 +318,19 @@
     window.location.href = `/seller-profile.html?id=${userId}`;
   });
 
+  let lastMessagesKey = "";
+
   async function loadMessages(showSpinner) {
     try {
       if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
       const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
+      if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       const data = await res.json();
       messages = data.messages || [];
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
       renderBlockedBanner();
-      renderMessages();
+      renderMessages(false);
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
       if (!recording) updateComposerVisibility();
     } catch (e) {}
@@ -344,11 +348,21 @@
     updateBlockButtonLabel();
   }
 
-  function renderMessages() {
+  function messagesFingerprint() {
+    return messages.map((m) =>
+      `${m.id}:${m.read_at || ""}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
+    ).join("|");
+  }
+
+  function renderMessages(force) {
     if (!messages.length) {
       messagesList.innerHTML = `<div class="empty-text">Say hello</div>`;
+      lastMessagesKey = "";
       return;
     }
+    const key = messagesFingerprint();
+    if (!force && key === lastMessagesKey && messagesList.querySelector(".bubble-row")) return;
+    lastMessagesKey = key;
     messagesList.innerHTML = messages.map(renderBubble).join("");
     messagesList.scrollTop = messagesList.scrollHeight;
 
@@ -387,7 +401,7 @@
           <span>${formatDuration(msg.audio_duration || 0)}</span>
         </div>`;
     } else {
-      inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${msg.content}</div>`;
+      inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${escHtml(msg.content)}</div>`;
     }
 
     const tick = isMine
@@ -726,12 +740,29 @@
     loadOtherUser();
     loadMessages(true);
     refreshPresence();
-    pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
-    presenceTimer = setInterval(refreshPresence, getPollInterval(POLL_INTERVAL));
+    startPollers();
     window.addEventListener("langchange", refreshPresence);
+
+    function stopPollers() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      if (presenceTimer) { clearInterval(presenceTimer); presenceTimer = null; }
+    }
+
+    function startPollers() {
+      stopPollers();
+      pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
+      presenceTimer = setInterval(refreshPresence, getPollInterval(POLL_INTERVAL));
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopPollers();
+      else startPollers();
+    });
+
     window.addEventListener("pagehide", () => {
       stopTyping(userId);
       stopPresenceHeartbeat();
+      stopPollers();
     });
   }
 </script>
