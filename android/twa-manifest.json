@@ -22,7 +22,7 @@
     "alias": "zedmarket"
   },
   "appVersionName": "1.0.2",
-  "appVersionCode": 3,
+  "appVersionCode": 4,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://zedmarket.app/manifest.json",
