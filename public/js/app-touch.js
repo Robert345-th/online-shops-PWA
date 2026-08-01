@@ -1,4 +1,26 @@
+document.documentElement.style.background = "#111111";
+
 (function () {
+  const loadShield = document.createElement("div");
+  loadShield.id = "zm-load-shield";
+  loadShield.style.cssText = [
+    "position:fixed",
+    "top:0",
+    "left:0",
+    "right:0",
+    "height:calc(var(--zm-safe-top, env(safe-area-inset-top, 0px)) + 6px)",
+    "background:#111111",
+    "z-index:2147483647",
+    "pointer-events:none",
+  ].join(";");
+  (document.documentElement || document.head).appendChild(loadShield);
+
+  function removeLoadShield() {
+    loadShield.remove();
+  }
+  window.addEventListener("load", removeLoadShield, { once: true });
+  setTimeout(removeLoadShield, 2500);
+
   const viewport = document.querySelector('meta[name="viewport"]');
   if (viewport && !/viewport-fit=cover/i.test(viewport.content)) {
     const base = viewport.content.replace(/,?\s*viewport-fit=\w+/gi, "").replace(/,\s*$/, "");
@@ -21,6 +43,7 @@
     }
 
     document.documentElement.style.setProperty("--zm-safe-top", `${Math.max(0, inset)}px`);
+    loadShield.style.height = `calc(${Math.max(0, inset)}px + 6px)`;
   }
 
   measureSafeTop();
