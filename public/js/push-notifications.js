@@ -1,5 +1,6 @@
 (function () {
   const PUSH_ENABLED_KEY = "zm_push_enabled";
+  const PUSH_OPT_OUT_KEY = "zm_push_opt_out";
   const ICON_URL = "https://zedmarket.app/icon-192.png";
 
   function getToken() {
@@ -8,6 +9,14 @@
 
   function isPushEnabled() {
     return localStorage.getItem(PUSH_ENABLED_KEY) === "true";
+  }
+
+  function isPushOptOut() {
+    return localStorage.getItem(PUSH_OPT_OUT_KEY) === "true";
+  }
+
+  function setPushOptOut(value) {
+    localStorage.setItem(PUSH_OPT_OUT_KEY, value ? "true" : "false");
   }
 
   function setPushEnabled(value) {
@@ -107,7 +116,7 @@
   }
 
   async function syncPushSubscription() {
-    if (!isPushEnabled() || !getToken() || !isPushSupported()) return;
+    if (isPushOptOut() || !getToken() || !isPushSupported()) return;
     if (Notification.permission !== "granted") {
       setPushEnabled(false);
       return;
@@ -135,6 +144,26 @@
     }
   }
 
+  async function autoEnablePushNotifications() {
+    if (!getToken() || isPushOptOut() || !isPushSupported()) return false;
+    if (Notification.permission === "denied") return false;
+
+    try {
+      if (Notification.permission === "granted") {
+        setPushEnabled(true);
+        await syncPushSubscription();
+        return true;
+      }
+
+      if (sessionStorage.getItem("zm_push_auto_tried") === "1") return false;
+      sessionStorage.setItem("zm_push_auto_tried", "1");
+      await enablePushNotifications();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   async function refreshPushToggle(toggleEl) {
     if (!toggleEl) return;
     if (!isPushSupported()) {
@@ -143,20 +172,23 @@
       return;
     }
     toggleEl.disabled = false;
-    if (!isPushEnabled() || Notification.permission !== "granted") {
+    if (isPushOptOut()) {
       toggleEl.checked = false;
-      if (Notification.permission !== "granted") setPushEnabled(false);
       return;
+    }
+    toggleEl.checked = true;
+    if (Notification.permission === "granted") {
+      setPushEnabled(true);
+      return;
+    }
+    if (Notification.permission !== "granted") {
+      toggleEl.checked = !isPushOptOut();
     }
     try {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
-      toggleEl.checked = !!subscription;
-      if (!subscription) setPushEnabled(false);
-    } catch (e) {
-      toggleEl.checked = false;
-      setPushEnabled(false);
-    }
+      if (subscription) setPushEnabled(true);
+    } catch (e) {}
   }
 
   function messagePreview(payload) {
@@ -191,7 +223,7 @@
   }
 
   async function showLocalMessageNotification(title, body, url) {
-    if (!isPushEnabled() || Notification.permission !== "granted") return;
+    if (isPushOptOut() || Notification.permission !== "granted") return;
     const options = {
       body,
       icon: ICON_URL,
@@ -213,7 +245,7 @@
   let messageUnreadCache = new Map();
 
   async function pollMessageNotifications(apiUrl, token, userId) {
-    if (!isPushEnabled() || !token || !userId) return;
+    if (isPushOptOut() || !token || !userId) return;
     try {
       const res = await fetch(`${apiUrl}/messages/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -238,7 +270,7 @@
   }
 
   function startMessageNotificationPoll(apiUrl, token, userId) {
-    if (messagePollTimer || !isPushEnabled()) return;
+    if (messagePollTimer || isPushOptOut()) return;
     pollMessageNotifications(apiUrl, token, userId);
     messagePollTimer = setInterval(() => {
       pollMessageNotifications(apiUrl, token, userId);
@@ -253,6 +285,9 @@
     }
   }
 
+  window.isPushOptOut = isPushOptOut;
+  window.setPushOptOut = setPushOptOut;
+  window.autoEnablePushNotifications = autoEnablePushNotifications;
   window.isPushSupported = isPushSupported;
   window.isPushEnabled = isPushEnabled;
   window.setPushEnabled = setPushEnabled;

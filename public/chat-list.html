@@ -228,13 +228,15 @@
 
     const pushToggle = document.getElementById("pushNotificationsToggle");
     refreshPushToggle(pushToggle);
-    if (isPushEnabled()) {
-      syncPushSubscription();
-      startMessageNotificationPoll(API_URL, token, user.id);
-    }
+    autoEnablePushNotifications().finally(() => {
+      if (!isPushOptOut()) {
+        startMessageNotificationPoll(API_URL, token, user.id);
+      }
+    });
 
     pushToggle.addEventListener("change", async () => {
       if (pushToggle.checked) {
+        setPushOptOut(false);
         try {
           await enablePushNotifications();
           startMessageNotificationPoll(API_URL, token, user.id);
@@ -248,6 +250,7 @@
           } else alert(t("push_enable_failed"));
         }
       } else {
+        setPushOptOut(true);
         await unsubscribeFromPush();
         stopMessageNotificationPoll();
       }

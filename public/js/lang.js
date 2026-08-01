@@ -84,7 +84,7 @@
       show_last_seen: "Show Last Seen",
       show_last_seen_sub: "Let others see when you were last active",
       push_notifications: "Message Notifications",
-      push_notifications_sub: "Get alerted when someone messages you",
+      push_notifications_sub: "On by default — turn off here if you don't want message alerts",
       push_unsupported: "Push notifications are not supported on this device.",
       push_denied: "Notification permission was blocked. Enable it in your browser settings.",
       push_enable_failed: "Could not enable message notifications. Try again.",
