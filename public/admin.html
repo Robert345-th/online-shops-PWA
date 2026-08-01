@@ -146,6 +146,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="nrcModal">
+  <div class="modal-box">
+    <div class="modal-title">NRC Verification</div>
+    <div class="modal-subtitle" id="nrcModalSubtitle"></div>
+    <div class="detail-scroll" id="nrcModalBody"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="nrcCloseBtn">Close</button>
+      <button class="approve-btn" id="nrcApproveBtn" style="flex:1;">Approve</button>
+      <button class="reject-btn" id="nrcRejectBtn" style="flex:1;">Reject</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
     <div class="modal-title">Reject Shop Application</div>
@@ -166,12 +179,16 @@
 
   let tab = "subscriptions";
   let pending = [], users = [], reports = [], userReports = [], shopApps = [], nameRequests = [], boostRequests = [], planPrices = [];
+  let nrcVerifications = [];
   let editedPrices = {};
   let userSearchText = "";
   let paymentStatus = null;
+  let nrcStatus = null;
   let broadcastTitle = "📢 ZedMarket";
   let rejectTargetId = null;
+  let rejectTargetType = "shop";
   let viewShopTargetId = null;
+  let viewNrcTargetId = null;
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -277,7 +294,7 @@
   async function loadAll() {
     await Promise.all([
       loadPending(), loadUsers(), loadReports(), loadUserReports(),
-      loadShopApps(), loadNameRequests(), loadBoostRequests(), loadPlanPrices(), loadPaymentStatus()
+      loadShopApps(), loadNrcVerifications(), loadNameRequests(), loadBoostRequests(), loadPlanPrices(), loadPaymentStatus(), loadNrcStatus()
     ]);
     render();
   }
@@ -310,6 +327,18 @@
     try {
       const res = await fetch(`${API_URL}/admin/shop-applications/pending`, { headers: authHeaders() });
       shopApps = await res.json();
+    } catch (e) {}
+  }
+  async function loadNrcVerifications() {
+    try {
+      const res = await fetch(`${API_URL}/admin/nrc-verifications/pending`, { headers: authHeaders() });
+      nrcVerifications = await res.json();
+    } catch (e) {}
+  }
+  async function loadNrcStatus() {
+    try {
+      const res = await fetch(`${API_URL}/settings/nrc-status`);
+      nrcStatus = await res.json();
     } catch (e) {}
   }
   async function loadNameRequests() {
@@ -345,6 +374,7 @@
       { key: "reports", label: `Listing Reports (${reports.length})` },
       { key: "userReports", label: `User Reports (${userReports.length})` },
       { key: "shopApps", label: `Shop Applications (${shopApps.length})` },
+      { key: "nrcVerifications", label: `NRC (${nrcVerifications.length})` },
       { key: "nameRequests", label: `Name Requests (${nameRequests.length})` },
       { key: "boostRequests", label: `Boost Requests (${boostRequests.length})` },
       { key: "planPrices", label: `Plan Prices` },
@@ -461,6 +491,22 @@
         el.addEventListener("click", () => openShopAppDetail(el.dataset.viewShop))
       );
 
+    } else if (tab === "nrcVerifications") {
+      content.innerHTML = `<div class="list">${
+        nrcVerifications.length === 0 ? `<div class="empty-text">No pending NRC verifications.</div>` :
+        nrcVerifications.map(s => `
+          <div class="card shop-app-row">
+            <div class="shop-app-row-main">
+              <div class="card-name">${escHtml(s.shop_name || s.name)}</div>
+              <div class="card-sub">${escHtml(s.name)} · ${escHtml(formatZambianPhone(s.phone))}</div>
+            </div>
+            <button type="button" class="view-btn" data-view-nrc="${s.id}">View</button>
+          </div>`).join("")
+      }</div>`;
+      content.querySelectorAll("[data-view-nrc]").forEach(el =>
+        el.addEventListener("click", () => openNrcDetail(el.dataset.viewNrc))
+      );
+
     } else if (tab === "nameRequests") {
       content.innerHTML = `<div class="list">${
         nameRequests.length === 0 ? `<div class="empty-text">No pending shop name changes.</div>` :
@@ -521,6 +567,17 @@
     } else if (tab === "payment") {
       content.innerHTML = `<div class="list">
         <div class="card">
+          <div class="card-name">NRC Verification Period</div>
+          ${nrcStatus?.active ? `
+            <div class="card-detail">Status: ${nrcStatus.expired ? "🔴 Grace period ended — unverified shops hidden" : "🟡 5-day window active"}</div>
+            <div class="card-detail">Ends: ${new Date(nrcStatus.nrc_grace_period_end).toLocaleString()}</div>
+            <button class="reject-btn" style="margin-top:14px;width:100%;" id="undoNrcBtn">Undo NRC Period (Testing)</button>
+          ` : `
+            <div class="card-detail">Status: 🟢 Not started — shops can sell without NRC until you announce.</div>
+            <button class="approve-btn" style="margin-top:14px;width:100%;" id="announceNrcBtn">📋 Start 5-Day NRC Period</button>
+          `}
+        </div>
+        <div class="card">
           <div class="card-name">Payment Enforcement</div>
           ${paymentStatus?.enforced ? `
             <div class="card-detail">Status: ${paymentStatus.grace_period_passed ? "🔴 Enforced (grace period ended)" : "🟡 Grace period active"}</div>
@@ -543,6 +600,10 @@
         document.getElementById("announceMessageInput").value = "Heads up! Starting next week, keeping your listings live on ZedMarket will require an active subscription. Please subscribe soon to avoid your listings being disabled.";
         document.getElementById("announceModal").classList.add("open");
       });
+      const announceNrcBtn = document.getElementById("announceNrcBtn");
+      if (announceNrcBtn) announceNrcBtn.addEventListener("click", handleAnnounceNrc);
+      const undoNrcBtn = document.getElementById("undoNrcBtn");
+      if (undoNrcBtn) undoNrcBtn.addEventListener("click", handleUndoNrc);
 
     } else {
       content.innerHTML = `<div class="list">
@@ -625,11 +686,63 @@
       alert("Approved — this shop can now post listings.");
     } catch (e) { alert("Could not connect to the server."); }
   }
-  function openRejectModal(id) {
+  function openNrcDetail(id) {
+    const item = nrcVerifications.find((s) => String(s.id) === String(id));
+    if (!item) return;
+    viewNrcTargetId = item.id;
+    document.getElementById("nrcModalSubtitle").textContent = `${item.name} · ${formatZambianPhone(item.phone)}`;
+    const rows = [
+      ["NRC number", item.nrc_number],
+      ["City / Province", [item.city, item.province].filter(Boolean).join(", ")],
+      ["Location", item.location_label],
+    ].filter(([, value]) => value);
+    let html = rows.map(([label, value]) =>
+      `<div class="detail-row"><span class="detail-label">${escHtml(label)}:</span> ${escHtml(value)}</div>`
+    ).join("");
+    if (item.nrc_photo_url) html += `<div class="doc-section"><div class="doc-section-title">NRC front</div><img class="doc-image" src="${escHtml(item.nrc_photo_url)}" alt="NRC front" /></div>`;
+    if (item.nrc_back_photo_url) html += `<div class="doc-section"><div class="doc-section-title">NRC back</div><img class="doc-image" src="${escHtml(item.nrc_back_photo_url)}" alt="NRC back" /></div>`;
+    if (item.selfie_photo_url) html += `<div class="doc-section"><div class="doc-section-title">Selfie</div><img class="doc-image" src="${escHtml(item.selfie_photo_url)}" alt="Selfie" /></div>`;
+    document.getElementById("nrcModalBody").innerHTML = html;
+    document.getElementById("nrcModal").classList.add("open");
+  }
+
+  function closeNrcDetail() {
+    document.getElementById("nrcModal").classList.remove("open");
+    viewNrcTargetId = null;
+  }
+
+  async function approveNrc(id) {
+    try {
+      const res = await fetch(`${API_URL}/admin/nrc-verifications/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not approve NRC."); return; }
+      nrcVerifications = nrcVerifications.filter(s => s.id != id);
+      renderTabContent();
+      alert("Approved — this shop's NRC is verified.");
+    } catch (e) { alert("Could not connect to the server."); }
+  }
+
+  function openRejectModal(id, type = "shop") {
     rejectTargetId = id;
+    rejectTargetType = type;
     document.getElementById("rejectReasonInput").value = "";
     document.getElementById("rejectModal").classList.add("open");
   }
+
+  document.getElementById("nrcCloseBtn").addEventListener("click", closeNrcDetail);
+  document.getElementById("nrcApproveBtn").addEventListener("click", async () => {
+    if (!viewNrcTargetId) return;
+    await approveNrc(viewNrcTargetId);
+    closeNrcDetail();
+  });
+  document.getElementById("nrcRejectBtn").addEventListener("click", () => {
+    if (!viewNrcTargetId) return;
+    openRejectModal(viewNrcTargetId, "nrc");
+    closeNrcDetail();
+  });
+  document.getElementById("nrcModal").addEventListener("click", (e) => {
+    if (e.target.id === "nrcModal") closeNrcDetail();
+  });
+
   document.getElementById("shopAppCloseBtn").addEventListener("click", closeShopAppDetail);
   document.getElementById("shopAppApproveBtn").addEventListener("click", async () => {
     if (!viewShopTargetId) return;
@@ -648,6 +761,7 @@
   document.getElementById("rejectCancelBtn").addEventListener("click", () => {
     document.getElementById("rejectModal").classList.remove("open");
     rejectTargetId = null;
+    rejectTargetType = "shop";
   });
   document.getElementById("rejectSubmitBtn").addEventListener("click", async () => {
     if (!rejectTargetId) return;
@@ -655,15 +769,26 @@
     const btn = document.getElementById("rejectSubmitBtn");
     btn.disabled = true;
     try {
-      const res = await fetch(`${API_URL}/admin/shop-applications/${rejectTargetId}/reject`, {
+      const endpoint = rejectTargetType === "nrc"
+        ? `${API_URL}/admin/nrc-verifications/${rejectTargetId}/reject`
+        : `${API_URL}/admin/shop-applications/${rejectTargetId}/reject`;
+      const res = await fetch(endpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ reason: reason || null })
       });
-      if (!res.ok) { alert("Could not reject shop."); return; }
-      shopApps = shopApps.filter(s => s.id != rejectTargetId);
+      if (!res.ok) {
+        alert(rejectTargetType === "nrc" ? "Could not reject NRC." : "Could not reject shop.");
+        return;
+      }
+      if (rejectTargetType === "nrc") {
+        nrcVerifications = nrcVerifications.filter(s => s.id != rejectTargetId);
+      } else {
+        shopApps = shopApps.filter(s => s.id != rejectTargetId);
+      }
       document.getElementById("rejectModal").classList.remove("open");
       rejectTargetId = null;
+      rejectTargetType = "shop";
       renderTabContent();
     } catch (e) {
       alert("Could not connect to the server.");
@@ -752,6 +877,35 @@
       btn.disabled = false;
     }
   });
+
+  async function handleAnnounceNrc() {
+    if (!confirm("Start the 5-day NRC submission window for all approved shops? After 5 days, unverified shops will be hidden from buyers.")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/announce-nrc-period`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "Could not start NRC period."); return; }
+      alert(`Started — notified ${data.notified} shops. Period ends ${new Date(data.nrc_grace_period_end).toLocaleString()}.`);
+      await loadNrcStatus();
+      renderTabContent();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  }
+
+  async function handleUndoNrc() {
+    if (!confirm("Reset the NRC grace period? (Testing only)")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/undo-nrc-period`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not reset NRC period."); return; }
+      await loadNrcStatus();
+      renderTabContent();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  }
 
   async function handleExtend() {
     if (!confirm("Add 3 more days to the current deadline?")) return;

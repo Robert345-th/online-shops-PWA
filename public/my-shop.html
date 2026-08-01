@@ -176,6 +176,7 @@
   let shopAccountType = "individual";
   let shopStatus = null;
   let rejectionReason = null;
+  let shopCompliance = null;
   let manageItem = null;
   let buyerPickerItem = null;
   let contacts = [];
@@ -224,6 +225,7 @@
       shopAccountType = shopStatusData.account_type || "individual";
       shopStatus = shopStatusData.shop_status || null;
       rejectionReason = shopStatusData.shop_rejection_reason || null;
+      shopCompliance = shopStatusData;
 
       render();
     } catch (e) {
@@ -287,6 +289,8 @@
       daysLeft = Math.max(0, Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24)));
     }
     const disabledCount = listings.filter(i => i.payment_disabled).length;
+    const canPost = shopCompliance?.can_post !== false;
+    const nrcBanner = buildNrcBanner();
 
     app.innerHTML = `
       <div class="topbar">
@@ -295,7 +299,7 @@
           <div class="sub-brand">${user.name} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
         </div>
-        <button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>
+        ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
       </div>
 
       <div class="action-row">
@@ -306,6 +310,8 @@
         ${user.is_admin ? ADMIN_BTN : ""}
       </div>
 
+      ${nrcBanner}
+
       ${disabledCount > 0 ? `
         <div class="warning-banner">
           <div class="warning-text">${t("hidden_listings_warning", { count: disabledCount })}</div>
@@ -315,7 +321,7 @@
       ${listings.length === 0 ? `
         <div class="center-box">
           <div class="empty-text">${t("no_listings_yet")}</div>
-          <button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>
+          ${canPost ? `<button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
         </div>` : `
         <div class="list">${listings.map(renderRow).join("")}</div>`}
     `;
@@ -327,6 +333,34 @@
       if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
     });
     observeLazyImages(app);
+  }
+
+  function buildNrcBanner() {
+    const c = shopCompliance;
+    if (!c || c.nrc_verified) return "";
+
+    if (c.nrc_grace_expired && !c.nrc_verified) {
+      const msg = c.nrc_status === "pending" && c.nrc_submitted
+        ? t("nrc_expired_pending")
+        : t("nrc_expired_blocked");
+      const btn = c.nrc_submitted && c.nrc_status === "pending"
+        ? ""
+        : `<button class="warning-btn" onclick="window.location.href='/submit-nrc.html'">${t("submit_nrc_btn")}</button>`;
+      return `<div class="warning-banner"><div class="warning-text">${msg}</div>${btn}</div>`;
+    }
+
+    if (c.nrc_grace_active && !c.nrc_verified) {
+      const deadline = c.nrc_grace_end ? new Date(c.nrc_grace_end).toLocaleString() : "";
+      if (c.nrc_status === "pending" && c.nrc_submitted) {
+        return `<div class="warning-banner"><div class="warning-text">${t("nrc_pending_review")}</div></div>`;
+      }
+      if (c.nrc_status === "rejected") {
+        return `<div class="warning-banner"><div class="warning-text">${t("nrc_rejected_resubmit")}</div><button class="warning-btn" onclick="window.location.href='/submit-nrc.html'">${t("submit_nrc_btn")}</button></div>`;
+      }
+      return `<div class="warning-banner"><div class="warning-text">${t("nrc_grace_warning", { date: deadline })}</div><button class="warning-btn" onclick="window.location.href='/submit-nrc.html'">${t("submit_nrc_btn")}</button></div>`;
+    }
+
+    return "";
   }
 
   function photoPlaceholder(size) {

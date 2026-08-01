@@ -727,6 +727,12 @@
       messageEl.textContent = t("post_shop_rejected_text");
       actionBtn.textContent = t("go_back");
       actionBtn.onclick = () => { window.location.href = "/my-shop.html"; };
+    } else if (state === "nrc") {
+      iconEl.innerHTML = pendingIconSvg("register");
+      titleEl.textContent = t("post_nrc_required_title");
+      messageEl.textContent = t("post_nrc_required_text");
+      actionBtn.textContent = t("submit_nrc_btn");
+      actionBtn.onclick = () => { window.location.href = "/submit-nrc.html"; };
     } else {
       iconEl.innerHTML = pendingIconSvg("register");
       titleEl.textContent = t("post_need_shop_title");
@@ -755,6 +761,12 @@
       if (accountType !== "shop" || shopStatus !== "approved") {
         if (accountType === "shop" && shopStatus === "pending") showBlockedView("pending");
         else if (accountType === "shop" && shopStatus === "rejected") showBlockedView("rejected");
+        else showBlockedView("register");
+        return;
+      }
+
+      if (data.can_post === false) {
+        if (data.nrc_grace_expired && !data.nrc_verified) showBlockedView("nrc");
         else showBlockedView("register");
         return;
       }

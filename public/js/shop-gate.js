@@ -7,10 +7,21 @@
     const data = await res.json();
     const accountType = data.account_type || "individual";
     const shopStatus = data.shop_status || null;
+    const step1Approved = accountType === "shop" && shopStatus === "approved";
+    const canPost = data.can_post === true;
     return {
-      canSell: accountType === "shop" && shopStatus === "approved",
+      canSell: canPost,
+      step1Approved,
       accountType,
       shopStatus,
+      hasLocation: data.has_location === true,
+      nrcGraceEnd: data.nrc_grace_end || null,
+      nrcGraceActive: data.nrc_grace_active === true,
+      nrcGraceExpired: data.nrc_grace_expired === true,
+      nrcSubmitted: data.nrc_submitted === true,
+      nrcVerified: data.nrc_verified === true,
+      nrcStatus: data.nrc_status || null,
+      needsNrc: data.nrc_grace_expired === true && data.nrc_verified !== true,
     };
   }
 
