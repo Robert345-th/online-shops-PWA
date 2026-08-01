@@ -41,10 +41,26 @@
   .input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; margin-bottom: 14px; }
   .upload-box {
     background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px;
-    padding: 16px; margin-bottom: 14px; text-align: center; cursor: pointer;
+    padding: 16px; margin-bottom: 14px; text-align: center;
   }
-  .upload-box img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-top: 8px; }
-  .upload-hint { font-size: 12px; color: var(--subtext); }
+  .upload-box.has-photo { border-style: solid; cursor: default; }
+  .preview-wrap { position: relative; border-radius: 8px; overflow: hidden; }
+  .preview-img { width: 100%; max-height: 180px; object-fit: cover; display: block; cursor: pointer; }
+  .upload-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700; gap: 8px;
+  }
+  .upload-spinner {
+    width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.35);
+    border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .preview-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
+  .view-hint, .change-link { font-size: 11px; }
+  .view-hint { color: var(--subtext); flex: 1; text-align: left; }
+  .change-link { color: var(--orange); font-weight: 700; cursor: pointer; padding: 4px 0; }
+  .upload-hint { font-size: 12px; color: var(--subtext); cursor: pointer; }
   .guide-box {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 14px; margin-bottom: 16px;
@@ -76,8 +92,8 @@
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     overflow: hidden; margin-bottom: 16px; display: none;
   }
-  .selfie-preview.show { display: block; }
-  .selfie-preview img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+  .selfie-preview.show { display: block; cursor: pointer; }
+  .selfie-preview img { width: 100%; max-height: 280px; object-fit: cover; display: block; cursor: pointer; }
   .selfie-preview-label {
     padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--green);
     background: #E8F5E9; text-align: center;
@@ -122,6 +138,16 @@
   }
   .camera-btn.primary { background: var(--orange); color: #fff; }
   .camera-btn.secondary { background: var(--card); color: var(--text); }
+  .photo-viewer {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(0,0,0,0.92); flex-direction: column; align-items: center; justify-content: center; padding: 16px;
+  }
+  .photo-viewer.open { display: flex; }
+  .photo-viewer img { max-width: 100%; max-height: 78vh; object-fit: contain; border-radius: 8px; }
+  .photo-viewer-close {
+    margin-top: 14px; background: var(--card); border: none; border-radius: 10px;
+    padding: 12px 20px; font-weight: 700; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -160,6 +186,11 @@
   </div>
 </div>
 
+<div class="photo-viewer" id="photoViewerModal">
+  <img id="photoViewerImg" alt="" />
+  <button type="button" class="photo-viewer-close" id="photoViewerCloseBtn" data-i18n="close">Close</button>
+</div>
+
 <script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -175,6 +206,26 @@
   let activeUpload = null;
   let selfieStream = null;
   let deadlineText = "";
+
+  let selfieStream = null;
+  let deadlineText = "";
+  const uploadBoxMap = { front: "nrcFrontBox", back: "nrcBackBox" };
+
+  function openPhotoViewer(url) {
+    if (!url) return;
+    document.getElementById("photoViewerImg").src = url;
+    document.getElementById("photoViewerModal").classList.add("open");
+  }
+
+  function closePhotoViewer() {
+    document.getElementById("photoViewerModal").classList.remove("open");
+    document.getElementById("photoViewerImg").src = "";
+  }
+
+  document.getElementById("photoViewerCloseBtn").addEventListener("click", closePhotoViewer);
+  document.getElementById("photoViewerModal").addEventListener("click", (e) => {
+    if (e.target.id === "photoViewerModal" || e.target.id === "photoViewerImg") closePhotoViewer();
+  });
 
   function showError(msg) {
     const el = document.getElementById("formError");
@@ -237,14 +288,8 @@
       </div>
     `;
 
-    document.getElementById("nrcFrontBox").addEventListener("click", () => {
-      activeUpload = "front";
-      document.getElementById("nrcFrontInput").click();
-    });
-    document.getElementById("nrcBackBox").addEventListener("click", () => {
-      activeUpload = "back";
-      document.getElementById("nrcBackInput").click();
-    });
+    document.getElementById("nrcFrontBox").addEventListener("click", (e) => onUploadBoxClick("front", "nrcFrontBox", e));
+    document.getElementById("nrcBackBox").addEventListener("click", (e) => onUploadBoxClick("back", "nrcBackBox", e));
     document.getElementById("nextStepBtn").addEventListener("click", goToStep2);
     document.getElementById("backStepBtn").addEventListener("click", () => { step = 1; updateStepUI(); });
     document.getElementById("takeSelfieBtn").addEventListener("click", openSelfieCamera);
@@ -254,9 +299,9 @@
       else window.location.href = "/my-shop.html";
     };
 
-    if (nrcFrontUrl) setPreview("nrcFrontBox", nrcFrontUrl);
-    if (nrcBackUrl) setPreview("nrcBackBox", nrcBackUrl);
-    if (selfieUrl) showSelfiePreview(selfieUrl);
+    if (nrcFrontUrl) setPreview("nrcFrontBox", nrcFrontUrl, false);
+    if (nrcBackUrl) setPreview("nrcBackBox", nrcBackUrl, false);
+    if (selfieUrl) showSelfiePreview(selfieUrl, false);
     updateStepUI();
   }
 
@@ -271,16 +316,88 @@
     updateStepUI();
   }
 
-  function showSelfiePreview(url) {
+  function onUploadBoxClick(uploadKey, boxId, e) {
+    if (e.target.classList.contains("preview-img")) {
+      openPhotoViewer(e.target.dataset.fullUrl || e.target.src);
+      return;
+    }
+    if (e.target.classList.contains("change-link") || !document.getElementById(boxId).querySelector(".preview-img")) {
+      activeUpload = uploadKey;
+      document.getElementById(uploadKey === "front" ? "nrcFrontInput" : "nrcBackInput").click();
+    }
+  }
+
+  function showSelfiePreview(url, uploading) {
     const wrap = document.getElementById("selfiePreview");
     const img = document.getElementById("selfiePreviewImg");
     const btn = document.getElementById("takeSelfieBtn");
     const submitBtn = document.getElementById("submitBtn");
     if (!wrap || !img) return;
     img.src = url;
+    img.dataset.fullUrl = url;
     wrap.classList.add("show");
-    if (btn) btn.textContent = t("retake_selfie");
-    if (submitBtn) submitBtn.disabled = false;
+    wrap.onclick = (e) => {
+      if (uploading) return;
+      if (e.target === img) openPhotoViewer(url);
+    };
+    const label = wrap.querySelector(".selfie-preview-label");
+    if (label) label.textContent = uploading ? t("uploading") : t("selfie_preview_ok");
+    if (btn) btn.textContent = uploading ? t("uploading") : (selfieUrl ? t("retake_selfie") : t("take_selfie"));
+    if (submitBtn) submitBtn.disabled = uploading || !selfieUrl;
+  }
+
+  function setPreview(boxId, url, uploading) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    box.classList.add("has-photo");
+    if (uploading) {
+      box.innerHTML = `
+        <div class="preview-wrap">
+          <img class="preview-img" src="${url}" alt="" />
+          <div class="upload-overlay"><div class="upload-spinner"></div><div>${t("uploading")}</div></div>
+        </div>`;
+      return;
+    }
+    box.innerHTML = `
+      <div class="preview-wrap">
+        <img class="preview-img" src="${url}" alt="" data-full-url="${url}" />
+      </div>
+      <div class="preview-actions">
+        <span class="view-hint">${t("tap_to_view_photo")}</span>
+        <span class="change-link">${t("change_photo")}</span>
+      </div>`;
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    let localUrl = null;
+    const boxId = uploadBoxMap[activeUpload];
+
+    try {
+      localUrl = URL.createObjectURL(file);
+      if (boxId) setPreview(boxId, localUrl, true);
+      else if (activeUpload === "selfie") showSelfiePreview(localUrl, true);
+
+      const url = await uploadPhoto(file);
+      if (activeUpload === "front") { nrcFrontUrl = url; setPreview("nrcFrontBox", url, false); }
+      else if (activeUpload === "back") { nrcBackUrl = url; setPreview("nrcBackBox", url, false); }
+      else if (activeUpload === "selfie") { selfieUrl = url; showSelfiePreview(url, false); }
+    } catch {
+      showError(t("upload_failed"));
+      if (boxId) {
+        const box = document.getElementById(boxId);
+        box.classList.remove("has-photo");
+        box.innerHTML = `<div class="upload-hint">${t("tap_to_upload")}</div>`;
+        if (activeUpload === "front") nrcFrontUrl = null;
+        if (activeUpload === "back") nrcBackUrl = null;
+      } else if (activeUpload === "selfie") {
+        selfieUrl = null;
+        const wrap = document.getElementById("selfiePreview");
+        if (wrap) wrap.classList.remove("show");
+      }
+    } finally {
+      if (localUrl) URL.revokeObjectURL(localUrl);
+    }
   }
 
   function closeSelfieCamera() {
@@ -346,30 +463,9 @@
     await handleFile(new File([blob], "selfie.jpg", { type: "image/jpeg" }));
   });
 
-  function setPreview(boxId, url) {
-    const box = document.getElementById(boxId);
-    if (!box) return;
-    box.innerHTML = `<img src="${url}" alt="" />`;
-  }
-
-  async function handleFile(file) {
-    if (!file) return;
-    try {
-      const url = await uploadPhoto(file);
-      if (activeUpload === "front") { nrcFrontUrl = url; setPreview("nrcFrontBox", url); }
-      if (activeUpload === "back") { nrcBackUrl = url; setPreview("nrcBackBox", url); }
-      if (activeUpload === "selfie") {
-        selfieUrl = url;
-        showSelfiePreview(url);
-      }
-    } catch {
-      showError(t("upload_failed"));
-    }
-  }
-
-  document.getElementById("nrcFrontInput").addEventListener("change", (e) => handleFile(e.target.files[0]));
-  document.getElementById("nrcBackInput").addEventListener("change", (e) => handleFile(e.target.files[0]));
-  document.getElementById("selfieInput").addEventListener("change", (e) => handleFile(e.target.files[0]));
+  document.getElementById("nrcFrontInput").addEventListener("change", (e) => { handleFile(e.target.files[0]); e.target.value = ""; });
+  document.getElementById("nrcBackInput").addEventListener("change", (e) => { handleFile(e.target.files[0]); e.target.value = ""; });
+  document.getElementById("selfieInput").addEventListener("change", (e) => { handleFile(e.target.files[0]); e.target.value = ""; });
 
   async function handleSubmit() {
     const nrcNumber = document.getElementById("nrcNumberInput").value.trim();
