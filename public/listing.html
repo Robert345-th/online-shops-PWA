@@ -36,7 +36,10 @@
   .round-btn { position: absolute; top: 14px; width: 48px; height: 48px; border-radius: 24px; background: var(--black); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 10; }
   .back-button { left: 18px; }
   .back-button svg, .round-btn svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-  .report-button { right: 18px; }
+  .hero-actions { position: absolute; top: 14px; right: 18px; display: flex; gap: 8px; z-index: 10; }
+  .hero-actions .round-btn { position: static; }
+  .favorite-button svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
+  .share-button svg { stroke: none; fill: var(--gold); }
   .report-button svg { width: 20px; height: 20px; }
   .report-button svg path { fill: var(--gold); }
   .report-button svg line { stroke: var(--gold); stroke-width: 2; }
@@ -215,6 +218,16 @@
   let myRating = 5;
   let selectedReason = "";
   let pendingContactAction = null;
+  let isFavorited = false;
+
+  function heartIcon(filled) {
+    const cls = filled ? "filled" : "";
+    return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  }
+
+  function shareIcon() {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+  }
 
   function isOwnListing() {
     return currentUser && listing?.seller_id === currentUser.id;
@@ -254,6 +267,7 @@
       }
       listing = data;
       render();
+      loadFavoriteStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
       trackRecentlyViewed(listing.id);
     } catch (e) {
@@ -288,7 +302,11 @@
     app.innerHTML = `
       <div class="hero-wrap">
         <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <button class="round-btn report-button" id="reportOpenBtn" aria-label="Report listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>
+        <div class="hero-actions">
+          <button class="round-btn favorite-button" id="favoriteBtn" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
+          <button class="round-btn share-button" id="shareListingBtn" aria-label="Share listing">${shareIcon()}</button>
+          <button class="round-btn report-button" id="reportOpenBtn" aria-label="Report listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>
+        </div>
         ${photos.length > 0
           ? `<img class="hero-photo" id="heroPhoto" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" />`
           : `<div class="hero-photo-empty">${photoPlaceholder(56)}</div>`}
@@ -342,6 +360,83 @@
 
     renderSellerRow();
     wireEvents(photos);
+    updateFavoriteButton();
+  }
+
+  async function loadFavoriteStatus() {
+    if (!token || !listingId) return;
+    try {
+      const res = await fetch(`${API_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const favorites = await res.json();
+      isFavorited = favorites.some((item) => String(item.id) === String(listingId));
+      updateFavoriteButton();
+    } catch (e) {}
+  }
+
+  function updateFavoriteButton() {
+    const btn = document.getElementById("favoriteBtn");
+    if (!btn) return;
+    btn.innerHTML = heartIcon(isFavorited);
+    btn.setAttribute("aria-pressed", isFavorited ? "true" : "false");
+    btn.setAttribute("aria-label", isFavorited ? t("saved_listing", "Saved") : t("save_listing", "Save"));
+  }
+
+  async function toggleFavorite() {
+    if (!currentUser || !token) {
+      window.location.href = "/login.html";
+      return;
+    }
+    if (isOwnListing()) {
+      alert("You can't save your own listing.");
+      return;
+    }
+    const method = isFavorited ? "DELETE" : "POST";
+    try {
+      const res = await fetch(`${API_URL}/favorites/${listingId}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        window.location.href = "/login.html";
+        return;
+      }
+      if (!res.ok) {
+        alert("Could not update saved listing.");
+        return;
+      }
+      isFavorited = !isFavorited;
+      updateFavoriteButton();
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
+  }
+
+  function getListingShareUrl() {
+    return `${window.location.origin}/listing.html?id=${listing.id}`;
+  }
+
+  function getListingShareText() {
+    return `${listing.title} — K${listing.price} on ZedMarket`;
+  }
+
+  async function handleShareListing() {
+    const url = getListingShareUrl();
+    const text = `${getListingShareText()}\n${url}`;
+    const waText = encodeURIComponent(text);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: listing.title, text: getListingShareText(), url });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+
+    window.open(`https://wa.me/?text=${waText}`, "_blank");
   }
 
   function renderSellerRow() {
@@ -368,6 +463,8 @@
   }
 
   function wireEvents(photos) {
+    document.getElementById("favoriteBtn").addEventListener("click", toggleFavorite);
+    document.getElementById("shareListingBtn").addEventListener("click", handleShareListing);
     document.getElementById("reportOpenBtn").addEventListener("click", openReportModal);
     document.getElementById("safetyOpenBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.add("open"));
     document.getElementById("shareMeetupBtn").addEventListener("click", handleShareMeetup);
