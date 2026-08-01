@@ -137,7 +137,7 @@
   <div class="row" id="listingLocationRow">
     <div>
       <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span data-i18n="listing_location">My Listing Location</span></div>
-      <div class="row-sub" id="listingLocationSub" data-i18n="listing_location_not_set">Not set — tap to add</div>
+      <div class="row-sub" id="listingLocationSub">Not set — tap to add</div>
     </div>
   </div>
 
@@ -305,10 +305,16 @@
 
   function refreshListingLocationSub() {
     const sub = document.getElementById("listingLocationSub");
-    const label = localStorage.getItem("zm_user_location_label");
+    if (!sub) return;
+    const label = (localStorage.getItem("zm_user_location_label") || "").trim();
     sub.textContent = label || t("listing_location_not_set");
   }
   refreshListingLocationSub();
+  window.addEventListener("langchange", refreshListingLocationSub);
+  window.addEventListener("pageshow", refreshListingLocationSub);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshListingLocationSub);
+  }
 
   function openLocationModal() {
     settingsCoords = null;
@@ -374,11 +380,19 @@
       alert(t("listing_location_required"));
       return;
     }
-    if (manual) settingsLocationLabel = manual;
+    let labelToSave = manual || settingsLocationLabel.trim();
+    if (!labelToSave && settingsCoords && isValidCoords(settingsCoords)) {
+      labelToSave = `${settingsCoords.lat.toFixed(4)}, ${settingsCoords.lng.toFixed(4)}`;
+    }
+    if (!labelToSave) {
+      alert(t("listing_location_required"));
+      return;
+    }
+    settingsLocationLabel = labelToSave;
     if (settingsCoords && isValidCoords(settingsCoords)) {
       localStorage.setItem("zm_home_location", JSON.stringify(settingsCoords));
     }
-    localStorage.setItem("zm_user_location_label", settingsLocationLabel);
+    localStorage.setItem("zm_user_location_label", labelToSave);
     refreshListingLocationSub();
     document.getElementById("locationModal").classList.remove("open");
   });

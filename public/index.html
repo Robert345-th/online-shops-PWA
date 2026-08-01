@@ -186,6 +186,7 @@
   .price { font-weight: 700; font-size: 14px; color: var(--price-red); }
   .title { font-size: 12px; color: var(--text); margin: 3px 0; }
   .loc { font-size: 10.5px; color: var(--subtext); }
+  .loc-dist { color: var(--orange); font-weight: 700; }
   .empty, .loading, .error {
     text-align: center; padding: 60px 20px; color: var(--subtext);
   }
@@ -553,7 +554,9 @@
 
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
-    const distancePart = (item.distanceKm != null) ? `${formatDistanceKm(item.distanceKm)} · ` : "";
+    const distancePart = (item.distanceKm != null)
+      ? `<span class="loc-dist">${escHtml(formatDistanceKm(item.distanceKm))}</span> · `
+      : "";
     return `
       <div class="card" id="card-${item.id}">
         <div class="thumb">
