@@ -8,7 +8,8 @@
     const accountType = data.account_type || "individual";
     const shopStatus = data.shop_status || null;
     const step1Approved = accountType === "shop" && shopStatus === "approved";
-    const canPost = data.can_post === true;
+    const nrcBlocked = data.nrc_grace_expired === true && data.nrc_verified !== true;
+    const canPost = step1Approved && !nrcBlocked;
     return {
       canSell: canPost,
       step1Approved,

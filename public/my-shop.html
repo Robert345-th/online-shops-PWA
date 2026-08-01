@@ -289,7 +289,8 @@
       daysLeft = Math.max(0, Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24)));
     }
     const disabledCount = listings.filter(i => i.payment_disabled).length;
-    const canPost = shopCompliance?.can_post !== false;
+    const nrcBlocked = shopCompliance?.nrc_grace_expired === true && shopCompliance?.nrc_verified !== true;
+    const canPost = isApprovedShop && !nrcBlocked;
     const nrcBanner = buildNrcBanner();
 
     app.innerHTML = `

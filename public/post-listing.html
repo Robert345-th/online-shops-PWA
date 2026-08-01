@@ -765,9 +765,8 @@
         return;
       }
 
-      if (data.can_post === false) {
-        if (data.nrc_grace_expired && !data.nrc_verified) showBlockedView("nrc");
-        else showBlockedView("register");
+      if (data.nrc_grace_expired && !data.nrc_verified) {
+        showBlockedView("nrc");
         return;
       }
 
