@@ -1,6 +1,13 @@
 (function () {
   const style = document.createElement("style");
   style.textContent = `
+    html {
+      background: #111111;
+    }
+    .topbar {
+      padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+    }
     html, body {
       -webkit-touch-callout: none;
     }
