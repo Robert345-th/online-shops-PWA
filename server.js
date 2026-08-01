@@ -140,11 +140,17 @@ const CRITICAL_HEAD =
   '<meta name="color-scheme" content="dark">' +
   '<style id="zm-critical">html{background:#111!important;color-scheme:dark}</style>';
 
+function injectCriticalHead(html) {
+  if (html.includes('id="zm-critical"')) return html;
+  html = html.replace(/<html([^>]*)>/i, (match, attrs) => {
+    if (/style=/i.test(attrs)) return match;
+    return `<html${attrs} style="background:#111111">`;
+  });
+  return html.replace(/<head>/i, `<head>${CRITICAL_HEAD}`);
+}
+
 function sendHtmlWithCritical(res, filePath) {
-  let html = fs.readFileSync(filePath, "utf8");
-  if (!html.includes('id="zm-critical"')) {
-    html = html.replace(/<head>/i, `<head>${CRITICAL_HEAD}`);
-  }
+  const html = injectCriticalHead(fs.readFileSync(filePath, "utf8"));
   res.type("html").send(html);
 }
 

@@ -16,13 +16,13 @@
   "iconUrl": "https://zedmarket.app/icon-512.png",
   "maskableIconUrl": "https://zedmarket.app/icon-512-maskable.png",
   "monochromeIconUrl": "https://zedmarket.app/icon-512.png",
-  "splashScreenFadeOutDuration": 300,
+  "splashScreenFadeOutDuration": 0,
   "signingKey": {
     "path": "./android.keystore",
     "alias": "zedmarket"
   },
   "appVersionName": "1.0.2",
-  "appVersionCode": 5,
+  "appVersionCode": 6,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://zedmarket.app/manifest.json",
