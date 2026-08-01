@@ -76,8 +76,9 @@
   <div class="label">Your Budget (optional)</div>
   <input class="field-input" id="budgetInput" type="number" placeholder="e.g. 30000" />
 
-  <div class="label">Category (optional)</div>
+  <div class="label">Category (recommended — sellers get notified)</div>
   <div class="cat-row" id="catRow"></div>
+  <div style="font-size:12px;color:var(--subtext);margin:-8px 0 16px;line-height:1.4;" data-i18n="wanted_alert_hint">Sellers in this category get notified automatically.</div>
 
   <div class="label">Preferred Area (optional)</div>
   <input class="field-input" id="locationInput" placeholder="e.g. Lusaka, Kabulonga" />
@@ -85,6 +86,7 @@
   <button class="submit-btn" id="submitBtn">Post to Wanted Board</button>
 </div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORY_OPTIONS = [
