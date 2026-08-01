@@ -181,10 +181,14 @@
     if (el) el.textContent = msg;
   }
 
-  function guideItemsHtml() {
-    return [1, 2, 3, 4, 5].map((n) =>
-      `<div class="guide-item"><div class="guide-icon">${n}</div><div>${t(`selfie_rule_${n}`)}</div></div>`
-    ).join("");
+  async function uploadPhoto(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+    const data = await res.json();
+    if (!data.secure_url) throw new Error("Upload failed");
+    return data.secure_url;
   }
 
   function updateStepUI() {
@@ -195,16 +199,6 @@
     document.querySelectorAll(".step-panel").forEach((panel, i) => {
       panel.classList.toggle("active", i + 1 === step);
     });
-  }
-
-  async function uploadPhoto(file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-    const data = await res.json();
-    if (!data.secure_url) throw new Error("Upload failed");
-    return data.secure_url;
   }
 
   function renderForm() {
@@ -231,14 +225,6 @@
       <div class="step-panel" id="step2Panel">
         <div class="step-title">${t("nrc_step2_title")}</div>
         <div class="step-subtitle">${t("nrc_step2_subtitle")}</div>
-        <div class="guide-box">
-          <div class="guide-title">${t("selfie_rules_title")}</div>
-          ${guideItemsHtml()}
-        </div>
-        <div class="selfie-example">
-          <div class="face-outline"></div>
-          <div class="example-text">${t("selfie_example_text")}</div>
-        </div>
         <div class="selfie-preview" id="selfiePreview">
           <img id="selfiePreviewImg" alt="" />
           <div class="selfie-preview-label">${t("selfie_preview_ok")}</div>
@@ -309,9 +295,7 @@
 
   function updateCameraText() {
     document.getElementById("cameraTopText").textContent = t("selfie_camera_hint");
-    document.getElementById("cameraChecklist").innerHTML = [1, 2, 3, 4].map((n) =>
-      `<li>• ${t(`selfie_camera_rule_${n}`)}</li>`
-    ).join("");
+    document.getElementById("cameraChecklist").innerHTML = "";
   }
 
   async function openSelfieCamera() {
