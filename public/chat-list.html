@@ -229,7 +229,7 @@
     const pushToggle = document.getElementById("pushNotificationsToggle");
     refreshPushToggle(pushToggle);
     autoEnablePushNotifications().finally(() => {
-      if (!isPushOptOut()) {
+      if (!isPushOptOut() && !/chat-list\.html/i.test(location.pathname)) {
         startMessageNotificationPoll(API_URL, token, user.id);
       }
     });

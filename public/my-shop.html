@@ -217,30 +217,43 @@
     return { Authorization: `Bearer ${token}` };
   }
 
+  function applyShopStatus(data) {
+    shopAccountType = data.account_type || "individual";
+    shopStatus = data.shop_status || null;
+    rejectionReason = data.shop_rejection_reason || null;
+    shopCompliance = data;
+  }
+
   async function loadData() {
     if (!user || !token) { window.location.href = "/login.html"; return; }
 
-    app.innerHTML = `<div class="center-box"><div>Loading…</div></div>`;
+    app.innerHTML = `
+      <div class="topbar">
+        <div>
+          ${myShopBrand()}
+          <div class="sub-brand">${user.name || ""}</div>
+        </div>
+      </div>
+      <div class="center-box"><div>${t("loading")}</div></div>`;
 
     try {
-      const [listingsRes, subRes, statusRes, shopStatusRes] = await Promise.all([
+      const [listingsRes, shopStatusRes] = await Promise.all([
         fetch(`${API_URL}/listings/mine/all`, { headers: authHeaders() }),
-        fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
-        fetch(`${API_URL}/settings/payment-status`),
         fetch(`${API_URL}/auth/shop-status`, { headers: authHeaders() }),
       ]);
 
       listings = await listingsRes.json();
+      applyShopStatus(await shopStatusRes.json());
+      render();
+
+      const [subRes, statusRes] = await Promise.all([
+        fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
+        fetch(`${API_URL}/settings/payment-status`),
+      ]);
+
       subscription = await subRes.json();
       const statusData = await statusRes.json();
-      const shopStatusData = await shopStatusRes.json();
-
       paymentEnforced = statusData.enforced === true;
-      shopAccountType = shopStatusData.account_type || "individual";
-      shopStatus = shopStatusData.shop_status || null;
-      rejectionReason = shopStatusData.shop_rejection_reason || null;
-      shopCompliance = shopStatusData;
-
       render();
     } catch (e) {
       app.innerHTML = `<div class="topbar">${myShopBrand()}</div><div class="center-box"><div class="error-text">Could not load your listings.</div></div>`;

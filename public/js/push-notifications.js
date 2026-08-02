@@ -271,6 +271,7 @@
 
   function startMessageNotificationPoll(apiUrl, token, userId) {
     if (messagePollTimer || isPushOptOut()) return;
+    if (/chat-list\.html/i.test(location.pathname)) return;
     pollMessageNotifications(apiUrl, token, userId);
     messagePollTimer = setInterval(() => {
       pollMessageNotifications(apiUrl, token, userId);

@@ -37,6 +37,8 @@
 }
 </script>
 <meta name="theme-color" content="#111111" />
+<link rel="preconnect" href="https://online-shops-production.up.railway.app" />
+<link rel="dns-prefetch" href="https://online-shops-production.up.railway.app" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" type="image/png" href="https://zedmarket.app/icon-192.png" />
 <link rel="apple-touch-icon" href="https://zedmarket.app/icon-192.png" />
@@ -311,6 +313,36 @@
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
   const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
   const PAGE_SIZE = 20;
+  const FEED_CACHE_KEY = "zm_feed_cache_v1";
+  const FEED_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+
+  function showCachedFeedIfFresh() {
+    try {
+      const raw = sessionStorage.getItem(FEED_CACHE_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return false;
+      if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
+      listings = parsed.items;
+      serverOffset = parsed.items.length;
+      hasMore = parsed.hasMore !== false;
+      applyListingDistances();
+      renderFeed();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function saveFeedCache() {
+    try {
+      sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({
+        ts: Date.now(),
+        items: listings.slice(0, PAGE_SIZE),
+        hasMore,
+      }));
+    } catch { /* ignore */ }
+  }
 
   let activeCategory = "All";
   let sortBy = "Newest";
@@ -449,13 +481,27 @@
     );
   }
 
+  function applyListingDistances() {
+    if (!myCoords) {
+      listings.forEach((item) => { item.distanceKm = null; });
+      return;
+    }
+    listings.forEach((item) => {
+      item.distanceKm = (item.latitude && item.longitude)
+        ? getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude))
+        : null;
+    });
+  }
+
   async function loadListings(reset = true) {
     if (loadingMore) return;
     if (reset) {
       serverOffset = 0;
       hasMore = true;
-      feed.className = "loading";
-      feed.textContent = t("loading_listings");
+      if (feed.className !== "grid") {
+        feed.className = "loading";
+        feed.textContent = t("loading_listings");
+      }
       loadMoreWrap.style.display = "none";
     } else {
       loadingMore = true;
@@ -469,7 +515,9 @@
       listings = reset ? batch : listings.concat(batch);
       serverOffset += batch.length;
       hasMore = batch.length === PAGE_SIZE;
+      applyListingDistances();
       renderFeed();
+      if (reset) saveFeedCache();
     } catch (e) {
       if (reset) {
         feed.className = "error";
@@ -502,15 +550,6 @@
         item.title?.toLowerCase().includes(q) ||
         item.description?.toLowerCase().includes(q)
       );
-    }
-
-    if (myCoords) {
-      items = items.map(item => ({
-        ...item,
-        distanceKm: (item.latitude && item.longitude)
-          ? getDistanceKm(myCoords.lat, myCoords.lng, parseFloat(item.latitude), parseFloat(item.longitude))
-          : null
-      }));
     }
 
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
@@ -571,7 +610,11 @@
       </div>`;
   }
 
-  searchInput.addEventListener("input", renderFeed);
+  let searchRenderTimer = null;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchRenderTimer);
+    searchRenderTimer = setTimeout(renderFeed, 250);
+  });
 
   initPwaInstall({ buttonIds: ["installBtn"], showBanner: true });
 
@@ -616,15 +659,20 @@
   }
 
   refreshAuthState();
-  syncLoggedInServices();
+  renderChips();
+  showCachedFeedIfFresh();
+  loadListings(true);
+  setTimeout(showLocationPrompt, 800);
+  setTimeout(syncLoggedInServices, 0);
   document.addEventListener("DOMContentLoaded", () => {
     refreshAuthState();
-    syncLoggedInServices();
+    setTimeout(syncLoggedInServices, 0);
   });
   window.addEventListener("pageshow", () => {
     refreshAuthState();
-    syncLoggedInServices();
+    setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
+    applyListingDistances();
     renderFeed();
   });
   window.addEventListener("langchange", () => {
@@ -636,11 +684,6 @@
   });
   window.addEventListener("lowdatachange", () => renderFeed());
 
-  loadMoreBtn.addEventListener("click", () => loadListings(false));
-
-  renderChips();
-  loadListings(true);
-  setTimeout(showLocationPrompt, 800);
 </script>
 </body>
 </html>

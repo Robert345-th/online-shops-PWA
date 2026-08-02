@@ -221,6 +221,7 @@
   const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
   const UPLOAD_PRESET = "online_shops_uploads";
   const POLL_INTERVAL = 3000;
+  const PRESENCE_POLL_INTERVAL = 9000;
   const QUICK_REPLIES = [
     { key: "chat_q_available", fallback: "Still available" },
     { key: "chat_q_negotiable", fallback: "Price is negotiable" },
@@ -845,7 +846,7 @@
     function startPollers() {
       stopPollers();
       pollTimer = setInterval(() => loadMessages(false), getPollInterval(POLL_INTERVAL));
-      presenceTimer = setInterval(refreshPresence, getPollInterval(POLL_INTERVAL));
+      presenceTimer = setInterval(refreshPresence, getPollInterval(PRESENCE_POLL_INTERVAL));
     }
 
     document.addEventListener("visibilitychange", () => {
