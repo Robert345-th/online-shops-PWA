@@ -248,6 +248,8 @@
   const userId = params.get("userId");
   const nameFromLink = params.get("name");
   const listingIdFromUrl = params.get("listingId");
+  const wantedTitleFromUrl = params.get("wantedTitle");
+  const wantedBudgetFromUrl = params.get("wantedBudget");
   const isKnownSupportChat = params.get("support") === "1";
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
@@ -370,6 +372,19 @@
     return "https://zedmarket.app/icon-512.png";
   }
 
+  function applyWantedContext() {
+    if (!wantedTitleFromUrl) return;
+    const banner = document.getElementById("listingContextBanner");
+    const labelEl = banner.querySelector(".listing-context-label");
+    document.getElementById("listingContextPhoto").innerHTML =
+      `<svg width="52" height="52" viewBox="0 0 24 24" aria-hidden="true" style="stroke:var(--subtext);fill:none;stroke-width:2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+    if (labelEl) labelEl.textContent = t("chat_about_wanted");
+    document.getElementById("listingContextTitle").textContent = wantedTitleFromUrl;
+    document.getElementById("listingContextPrice").textContent = wantedBudgetFromUrl ? `K${wantedBudgetFromUrl}` : "";
+    banner.href = "/wanted.html";
+    banner.classList.add("visible");
+  }
+
   function applyListingContext(listing) {
     if (!listing || !listing.id) {
       activeListing = null;
@@ -422,6 +437,8 @@
         applyListingContext(data.listing_context);
       } else if (!activeListing && listingIdFromUrl) {
         await loadListingContextFromApi();
+      } else if (wantedTitleFromUrl && !listingIdFromUrl) {
+        applyWantedContext();
       }
       renderBlockedBanner();
       renderMessages(false);
@@ -832,6 +849,7 @@
     startPresenceHeartbeat();
     if (window.syncPushSubscription) syncPushSubscription();
     if (window.autoEnablePushNotifications) autoEnablePushNotifications();
+    if (wantedTitleFromUrl && !listingIdFromUrl) applyWantedContext();
     loadOtherUser();
     loadMessages(true);
     refreshPresence();

@@ -151,7 +151,7 @@
   window.addEventListener("pageshow", applyDarkMode);
 </script>
 
-<div id="app"><div class="center-box">Loading…</div></div>
+<div id="app"><div class="center-box"><span data-i18n="loading">Loading…</span></div></div>
 
 <div class="viewer-overlay" id="viewerOverlay">
   <button class="round-btn viewer-back" id="viewerBackBtn" aria-label="Close photo"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -163,50 +163,50 @@
 
 <div class="modal-overlay" id="reviewModal">
   <div class="modal-box">
-    <div class="modal-title" id="reviewModalTitle">Rate seller</div>
+    <div class="modal-title" id="reviewModalTitle" data-i18n="rate_seller">Rate seller</div>
     <div class="stars-row" id="starsRow"></div>
-    <textarea class="modal-input" id="reviewComment" placeholder="Leave a comment (optional)"></textarea>
+    <textarea class="modal-input" id="reviewComment" data-i18n-placeholder="review_comment_placeholder" placeholder="Leave a comment (optional)"></textarea>
     <div class="modal-actions">
-      <button class="modal-cancel-btn" id="reviewCancelBtn">Cancel</button>
-      <button class="modal-submit-btn" id="reviewSubmitBtn">Submit</button>
+      <button class="modal-cancel-btn" id="reviewCancelBtn" data-i18n="cancel">Cancel</button>
+      <button class="modal-submit-btn" id="reviewSubmitBtn" data-i18n="submit">Submit</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="reportModal">
   <div class="modal-box">
-    <div class="modal-title">Report this listing</div>
-    <div class="modal-subtitle">Select a reason:</div>
+    <div class="modal-title" data-i18n="report_listing">Report this listing</div>
+    <div class="modal-subtitle" data-i18n="report_select_reason">Select a reason:</div>
     <div id="reasonsList"></div>
-    <textarea class="modal-input" id="reportDetails" placeholder="Describe the issue..." style="display:none;"></textarea>
+    <textarea class="modal-input" id="reportDetails" data-i18n-placeholder="report_details_placeholder" placeholder="Describe the issue..." style="display:none;"></textarea>
     <div class="modal-actions">
-      <button class="modal-cancel-btn" id="reportCancelBtn">Cancel</button>
-      <button class="modal-submit-btn" id="reportSubmitBtn">Submit</button>
+      <button class="modal-cancel-btn" id="reportCancelBtn" data-i18n="cancel">Cancel</button>
+      <button class="modal-submit-btn" id="reportSubmitBtn" data-i18n="submit">Submit</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="paySafetyModal">
   <div class="modal-box">
-    <div class="modal-title">Before you contact the seller</div>
-    <div class="pay-safety-box">Do not pay until you see the item.</div>
-    <div class="pay-safety-note">Never send mobile money or any payment before you meet the seller and check the item in person. If someone pushes you to pay first, stop and walk away.</div>
+    <div class="modal-title" data-i18n="before_contact_seller">Before you contact the seller</div>
+    <div class="pay-safety-box" data-i18n="pay_before_see">Do not pay until you see the item.</div>
+    <div class="pay-safety-note" data-i18n="pay_safety_note">Never send mobile money or any payment before you meet the seller and check the item in person. If someone pushes you to pay first, stop and walk away.</div>
     <div class="modal-actions">
-      <button type="button" class="modal-cancel-btn" id="paySafetyCancelBtn">Go Back</button>
-      <button type="button" class="modal-submit-btn" id="paySafetyUnderstandBtn">I Understand</button>
+      <button type="button" class="modal-cancel-btn" id="paySafetyCancelBtn" data-i18n="go_back">Go Back</button>
+      <button type="button" class="modal-submit-btn" id="paySafetyUnderstandBtn" data-i18n="i_understand">I Understand</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="safetyModal">
   <div class="modal-box">
-    <div class="modal-title">Meeting Safely</div>
-    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Meet in a public place, like a mall, police station, or busy shopping area.</span></div>
-    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Never send payment before seeing and checking the item in person.</span></div>
-    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Bring a friend or family member with you if possible.</span></div>
-    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">Tell someone where you're going using "Share My Meetup" below.</span></div>
-    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text">If something feels wrong, trust your instinct and walk away.</span></div>
-    <button class="modal-submit-btn" id="safetyGotItBtn">Got It</button>
+    <div class="modal-title" data-i18n="meeting_safely">Meeting Safely</div>
+    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text" data-i18n="safety_tip_public">Meet in a public place, like a mall, police station, or busy shopping area.</span></div>
+    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text" data-i18n="safety_tip_payment">Never send payment before seeing and checking the item in person.</span></div>
+    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text" data-i18n="safety_tip_friend">Bring a friend or family member with you if possible.</span></div>
+    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text" data-i18n="safety_tip_share">Tell someone where you're going using "Share My Meetup" below.</span></div>
+    <div class="tip-row"><span class="tip-bullet">•</span><span class="tip-text" data-i18n="safety_tip_instinct">If something feels wrong, trust your instinct and walk away.</span></div>
+    <button class="modal-submit-btn" id="safetyGotItBtn" data-i18n="got_it">Got It</button>
   </div>
 </div>
 
@@ -215,11 +215,11 @@
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const REPORT_REASONS = [
-    "Didn't receive item",
-    "Fake product",
-    "Asked for money outside app",
-    "Location doesn't match",
-    "Other",
+    { key: "report_reason_no_item", id: "no_item" },
+    { key: "report_reason_fake", id: "fake" },
+    { key: "report_reason_money_outside", id: "money_outside" },
+    { key: "report_reason_location", id: "location" },
+    { key: "report_reason_other", id: "other" },
   ];
   const params = new URLSearchParams(window.location.search);
   const listingId = params.get("id");
@@ -267,7 +267,7 @@
   }
 
   if (!listingId) {
-    app.innerHTML = `<div class="center-box"><div class="error-text">No listing specified.</div></div>`;
+    app.innerHTML = `<div class="center-box"><div class="error-text">${t("no_listing_specified")}</div></div>`;
   } else {
     fetchListing();
   }
@@ -277,7 +277,7 @@
       const res = await fetch(`${API_URL}/listings/${listingId}`);
       const data = await res.json();
       if (!res.ok) {
-        app.innerHTML = `<div class="center-box"><div class="error-text">${data.error || "Could not load this listing."}</div><button class="back-btn-flat" onclick="history.back()">Go Back</button></div>`;
+        app.innerHTML = `<div class="center-box"><div class="error-text">${data.error || t("could_not_load_listing")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
         return;
       }
       listing = data;
@@ -287,7 +287,7 @@
       if (listing.seller_id) fetchReviews(listing.seller_id);
       trackRecentlyViewed(listing.id);
     } catch (e) {
-      app.innerHTML = `<div class="center-box"><div class="error-text">Could not connect to the server.</div><button class="back-btn-flat" onclick="history.back()">Go Back</button></div>`;
+      app.innerHTML = `<div class="center-box"><div class="error-text">${t("chat_server_fail")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
     }
   }
 
@@ -387,8 +387,8 @@
         <div id="sellerRowWrap"></div>
 
         <div class="safety-row">
-          <div class="safety-btn" id="safetyOpenBtn">Safety Tips</div>
-          <div class="safety-btn" id="shareMeetupBtn">Share My Meetup</div>
+          <div class="safety-btn" id="safetyOpenBtn">${t("safety_tips")}</div>
+          <div class="safety-btn" id="shareMeetupBtn">${t("share_meetup")}</div>
         </div>
       </div>
 
@@ -432,7 +432,7 @@
       return;
     }
     if (isOwnListing()) {
-      alert("You can't save your own listing.");
+      alert(t("cant_save_own"));
       return;
     }
     const method = isFavorited ? "DELETE" : "POST";
@@ -446,13 +446,13 @@
         return;
       }
       if (!res.ok) {
-        alert("Could not update saved listing.");
+        alert(t("cant_update_favorite"));
         return;
       }
       isFavorited = !isFavorited;
       updateFavoriteButton();
     } catch (e) {
-      alert("Could not connect to the server.");
+      alert(t("chat_server_fail"));
     }
   }
 
@@ -484,16 +484,16 @@
   function renderSellerRow() {
     const wrap = document.getElementById("sellerRowWrap");
     if (!wrap) return;
-    const displayName = listing.shop_name || listing.seller_name || "Unknown Seller";
+    const displayName = listing.shop_name || listing.seller_name || t("unknown_seller");
     wrap.innerHTML = `
       <div class="seller-row" id="sellerRow">
         <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
         <div class="seller-info">
           <div class="seller-name">${displayName}${listing.seller_nrc_verified ? ` <span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>` : ""}</div>
-          <div class="seller-sub">${listing.seller_account_type === "shop" ? "Shop Seller" : "Individual Seller"}</div>
-          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} review${reviewData.total === 1 ? "" : "s"})</div>` : ""}
+          <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
+          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
         </div>
-        <button class="review-btn" id="rateSellerBtn">Rate Seller</button>
+        <button class="review-btn" id="rateSellerBtn">${t("rate_seller")}</button>
       </div>`;
     document.getElementById("sellerRow").addEventListener("click", () => {
       window.location.href = `/seller-profile.html?id=${listing.seller_id}`;
@@ -589,7 +589,7 @@
   function handleCall() {
     requireContactSafety(() => {
       if (!listing.seller_phone) {
-        alert("Seller phone number not available.");
+        alert(t("seller_phone_unavailable"));
         return;
       }
       window.location.href = `tel:${listing.seller_phone}`;
@@ -605,7 +605,7 @@
   function handleMessage() {
     if (!currentUser) { window.location.href = "/login.html"; return; }
     if (isOwnListing()) {
-      alert("That's your listing — you can't message yourself about your own listing.");
+      alert(t("cant_message_own"));
       return;
     }
     requireContactSafety(() => {
@@ -619,13 +619,13 @@
       try { await navigator.share({ text: message }); } catch (e) {}
     } else {
       navigator.clipboard.writeText(message);
-      alert("Meetup details copied to clipboard — paste it to whoever you want to share with.");
+      alert(t("meetup_copied"));
     }
   }
 
   function openReviewModal() {
     if (!currentUser) { window.location.href = "/login.html"; return; }
-    document.getElementById("reviewModalTitle").textContent = `Rate ${listing.shop_name || listing.seller_name}`;
+    document.getElementById("reviewModalTitle").textContent = t("rate_seller_title", { name: listing.shop_name || listing.seller_name });
     myRating = 5;
     renderStars();
     document.getElementById("reviewComment").value = "";
@@ -642,7 +642,7 @@
   document.getElementById("reviewSubmitBtn").addEventListener("click", async () => {
     const comment = document.getElementById("reviewComment").value;
     const btn = document.getElementById("reviewSubmitBtn");
-    btn.disabled = true; btn.textContent = "Submitting…";
+    btn.disabled = true; btn.textContent = t("submitting");
     try {
       const res = await fetch(`${API_URL}/reviews/seller/${listing.seller_id}`, {
         method: "POST",
@@ -650,21 +650,21 @@
         body: JSON.stringify({ rating: myRating, comment })
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || "Could not submit review."); return; }
-      alert("Thank you! Your review has been submitted.");
+      if (!res.ok) { alert(data.error || t("review_submit_fail")); return; }
+      alert(t("review_thanks"));
       document.getElementById("reviewModal").classList.remove("open");
       fetchReviews(listing.seller_id);
     } catch (e) {
-      alert("Could not connect to the server.");
+      alert(t("chat_server_fail"));
     } finally {
-      btn.disabled = false; btn.textContent = "Submit";
+      btn.disabled = false; btn.textContent = t("submit");
     }
   });
 
   function openReportModal() {
     selectedReason = "";
     document.getElementById("reasonsList").innerHTML = REPORT_REASONS.map(r =>
-      `<div class="reason-row" data-reason="${r}"><div class="radio-circle"><div class="radio-dot" style="display:none;"></div></div><span>${r}</span></div>`
+      `<div class="reason-row" data-reason="${r.id}"><div class="radio-circle"><div class="radio-dot" style="display:none;"></div></div><span>${t(r.key)}</span></div>`
     ).join("");
     document.getElementById("reportDetails").style.display = "none";
     document.getElementById("reportDetails").value = "";
@@ -675,7 +675,7 @@
         document.querySelectorAll("#reasonsList .radio-dot").forEach(d => d.style.display = "none");
         el.querySelector(".radio-circle").classList.add("active");
         el.querySelector(".radio-dot").style.display = "block";
-        document.getElementById("reportDetails").style.display = selectedReason === "Other" ? "block" : "none";
+        document.getElementById("reportDetails").style.display = selectedReason === "other" ? "block" : "none";
       })
     );
     document.getElementById("reportModal").classList.add("open");
@@ -683,13 +683,14 @@
   document.getElementById("reportCancelBtn").addEventListener("click", () => document.getElementById("reportModal").classList.remove("open"));
   document.getElementById("reportSubmitBtn").addEventListener("click", async () => {
     if (!currentUser) { window.location.href = "/login.html"; return; }
-    if (!selectedReason) { alert("Please select a reason."); return; }
+    if (!selectedReason) { alert(t("report_select_required")); return; }
     const details = document.getElementById("reportDetails").value.trim();
-    if (selectedReason === "Other" && !details) { alert("Please describe the issue."); return; }
-    const finalReason = selectedReason === "Other" ? details : selectedReason;
+    if (selectedReason === "other" && !details) { alert(t("report_describe_required")); return; }
+    const reasonObj = REPORT_REASONS.find(r => r.id === selectedReason);
+    const finalReason = selectedReason === "other" ? details : t(reasonObj.key);
 
     const btn = document.getElementById("reportSubmitBtn");
-    btn.disabled = true; btn.textContent = "Submitting…";
+    btn.disabled = true; btn.textContent = t("submitting");
     try {
       const res = await fetch(`${API_URL}/listings/${listingId}/report`, {
         method: "POST",
@@ -698,15 +699,25 @@
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Could not submit report.");
+        alert(data.error || t("report_submit_fail"));
         return;
       }
-      alert("Reported — thank you, our team will review this listing.");
+      alert(t("report_success"));
       document.getElementById("reportModal").classList.remove("open");
     } catch (e) {
-      alert("Could not connect to the server.");
+      alert(t("chat_server_fail"));
     } finally {
-      btn.disabled = false; btn.textContent = "Submit";
+      btn.disabled = false; btn.textContent = t("submit");
+    }
+  });
+
+  window.addEventListener("langchange", () => {
+    if (listing) {
+      renderSellerRow();
+      const safetyBtn = document.getElementById("safetyOpenBtn");
+      const meetupBtn = document.getElementById("shareMeetupBtn");
+      if (safetyBtn) safetyBtn.textContent = t("safety_tips");
+      if (meetupBtn) meetupBtn.textContent = t("share_meetup");
     }
   });
 

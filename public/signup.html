@@ -89,8 +89,8 @@
   window.addEventListener("pageshow", applyDarkMode);
 </script>
 <div class="content">
-  <div class="title">Create Account</div>
-  <div class="subtitle" id="stepSubtitle">Step 1 of 3 — Your details</div>
+  <div class="title" data-i18n="create_account">Create Account</div>
+  <div class="subtitle" id="stepSubtitle" data-i18n="signup_step1_sub">Step 1 of 3 — Your details</div>
 
   <div class="step-row">
     <div class="step-dot active" id="dot1"></div>
@@ -101,60 +101,61 @@
   <div class="form-banner error" id="errorBanner"></div>
 
   <div class="step-panel active" id="step1">
-    <div class="label">Full Name</div>
-    <input class="field-input" id="nameInput" placeholder="e.g. Robert Banda" autocomplete="name" />
+    <div class="label" data-i18n="full_name">Full Name</div>
+    <input class="field-input" id="nameInput" data-i18n-placeholder="name_placeholder" placeholder="e.g. Robert Banda" autocomplete="name" />
 
-    <div class="label">Phone Number</div>
+    <div class="label" data-i18n="phone_number">Phone Number</div>
     <div class="phone-row">
       <div class="phone-prefix"><span>🇿🇲 +260</span></div>
-      <input class="phone-input" id="phoneInput" placeholder="Phone number" maxlength="10" inputmode="tel" autocomplete="tel" />
+      <input class="phone-input" id="phoneInput" data-i18n-placeholder="phone_number" placeholder="Phone number" maxlength="10" inputmode="tel" autocomplete="tel" />
     </div>
-    <div class="phone-hint">Airtel and Zamtel only</div>
+    <div class="phone-hint" data-i18n="phone_hint_carriers">Airtel and Zamtel only</div>
 
-    <div class="label">Referral Code (optional)</div>
-    <input class="field-input" id="referralInput" placeholder="Have a friend's code? Enter it here" style="text-transform:uppercase;" />
+    <div class="label" data-i18n="referral_code_optional">Referral Code (optional)</div>
+    <input class="field-input" id="referralInput" data-i18n-placeholder="referral_placeholder" placeholder="Have a friend's code? Enter it here" style="text-transform:uppercase;" />
 
-    <button type="button" class="submit-btn" id="next1Btn">Next</button>
+    <button type="button" class="submit-btn" id="next1Btn" data-i18n="next">Next</button>
   </div>
 
   <div class="step-panel" id="step2">
-    <div class="label">Password</div>
-    <input class="field-input" id="passwordInput" type="password" placeholder="Create a password (8-15 characters)" maxlength="15" autocomplete="new-password" />
+    <div class="label" data-i18n="password">Password</div>
+    <input class="field-input" id="passwordInput" type="password" data-i18n-placeholder="password_create_placeholder" placeholder="Create a password (8-15 characters)" maxlength="15" autocomplete="new-password" />
 
-    <div class="label">Confirm Password</div>
-    <input class="field-input" id="confirmPasswordInput" type="password" placeholder="Re-enter your password" maxlength="15" autocomplete="new-password" />
+    <div class="label" data-i18n="confirm_password">Confirm Password</div>
+    <input class="field-input" id="confirmPasswordInput" type="password" data-i18n-placeholder="password_confirm_placeholder" placeholder="Re-enter your password" maxlength="15" autocomplete="new-password" />
 
     <div class="checkbox-row" id="showPasswordRow">
       <div class="checkbox" id="showPasswordBox"></div>
-      <div class="checkbox-label">Show password</div>
+      <div class="checkbox-label" data-i18n="show_password">Show password</div>
     </div>
 
     <div class="btn-row">
-      <button type="button" class="back-btn" id="back2Btn">Back</button>
-      <button type="button" class="submit-btn" id="next2Btn">Next</button>
+      <button type="button" class="back-btn" id="back2Btn" data-i18n="back">Back</button>
+      <button type="button" class="submit-btn" id="next2Btn" data-i18n="next">Next</button>
     </div>
   </div>
 
   <div class="step-panel" id="step3">
-    <div class="label">Your Location</div>
-    <div class="loc-hint">This is where your listings will show from. You can change it later when posting.</div>
-    <button type="button" class="loc-button" id="locButton">Use my current location</button>
-    <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
+    <div class="label" data-i18n="your_location">Your Location</div>
+    <div class="loc-hint" data-i18n="location_hint_signup">This is where your listings will show from. You can change it later when posting.</div>
+    <button type="button" class="loc-button" id="locButton" data-i18n="use_current_location">Use my current location</button>
+    <input class="field-input" id="locationInput" data-i18n-placeholder="location_placeholder" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
 
     <div class="checkbox-row" id="ageConfirmRow">
       <div class="checkbox" id="ageConfirmBox"></div>
-      <div class="checkbox-label">I confirm that I am 18 years of age or older</div>
+      <div class="checkbox-label" data-i18n="age_confirm">I confirm that I am 18 years of age or older</div>
     </div>
 
     <div class="btn-row">
-      <button type="button" class="back-btn" id="back3Btn">Back</button>
-      <button type="button" class="submit-btn" id="signupBtn" disabled>Sign Up</button>
+      <button type="button" class="back-btn" id="back3Btn" data-i18n="back">Back</button>
+      <button type="button" class="submit-btn" id="signupBtn" disabled data-i18n="sign_up">Sign Up</button>
     </div>
   </div>
 
-  <a class="link" href="/login.html">Already have an account? Log in</a>
+  <a class="link" href="/login.html" data-i18n="already_have_account">Already have an account? Log in</a>
 </div>
 
+<script src="/js/lang.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/phone.js"></script>
 <script>
@@ -170,6 +171,7 @@
   const errorBanner = document.getElementById("errorBanner");
   const stepSubtitle = document.getElementById("stepSubtitle");
   const signupBtn = document.getElementById("signupBtn");
+  const locButton = document.getElementById("locButton");
 
   function showError(message) {
     errorBanner.textContent = message;
@@ -188,9 +190,9 @@
       dot.classList.toggle("done", step > n);
     });
     const subtitles = {
-      1: "Step 1 of 3 — Your details",
-      2: "Step 2 of 3 — Create a password",
-      3: "Step 3 of 3 — Your location",
+      1: t("signup_step1_sub"),
+      2: t("signup_step2_sub"),
+      3: t("signup_step3_sub"),
     };
     stepSubtitle.textContent = subtitles[step];
     clearError();
@@ -227,8 +229,7 @@
   document.getElementById("locButton").addEventListener("click", async () => {
     if (gettingLocation) return;
     gettingLocation = true;
-    const btn = document.getElementById("locButton");
-    btn.textContent = "Getting location…";
+    locButton.textContent = t("getting_location");
     clearError();
 
     try {
@@ -246,11 +247,11 @@
       }
       signupLocationLabel = label;
       document.getElementById("locationInput").value = label;
-      btn.textContent = label;
+      locButton.textContent = label;
     } catch {
       signupCoords = null;
-      showError("Could not get your location. Type your area below instead.");
-      btn.textContent = "Use my current location";
+      showError(t("signup_location_fail"));
+      locButton.textContent = t("use_current_location");
     } finally {
       gettingLocation = false;
     }
@@ -261,11 +262,11 @@
     const name = document.getElementById("nameInput").value.trim();
     const phone = normalizeZambianPhone(document.getElementById("phoneInput").value);
     if (!name || !phone) {
-      showError("Please enter your name and phone number.");
+      showError(t("signup_err_name_phone"));
       return;
     }
     if (!isValidZambianPhone(phone)) {
-      showError("Airtel and Zamtel only.");
+      showError(t("phone_hint_carriers"));
       return;
     }
     step = 2;
@@ -282,15 +283,15 @@
     const password = document.getElementById("passwordInput").value;
     const confirmPassword = document.getElementById("confirmPasswordInput").value;
     if (!password || !confirmPassword) {
-      showError("Please enter and confirm your password.");
+      showError(t("signup_err_password"));
       return;
     }
     if (password.length < 8 || password.length > 15) {
-      showError("Password must be between 8 and 15 characters.");
+      showError(t("signup_err_password_length"));
       return;
     }
     if (password !== confirmPassword) {
-      showError("Passwords don't match.");
+      showError(t("signup_err_password_match"));
       return;
     }
     step = 3;
@@ -312,14 +313,14 @@
     const manualLocation = document.getElementById("locationInput").value.trim();
 
     if (!manualLocation && !signupCoords) {
-      showError('Please add your location — tap "Use my current location" or type your area.');
+      showError(t("signup_err_location"));
       return;
     }
     if (manualLocation && !signupLocationLabel) {
       signupLocationLabel = manualLocation;
     }
     if (!ageConfirmed) {
-      showError("You must confirm you are 18 years or older.");
+      showError(t("signup_err_age"));
       return;
     }
 
@@ -331,7 +332,7 @@
     }
 
     signupBtn.disabled = true;
-    signupBtn.textContent = "Creating account…";
+    signupBtn.textContent = t("signup_creating");
 
     try {
       const body = {
@@ -355,16 +356,26 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || "Something went wrong.");
+        showError(data.error || t("chat_server_fail"));
         return;
       }
 
       window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
     } catch {
-      showError("Could not connect to the server.");
+      showError(t("chat_server_fail"));
     } finally {
       signupBtn.disabled = !ageConfirmed;
-      signupBtn.textContent = "Sign Up";
+      signupBtn.textContent = t("sign_up");
+    }
+  });
+
+  window.addEventListener("langchange", () => {
+    updateStepUI();
+    if (!gettingLocation && locButton.textContent !== signupLocationLabel) {
+      locButton.textContent = t("use_current_location");
+    }
+    if (!signupBtn.disabled && signupBtn.textContent !== t("signup_creating")) {
+      signupBtn.textContent = t("sign_up");
     }
   });
 </script>

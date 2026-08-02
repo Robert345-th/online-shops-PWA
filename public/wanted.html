@@ -160,7 +160,7 @@
   function handleRespond(post) {
     if (!user) { window.location.href = "/login.html"; return; }
     if (post.user_id === user.id) { alert(t("wanted_own_post")); return; }
-    window.location.href = `/chat-room.html?userId=${post.user_id}&name=${encodeURIComponent(post.poster_name || "")}`;
+    window.location.href = `/chat-room.html?userId=${post.user_id}&name=${encodeURIComponent(post.poster_name || "")}&wantedTitle=${encodeURIComponent(post.title || "")}${post.budget ? `&wantedBudget=${encodeURIComponent(post.budget)}` : ""}`;
   }
 
   async function handleClosePost(postId) {

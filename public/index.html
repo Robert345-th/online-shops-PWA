@@ -274,7 +274,7 @@
       <div class="icon-row">
       <button class="icon-btn" onclick="window.location.href='/wanted.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></button>
       <button class="icon-btn" onclick="window.location.href='/map-view.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
-      <button class="icon-btn" onclick="window.location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+      <button class="icon-btn" id="chatNavBtn" onclick="window.location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge" id="chatUnreadBadge" style="display:none"></span></button>
       <button class="icon-btn" onclick="window.location.href='/favorites.html'" aria-label="Favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
       </div>
     </div>
@@ -507,6 +507,15 @@
     });
   }
 
+  function renderFeedError() {
+    feed.className = "error";
+    feed.innerHTML = `
+      <div>${t("feed_error")}</div>
+      <button type="button" class="empty-btn" id="feedRetryBtn">${t("gate_try_again")}</button>`;
+    document.getElementById("feedRetryBtn")?.addEventListener("click", () => loadListings(true));
+    updateLoadMoreButton();
+  }
+
   async function loadListings(reset = true) {
     if (loadingMore) return;
     if (reset) {
@@ -533,10 +542,7 @@
       renderFeed();
       if (reset) saveFeedCache();
     } catch (e) {
-      if (reset) {
-        feed.className = "error";
-        feed.textContent = t("feed_error");
-      }
+      if (reset) renderFeedError();
       console.error(e);
     } finally {
       loadingMore = false;
@@ -722,8 +728,32 @@
     }
   }
 
+  async function refreshChatUnreadBadge() {
+    const badge = document.getElementById("chatUnreadBadge");
+    if (!badge) return;
+    if (!isLoggedIn()) {
+      badge.style.display = "none";
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/messages/unread-count`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("zm_token")}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const count = parseInt(data.count, 10) || 0;
+      if (count > 0) {
+        badge.textContent = count > 99 ? "99+" : String(count);
+        badge.style.display = "flex";
+      } else {
+        badge.style.display = "none";
+      }
+    } catch (e) {}
+  }
+
   function syncLoggedInServices() {
     if (!isLoggedIn()) return;
+    refreshChatUnreadBadge();
     startPresenceHeartbeat();
     autoEnablePushNotifications().finally(() => {
       if (!isPushOptOut()) {
@@ -765,7 +795,7 @@
         else window.location.href = "/post-listing.html";
       });
     }
-    if (feed.classList.contains("error")) feed.textContent = t("feed_error");
+    if (feed.classList.contains("error")) renderFeedError();
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
     if (feed.classList.contains("grid")) renderFeed();
   });

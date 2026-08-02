@@ -527,17 +527,25 @@
 
   async function confirmWithBuyerId(buyerId) {
     buyerModal.classList.remove("open");
+    const listingId = buyerPickerItem?.id;
+    const listingTitle = buyerPickerItem?.title;
+    buyerPickerItem = null;
     try {
       const res = await fetch(`${API_URL}/sale-confirmations`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ buyer_id: buyerId, listing_title: buyerPickerItem.title })
+        body: JSON.stringify({ buyer_id: buyerId, listing_title: listingTitle })
       });
       const data = await res.json();
-      alert(res.ok ? "Sent — we've asked the buyer to confirm." : (data.error || "Please try again."));
-    } catch (e) {}
-    await removeListing(buyerPickerItem.id);
-    buyerPickerItem = null;
+      if (!res.ok) {
+        alert(data.error || "Please try again.");
+        return;
+      }
+      alert("Sent — we've asked the buyer to confirm.");
+      await removeListing(listingId);
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
   }
 
   document.getElementById("phoneSendBtn").addEventListener("click", async () => {

@@ -38,7 +38,6 @@
   .link { display: block; width: 100%; text-align: center; color: var(--price-red); font-size: 13px; background: none; border: none; cursor: pointer; }
   .link:disabled { opacity: 0.6; cursor: default; }
 
-  /* Styled inline banners, replacing the browser's native alert() popups */
   .form-banner {
     display: none;
     border-radius: 10px;
@@ -70,34 +69,39 @@
   window.addEventListener("pageshow", applyDarkMode);
 </script>
 <div class="content">
-  <div class="title">Verify Your Phone</div>
-  <div class="subtitle" id="subtitleText">Enter the 6-digit code sent to your phone</div>
+  <div class="title" data-i18n="verify_phone">Verify Your Phone</div>
+  <div class="subtitle" id="subtitleText" data-i18n="verify_otp_sub_generic">Enter the 6-digit code sent to your phone</div>
 
   <div class="form-banner error" id="errorBanner"></div>
   <div class="form-banner success" id="successBanner"></div>
 
-  <input class="otp-input" id="otpInput" placeholder="000000" maxlength="6" inputmode="numeric" />
+  <input class="otp-input" id="otpInput" data-i18n-placeholder="otp_placeholder" placeholder="000000" maxlength="6" inputmode="numeric" />
 
-  <button class="submit-btn" id="verifyBtn">Verify</button>
+  <button class="submit-btn" id="verifyBtn" data-i18n="verify">Verify</button>
 
-  <button class="link" id="resendBtn">Didn't get a code? Resend</button>
+  <button class="link" id="resendBtn" data-i18n="resend_code">Didn't get a code? Resend</button>
 </div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const params = new URLSearchParams(window.location.search);
   const phone = params.get("phone") || "";
-
-  document.getElementById("subtitleText").textContent = `Enter the 6-digit code sent to ${phone}`;
 
   const otpInput = document.getElementById("otpInput");
   const verifyBtn = document.getElementById("verifyBtn");
   const resendBtn = document.getElementById("resendBtn");
   const errorBanner = document.getElementById("errorBanner");
   const successBanner = document.getElementById("successBanner");
+  const subtitleText = document.getElementById("subtitleText");
 
-  // Replaces alert() - shows a styled banner above the form instead of the
-  // browser's native popup, and scrolls it into view so it's never missed.
+  function updateSubtitle() {
+    subtitleText.textContent = phone
+      ? t("verify_otp_sub", { phone })
+      : t("verify_otp_sub_generic");
+  }
+  updateSubtitle();
+
   function showError(message) {
     successBanner.classList.remove("show");
     errorBanner.textContent = message;
@@ -119,12 +123,12 @@
     clearBanners();
     const otp = otpInput.value.trim();
     if (!otp) {
-      showError("Please enter the code sent to your phone.");
+      showError(t("otp_enter_code"));
       return;
     }
 
     verifyBtn.disabled = true;
-    verifyBtn.textContent = "Verifying…";
+    verifyBtn.textContent = t("verifying");
 
     try {
       const res = await fetch(`${API_URL}/auth/verify-otp`, {
@@ -135,26 +139,26 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || "Something went wrong.");
+        showError(data.error || t("chat_server_fail"));
         return;
       }
 
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
-      showSuccess(`Verified! Welcome, ${data.user.name}`);
+      showSuccess(t("otp_verified_welcome", { name: data.user.name }));
       setTimeout(() => { window.location.href = "/index.html"; }, 700);
     } catch (e) {
-      showError("Could not connect to the server.");
+      showError(t("chat_server_fail"));
     } finally {
       verifyBtn.disabled = false;
-      verifyBtn.textContent = "Verify";
+      verifyBtn.textContent = t("verify");
     }
   });
 
   resendBtn.addEventListener("click", async () => {
     clearBanners();
     resendBtn.disabled = true;
-    resendBtn.textContent = "Sending...";
+    resendBtn.textContent = t("sending");
 
     try {
       const res = await fetch(`${API_URL}/auth/resend-otp`, {
@@ -165,17 +169,23 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || "Could not resend code.");
+        showError(data.error || t("otp_resend_fail"));
         return;
       }
 
-      showSuccess("Code sent — a new code has been sent to your phone.");
+      showSuccess(t("otp_sent"));
     } catch (e) {
-      showError("Could not connect to the server.");
+      showError(t("chat_server_fail"));
     } finally {
       resendBtn.disabled = false;
-      resendBtn.textContent = "Didn't get a code? Resend";
+      resendBtn.textContent = t("resend_code");
     }
+  });
+
+  window.addEventListener("langchange", () => {
+    updateSubtitle();
+    if (!verifyBtn.disabled) verifyBtn.textContent = t("verify");
+    if (!resendBtn.disabled) resendBtn.textContent = t("resend_code");
   });
 </script>
 </body>
