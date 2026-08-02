@@ -182,6 +182,18 @@
     position: relative;
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .fav-btn {
+    position: absolute; top: 8px; right: 8px;
+    width: 32px; height: 32px; border-radius: 16px;
+    background: rgba(17, 17, 17, 0.65); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 2; padding: 0;
+  }
+  .fav-btn svg {
+    width: 16px; height: 16px; stroke: #fff; fill: none;
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .fav-btn svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
   .card-info { padding: 10px; }
@@ -351,6 +363,7 @@
   let serverOffset = 0;
   let hasMore = true;
   let loadingMore = false;
+  let favoriteIds = new Set();
   let myCoords = readSavedCoords("zm_home_location");
   if (myCoords) sortBy = "Nearest";
 
@@ -590,6 +603,13 @@
       const card = document.getElementById(`card-${item.id}`);
       if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
     });
+    feed.querySelectorAll(".fav-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleFavorite(btn.dataset.id, btn);
+      });
+    });
     observeLazyImages(feed);
     updateLoadMoreButton();
   }
@@ -598,8 +618,55 @@
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
   }
 
+  function heartIcon(filled) {
+    const cls = filled ? "filled" : "";
+    return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+  }
+
+  async function loadFavoriteIds() {
+    favoriteIds = new Set();
+    if (!isLoggedIn()) return;
+    try {
+      const token = localStorage.getItem("zm_token");
+      const res = await fetch(`${API_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const favorites = await res.json();
+      favoriteIds = new Set(favorites.map((item) => String(item.id)));
+    } catch (e) {}
+  }
+
+  async function toggleFavorite(listingId, btn) {
+    if (!isLoggedIn()) {
+      window.location.href = "/login.html";
+      return;
+    }
+    const id = String(listingId);
+    const token = localStorage.getItem("zm_token");
+    const wasFav = favoriteIds.has(id);
+    try {
+      const res = await fetch(`${API_URL}/favorites/${listingId}`, {
+        method: wasFav ? "DELETE" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        window.location.href = "/login.html";
+        return;
+      }
+      if (!res.ok) return;
+      if (wasFav) favoriteIds.delete(id);
+      else favoriteIds.add(id);
+      const saved = favoriteIds.has(id);
+      btn.innerHTML = heartIcon(saved);
+      btn.setAttribute("aria-pressed", saved ? "true" : "false");
+      btn.setAttribute("aria-label", saved ? t("saved_listing") : t("save_listing"));
+    } catch (e) {}
+  }
+
   function renderCard(item) {
     const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const isFav = favoriteIds.has(String(item.id));
     const distancePart = (item.distanceKm != null)
       ? `<span class="loc-dist">${escHtml(formatDistanceKm(item.distanceKm))}</span> · `
       : "";
@@ -607,6 +674,7 @@
       <div class="card" id="card-${item.id}">
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
+          <button type="button" class="fav-btn" data-id="${item.id}" aria-label="${isFav ? t("saved_listing") : t("save_listing")}" aria-pressed="${isFav ? "true" : "false"}">${heartIcon(isFav)}</button>
         </div>
         <div class="card-info">
           <div class="price">K${escHtml(item.price)}</div>
@@ -668,6 +736,9 @@
   refreshAuthState();
   renderChips();
   showCachedFeedIfFresh();
+  loadFavoriteIds().then(() => {
+    if (feed.classList.contains("grid")) renderFeed();
+  });
   loadListings(true);
   setTimeout(showLocationPrompt, 800);
   setTimeout(syncLoggedInServices, 0);
@@ -680,7 +751,7 @@
     setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
     applyListingDistances();
-    renderFeed();
+    loadFavoriteIds().then(() => renderFeed());
   });
   window.addEventListener("langchange", () => {
     refreshAuthState();
@@ -696,6 +767,7 @@
     }
     if (feed.classList.contains("error")) feed.textContent = t("feed_error");
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
+    if (feed.classList.contains("grid")) renderFeed();
   });
   window.addEventListener("lowdatachange", () => renderFeed());
 
