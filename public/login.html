@@ -86,7 +86,7 @@
   <div class="label" data-i18n="phone_number">Phone Number</div>
   <div class="phone-row">
     <div class="phone-prefix"><span>🇿🇲 +260</span></div>
-    <input class="phone-input" id="phone" placeholder="e.g. 0977123456 or 977123456" maxlength="10" inputmode="tel" />
+    <input class="phone-input" id="phone" placeholder="Phone number" maxlength="10" inputmode="tel" />
   </div>
 
   <div class="label" data-i18n="password">Password</div>
@@ -153,7 +153,7 @@
       return;
     }
     if (!isValidZambianPhone(phone)) {
-      showError("Airtel, MTN & Zamtel only (0573, 0574, 077, 097, 096, 750, 095).");
+      showError("Airtel and Zamtel only.");
       return;
     }
 
