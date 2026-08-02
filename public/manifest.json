@@ -2,9 +2,9 @@
   "name": "ZedMarket",
   "short_name": "ZedMarket",
   "description": "ZedMarket — buy and sell locally in Zambia.",
-  "start_url": "/?utm_source=pwa",
-  "scope": "/",
-  "id": "/?utm_source=pwa",
+  "start_url": "https://zedmarket.app/?utm_source=pwa",
+  "scope": "https://zedmarket.app/",
+  "id": "https://zedmarket.app/?utm_source=pwa",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen"],
   "background_color": "#111111",
@@ -22,21 +22,21 @@
       "name": "Sell",
       "short_name": "Sell",
       "description": "Post a listing for sale",
-      "url": "/post-listing.html?utm_source=shortcut",
+      "url": "https://zedmarket.app/post-listing.html?utm_source=shortcut",
       "icons": [{ "src": "https://zedmarket.app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Messages",
       "short_name": "Messages",
       "description": "View your conversations",
-      "url": "/chat-list.html?utm_source=shortcut",
+      "url": "https://zedmarket.app/chat-list.html?utm_source=shortcut",
       "icons": [{ "src": "https://zedmarket.app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Wanted",
       "short_name": "Wanted",
       "description": "Browse wanted posts",
-      "url": "/wanted.html?utm_source=shortcut",
+      "url": "https://zedmarket.app/wanted.html?utm_source=shortcut",
       "icons": [{ "src": "https://zedmarket.app/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]

@@ -21,8 +21,8 @@
     "path": "./android.keystore",
     "alias": "zedmarket"
   },
-  "appVersionName": "1.0.3",
-  "appVersionCode": 6,
+  "appVersionName": "1.0.2",
+  "appVersionCode": 3,
   "shortcuts": [
     {
       "name": "Sell",
@@ -58,6 +58,13 @@
   "isMetaQuest": false,
   "minSdkVersion": 21,
   "orientation": "portrait",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "value": "8F:24:83:E6:E5:70:8C:7E:55:B1:23:AC:1C:5E:05:A8:7F:66:22:B3:A6:0D:75:7A:15:D8:A7:98:4D:12:1C:9F"
+    },
+    {
+      "value": "2D:6E:54:59:8B:18:4F:FE:E9:14:5C:EA:86:7C:28:71:3E:B8:3D:63:AD:86:31:3E:E5:35:0E:A0:11:6C:F4:7B"
+    }
+  ],
   "additionalTrustedOrigins": []
 }
