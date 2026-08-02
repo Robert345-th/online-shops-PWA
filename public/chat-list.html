@@ -123,7 +123,6 @@
   <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span data-i18n="chats">Chats</span></div>
   <div class="topbar-actions" id="topbarActions" style="display:none">
-    <button class="topbar-icon-btn" id="saleConfirmBtn" aria-label="Confirm purchases" onclick="window.location.href='/sale-confirmations.html'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="unread-badge" id="saleConfirmBadge" style="display:none; position:absolute; top:-4px; right:-4px;"></span></button>
     <button class="topbar-icon-btn" id="chatSettingsBtn" aria-label="Chat settings"><svg class="bars" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
   </div>
 </div>
@@ -189,32 +188,12 @@
   const unreadCache = new Map();
   const settingsOverlay = document.getElementById("settingsOverlay");
 
-  async function refreshSaleConfirmBadge() {
-    const badge = document.getElementById("saleConfirmBadge");
-    if (!badge || !token) return;
-    try {
-      const res = await fetch(`${API_URL}/sale-confirmations/pending-count`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const count = parseInt(data.count, 10) || 0;
-      if (count > 0) {
-        badge.textContent = count > 99 ? "99+" : String(count);
-        badge.style.display = "flex";
-      } else {
-        badge.style.display = "none";
-      }
-    } catch (e) {}
-  }
-
   function initChatSettings() {
     if (!user) {
       document.getElementById("topbarActions").style.display = "none";
       return;
     }
     document.getElementById("topbarActions").style.display = "flex";
-    refreshSaleConfirmBadge();
 
     document.getElementById("chatSettingsBtn").addEventListener("click", () => {
       settingsOverlay.classList.add("open");
