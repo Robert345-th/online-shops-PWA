@@ -60,7 +60,7 @@
   .deny-btn:disabled { opacity: 0.7; }
 </style>
 </head>
-<body>
+<body data-nav-active="confirm">
 <script>
   function applyDarkMode() {
     document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
@@ -76,6 +76,7 @@
 <div id="content"><div class="center-box"><div class="spinner"></div></div></div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/bottom-nav.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");

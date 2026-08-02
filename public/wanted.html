@@ -24,7 +24,7 @@
     --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; transition: background 0.2s, color 0.2s; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
 
   .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
   .back-button {
@@ -70,14 +70,14 @@
   .close-btn:disabled { opacity: 0.7; }
 
   .fab {
-    position: fixed; bottom: 24px; left: 20px; right: 20px; max-width: 520px; margin: 0 auto;
+    position: fixed; bottom: 72px; left: 20px; right: 20px; max-width: 520px; margin: 0 auto;
     background: var(--black); border: none; border-radius: 30px; padding: 16px; text-align: center;
     color: var(--gold); font-weight: 700; font-size: 14px; cursor: pointer;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   }
 </style>
 </head>
-<body>
+<body data-nav-active="wanted">
 <script>
   function applyDarkMode() {
     document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
@@ -101,6 +101,7 @@
 <button class="fab" onclick="window.location.href='/post-wanted.html'" data-i18n="post_wanted">+ Post What You Want</button>
 
 <script src="/js/lang.js"></script>
+<script src="/js/bottom-nav.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");
