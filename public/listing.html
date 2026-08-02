@@ -61,6 +61,7 @@
   .body-scroll { max-height: 38vh; overflow-y: auto; padding: 14px 18px; }
   .price { font-size: 24px; font-weight: 700; color: var(--price-red); }
   .item-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
+  .view-count { font-size: 11px; color: var(--subtext); margin-bottom: 8px; }
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
@@ -282,6 +283,7 @@
       }
       listing = data;
       updateListingMeta(listing);
+      trackListingView();
       render();
       loadFavoriteStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
@@ -337,6 +339,23 @@
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
   }
 
+  function trackListingView() {
+    if (!listingId) return;
+    const key = `viewed_${listingId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    fetch(`${API_URL}/listings/${listingId}/view`, { method: "POST" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && typeof data.view_count === "number") {
+          listing.view_count = data.view_count;
+          const el = document.getElementById("viewCountEl");
+          if (el) el.textContent = t("listing_views_count", { count: data.view_count });
+        }
+      })
+      .catch(() => {});
+  }
+
   function render() {
     const photos = listing.photos && listing.photos.length > 0 ? listing.photos : [];
 
@@ -360,6 +379,7 @@
       <div class="body-scroll">
         <div class="price">K${listing.price}</div>
         <div class="item-title">${listing.title}</div>
+        ${listing.view_count > 0 ? `<div class="view-count" id="viewCountEl">${t("listing_views_count", { count: listing.view_count })}</div>` : `<div class="view-count" id="viewCountEl" style="display:none;"></div>`}
         <div class="badge-row">
           ${listing.category ? `<div class="badge">${listing.category}</div>` : ""}
           ${listing.location_label ? `<div class="badge dist">${listing.location_label}</div>` : ""}

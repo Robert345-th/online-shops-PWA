@@ -171,6 +171,25 @@
     display: inline-block; background: #1B7A4A; color: #fff;
     font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-top: 4px;
   }
+  .top-sellers-wrap { padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
+  .top-sellers-head { padding: 0 12px 8px; }
+  .top-sellers-title { font-size: 15px; font-weight: 700; }
+  .top-sellers-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .top-sellers-row {
+    display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 8px;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .top-sellers-row::-webkit-scrollbar { display: none; }
+  .top-seller-card {
+    flex-shrink: 0; width: 118px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 10px; text-align: center; cursor: pointer;
+  }
+  .top-seller-avatar {
+    width: 40px; height: 40px; border-radius: 20px; background: #E01B27; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 8px;
+  }
+  .top-seller-name { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
+  .top-seller-rating { font-size: 11px; color: var(--price-red); font-weight: 600; }
   .card {
     width: calc(50% - 5px);
     background: var(--card); border: 1px solid var(--border); border-radius: 14px;
@@ -272,6 +291,7 @@
         <span id="authBtnText">Login / Sign Up</span>
       </button>
       <div class="icon-row">
+      <button class="icon-btn" id="saleConfirmNavBtn" onclick="window.location.href='/sale-confirmations.html'" aria-label="Confirm purchases"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="badge" id="saleConfirmBadge" style="display:none"></span></button>
       <button class="icon-btn" onclick="window.location.href='/wanted.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></button>
       <button class="icon-btn" onclick="window.location.href='/map-view.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
       <button class="icon-btn" id="chatNavBtn" onclick="window.location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge" id="chatUnreadBadge" style="display:none"></span></button>
@@ -293,6 +313,8 @@
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
   </div>
 </div>
+
+<div id="topSellersWrap" style="display:none;"></div>
 
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
 <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
@@ -728,6 +750,72 @@
     }
   }
 
+  async function refreshSaleConfirmBadge() {
+    const badge = document.getElementById("saleConfirmBadge");
+    const btn = document.getElementById("saleConfirmNavBtn");
+    if (!badge || !btn) return;
+    if (!isLoggedIn()) {
+      badge.style.display = "none";
+      btn.style.display = "none";
+      return;
+    }
+    btn.style.display = "";
+    try {
+      const res = await fetch(`${API_URL}/sale-confirmations/pending-count`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("zm_token")}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const count = parseInt(data.count, 10) || 0;
+      if (count > 0) {
+        badge.textContent = count > 99 ? "99+" : String(count);
+        badge.style.display = "flex";
+      } else {
+        badge.style.display = "none";
+      }
+    } catch (e) {}
+  }
+
+  async function loadTopSellers() {
+    const wrap = document.getElementById("topSellersWrap");
+    if (!wrap) return;
+    try {
+      const res = await fetch(`${API_URL}/reviews/leaderboard`);
+      if (!res.ok) return;
+      const sellers = await res.json();
+      if (!Array.isArray(sellers) || sellers.length === 0) {
+        wrap.style.display = "none";
+        return;
+      }
+      wrap.style.display = "block";
+      wrap.innerHTML = `
+        <div class="top-sellers-wrap">
+          <div class="top-sellers-head">
+            <div class="top-sellers-title">${t("top_sellers_title")}</div>
+            <div class="top-sellers-sub">${t("top_sellers_sub")}</div>
+          </div>
+          <div class="top-sellers-row">
+            ${sellers.slice(0, 8).map((s) => {
+              const name = s.shop_name || s.name || "Seller";
+              return `
+                <div class="top-seller-card" data-seller-id="${s.id}">
+                  <div class="top-seller-avatar">${name.charAt(0).toUpperCase()}</div>
+                  <div class="top-seller-name">${name}</div>
+                  <div class="top-seller-rating">★ ${s.average} (${s.total})</div>
+                </div>`;
+            }).join("")}
+          </div>
+        </div>`;
+      wrap.querySelectorAll("[data-seller-id]").forEach((el) => {
+        el.addEventListener("click", () => {
+          window.location.href = `/seller-profile.html?id=${el.dataset.sellerId}`;
+        });
+      });
+    } catch (e) {
+      wrap.style.display = "none";
+    }
+  }
+
   async function refreshChatUnreadBadge() {
     const badge = document.getElementById("chatUnreadBadge");
     if (!badge) return;
@@ -754,6 +842,7 @@
   function syncLoggedInServices() {
     if (!isLoggedIn()) return;
     refreshChatUnreadBadge();
+    refreshSaleConfirmBadge();
     startPresenceHeartbeat();
     autoEnablePushNotifications().finally(() => {
       if (!isPushOptOut()) {
@@ -765,6 +854,7 @@
 
   refreshAuthState();
   renderChips();
+  loadTopSellers();
   showCachedFeedIfFresh();
   loadFavoriteIds().then(() => {
     if (feed.classList.contains("grid")) renderFeed();
@@ -778,6 +868,7 @@
   });
   window.addEventListener("pageshow", () => {
     refreshAuthState();
+    refreshSaleConfirmBadge();
     setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
     applyListingDistances();
@@ -786,6 +877,7 @@
   window.addEventListener("langchange", () => {
     refreshAuthState();
     renderChips();
+    loadTopSellers();
     if (feed.classList.contains("empty")) {
       feed.innerHTML = `
         <div>${t("feed_empty")}</div>

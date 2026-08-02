@@ -88,6 +88,7 @@
   .row-info { flex: 1; min-width: 0; }
   .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .row-views { font-size: 10px; color: var(--subtext); margin-top: 2px; }
   .status-badge { display: inline-block; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-top: 4px; }
   .disabled-badge { display: inline-block; background: var(--price-red); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; margin-top: 4px; }
   .boosted-badge { display: inline-block; background: var(--orange); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; margin-top: 4px; }
@@ -163,7 +164,7 @@
       <input class="phone-input" id="buyerPhoneInput" placeholder="e.g. 0977123456" />
       <button class="phone-send-btn" id="phoneSendBtn">Send</button>
     </div>
-    <button class="skip-btn" id="skipConfirmBtn">Skip — just remove the listing</button>
+    <button class="skip-btn" id="skipConfirmBtn" data-i18n="remove_listing_only">Remove listing only</button>
     <button class="modal-cancel-btn" id="buyerCancelBtn">Cancel</button>
   </div>
 </div>
@@ -475,6 +476,7 @@
           <div class="row-info">
             <div class="row-title">${item.title}</div>
             <div class="row-price">K${item.price}</div>
+            ${item.view_count > 0 ? `<div class="row-views">${t("listing_views_count", { count: item.view_count })}</div>` : ""}
             ${badge}
           </div>
         </div>
@@ -569,6 +571,8 @@
   });
 
   document.getElementById("skipConfirmBtn").addEventListener("click", async () => {
+    if (!buyerPickerItem) return;
+    if (!confirm(t("remove_listing_confirm"))) return;
     buyerModal.classList.remove("open");
     await removeListing(buyerPickerItem.id);
     buyerPickerItem = null;

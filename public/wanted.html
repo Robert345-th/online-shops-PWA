@@ -36,8 +36,12 @@
     width: 22px; height: 22px; stroke: var(--gold); fill: none;
     stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   }
-  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
   .header-title svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .my-posts-btn {
+    background: rgba(245, 197, 24, 0.15); border: 1px solid rgba(245, 197, 24, 0.5); color: var(--gold);
+    border-radius: 20px; padding: 8px 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
 
   .explainer-box { background: var(--warn-bg); padding: 12px; margin: 14px 14px 0; border-radius: 10px; }
   .explainer-text { font-size: 12px; color: var(--warn-text); line-height: 1.4; }
@@ -85,6 +89,7 @@
 <div class="topbar">
   <button class="back-button" onclick="history.back()" data-i18n-aria="back" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
   <div class="header-title"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span data-i18n="wanted_board">Wanted Board</span></div>
+  <button type="button" class="my-posts-btn" id="myWantedBtn" data-i18n="my_wanted_posts">My Posts</button>
 </div>
 
 <div class="explainer-box">
@@ -102,6 +107,11 @@
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
   const content = document.getElementById("content");
   let posts = [];
+
+  document.getElementById("myWantedBtn").addEventListener("click", () => {
+    if (!token) { window.location.href = "/login.html"; return; }
+    window.location.href = "/my-wanted.html";
+  });
 
   async function loadPosts() {
     try {

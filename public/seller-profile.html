@@ -85,6 +85,9 @@
   .card-price { font-weight: 700; font-size: 13px; color: var(--price-red); }
   .card-title { font-size: 11px; color: var(--text); margin: 2px 0; }
   .card-loc { font-size: 10px; color: var(--subtext); }
+  .sold-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .sold-item-title { font-size: 13px; font-weight: 600; }
+  .sold-item-date { font-size: 10px; color: var(--subtext); margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -161,10 +164,11 @@
 
   async function loadProfile() {
     try {
-      const [profileRes, reviewsRes, listingsRes] = await Promise.all([
+      const [profileRes, reviewsRes, listingsRes, soldRes] = await Promise.all([
         fetch(`${API_URL}/reviews/seller/${sellerId}/profile`),
         fetch(`${API_URL}/reviews/seller/${sellerId}`),
-        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=20`)
+        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=20`),
+        fetch(`${API_URL}/sale-confirmations/seller/${sellerId}/history`)
       ]);
       const profile = await profileRes.json();
       const reviewsData = await reviewsRes.json();
@@ -173,13 +177,18 @@
         listings = await listingsRes.json();
         if (!Array.isArray(listings)) listings = [];
       }
-      render(profile, reviewsData.reviews || [], listings);
+      let soldHistory = [];
+      if (soldRes.ok) {
+        soldHistory = await soldRes.json();
+        if (!Array.isArray(soldHistory)) soldHistory = [];
+      }
+      render(profile, reviewsData.reviews || [], listings, soldHistory);
     } catch (e) {
       app.innerHTML = `<div class="center-box"><div class="error-text">${t("shop_not_found")}</div></div>`;
     }
   }
 
-  function render(profile, reviews, listings) {
+  function render(profile, reviews, listings, soldHistory) {
     if (!profile || profile.error) {
       app.innerHTML = `<div class="center-box"><div class="error-text">${t("shop_not_found")}</div></div>`;
       return;
@@ -234,6 +243,20 @@
         ${listings.length === 0
           ? `<div class="empty-text">${t("no_seller_listings")}</div>`
           : `<div class="grid" id="sellerListingsGrid">${listings.map(renderListingCard).join("")}</div>`}
+
+        <div class="section-title">${t("sold_history_section")}</div>
+        ${soldHistory.length === 0
+          ? `<div class="empty-text">${t("sold_history_empty")}</div>`
+          : soldHistory.map((item) => {
+              const date = item.confirmed_at
+                ? new Date(item.confirmed_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                : "";
+              return `
+                <div class="sold-item">
+                  <div class="sold-item-title">${item.listing_title}</div>
+                  ${date ? `<div class="sold-item-date">${date}</div>` : ""}
+                </div>`;
+            }).join("")}
 
         <div class="section-title">${t("reviews_section")}</div>
         ${reviews.length === 0
