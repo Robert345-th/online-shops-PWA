@@ -30,12 +30,14 @@
   `;
 
   const ICONS = {
+    home: '<path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/>',
     wanted: '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>',
     confirm: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
     shop: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
   };
 
   const ITEMS = [
+    { key: "home", href: "/index.html", label: "home" },
     { key: "wanted", href: "/wanted.html", label: "nav_wanted" },
     { key: "confirm", href: "/sale-confirmations.html", label: "nav_confirm", badge: true },
     { key: "shop", href: "/my-shop.html", label: "my_shop" },
