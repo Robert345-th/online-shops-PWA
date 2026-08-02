@@ -118,8 +118,9 @@
     if (document.getElementById("pwaInstallBanner")) return;
 
     const ios = isIOS();
+    const androidChrome = typeof window.isAndroidChrome === "function" && window.isAndroidChrome();
     const androidNeedsChrome = typeof window.needsChromeOnAndroid === "function" && window.needsChromeOnAndroid();
-    if (!ios && !androidNeedsChrome) return;
+    if (!ios && !androidNeedsChrome && !androidChrome) return;
 
     const banner = document.createElement("div");
     banner.id = "pwaInstallBanner";
@@ -142,7 +143,7 @@
       <img src="https://zedmarket.app/icon-192.png" alt="" width="40" height="40" style="border-radius:10px;flex-shrink:0;" />
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="${androidNeedsChrome ? "install_android_banner_text" : "install_banner_text"}">Install ZedMarket on your home screen</div>
-        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${androidNeedsChrome ? "install_android_banner_sub" : "install_banner_sub"}">${androidNeedsChrome ? "Open in Chrome first — then tap Install app" : "Two taps in Safari — no App Store needed"}</div>
+        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${androidNeedsChrome ? "install_android_banner_sub" : (androidChrome ? "install_page_ready_sub" : "install_banner_sub")}">${androidNeedsChrome ? "Open in Chrome first — then tap Install app" : (androidChrome ? "You're in a browser that can install ZedMarket." : "Two taps in Safari — no App Store needed")}</div>
       </div>
       <button type="button" id="pwaInstallBannerBtn" style="background:#F5C518;color:#111;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;" data-i18n="${androidNeedsChrome ? "install_android_banner_btn" : "install_banner_btn"}">${androidNeedsChrome ? "Open in Chrome" : "Install"}</button>
       <button type="button" id="pwaInstallBannerDismiss" aria-label="Dismiss" style="background:none;border:none;color:#C9BFAF;font-size:20px;line-height:1;cursor:pointer;padding:0 2px;">×</button>`;
@@ -176,6 +177,7 @@
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
+      window.dispatchEvent(new CustomEvent("pwa-install-ready"));
     });
 
     elementIds.forEach((id) => {
