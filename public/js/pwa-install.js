@@ -113,6 +113,7 @@
   }
 
   function showInstallBanner() {
+    if (typeof window.isPlayStoreApp === "function" && window.isPlayStoreApp()) return;
     if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1") return;
     if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) return;
     if (document.getElementById("pwaInstallBanner")) return;
