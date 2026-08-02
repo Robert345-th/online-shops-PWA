@@ -58,7 +58,8 @@
   .support-banner svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
-  .empty-text { color: var(--subtext); margin-bottom: 16px; }
+  .empty-text { color: var(--subtext); margin-bottom: 8px; }
+  .empty-sub { color: var(--subtext); font-size: 12px; margin-bottom: 16px; line-height: 1.4; }
   .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
 
   .list { padding: 12px; }
@@ -275,7 +276,12 @@
       const conversations = await res.json();
 
       if (!conversations.length) {
-        content.innerHTML = `<div class="center-box"><div class="empty-text">${t("no_conversations")}</div></div>`;
+        content.innerHTML = `
+          <div class="center-box">
+            <div class="empty-text">${t("no_conversations")}</div>
+            <div class="empty-sub">${t("no_conversations_sub")}</div>
+            <button type="button" class="login-btn" onclick="window.location.href='/'">${t("browse_listings")}</button>
+          </div>`;
         return;
       }
 
@@ -295,7 +301,7 @@
         });
       });
     } catch (e) {
-      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load conversations.</div></div>`;
+      content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
     }
   }
 

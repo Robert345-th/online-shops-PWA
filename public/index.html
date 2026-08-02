@@ -192,6 +192,7 @@
   .empty, .loading, .error {
     text-align: center; padding: 60px 20px; color: var(--subtext);
   }
+  .empty-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 4px; }
   .error { color: var(--price-red); }
 
   .bottom-nav {
@@ -571,7 +572,13 @@
 
     if (!items.length) {
       feed.className = "empty";
-      feed.textContent = t("feed_empty");
+      feed.innerHTML = `
+        <div>${t("feed_empty")}</div>
+        <button type="button" class="empty-btn" id="emptyPostBtn">${t("post_listing")}</button>`;
+      document.getElementById("emptyPostBtn")?.addEventListener("click", () => {
+        if (!getAuthUser() || !localStorage.getItem("zm_token")) window.location.href = "/login.html";
+        else window.location.href = "/post-listing.html";
+      });
       updateLoadMoreButton();
       return;
     }
@@ -678,7 +685,15 @@
   window.addEventListener("langchange", () => {
     refreshAuthState();
     renderChips();
-    if (feed.classList.contains("empty")) feed.textContent = t("feed_empty");
+    if (feed.classList.contains("empty")) {
+      feed.innerHTML = `
+        <div>${t("feed_empty")}</div>
+        <button type="button" class="empty-btn" id="emptyPostBtn">${t("post_listing")}</button>`;
+      document.getElementById("emptyPostBtn")?.addEventListener("click", () => {
+        if (!getAuthUser() || !localStorage.getItem("zm_token")) window.location.href = "/login.html";
+        else window.location.href = "/post-listing.html";
+      });
+    }
     if (feed.classList.contains("error")) feed.textContent = t("feed_error");
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
   });

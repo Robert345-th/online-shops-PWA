@@ -411,7 +411,7 @@
 
   async function loadMessages(showSpinner) {
     try {
-      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">Loading…</div>`;
+      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">${t("loading")}</div>`;
       const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
       if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       const data = await res.json();
@@ -433,9 +433,9 @@
   function renderBlockedBanner() {
     const wrap = document.getElementById("blockedBannerWrap");
     if (theyBlockedMe) {
-      wrap.innerHTML = `<div class="blocked-banner">This user has blocked you.</div>`;
+      wrap.innerHTML = `<div class="blocked-banner">${t("chat_blocked_you")}</div>`;
     } else if (iBlockedThem) {
-      wrap.innerHTML = `<div class="blocked-banner">You have blocked this user.</div>`;
+      wrap.innerHTML = `<div class="blocked-banner">${t("chat_you_blocked")}</div>`;
     } else {
       wrap.innerHTML = "";
     }
@@ -450,7 +450,7 @@
 
   function renderMessages(force) {
     if (!messages.length) {
-      messagesList.innerHTML = `<div class="empty-text">Say hello</div>`;
+      messagesList.innerHTML = `<div class="empty-text">${t("chat_say_hello")}</div>`;
       lastMessagesKey = "";
       return;
     }
@@ -622,7 +622,7 @@
         body: JSON.stringify({ receiver_id: userId, ...(activeListingId ? { listing_id: activeListingId } : {}), ...payload })
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || "Could not send message."); return; }
+      if (!res.ok) { alert(data.error || t("chat_send_fail")); return; }
       if (window.notifyMessagePush && currentUser) {
         const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
         notifyMessagePush(userId, {
@@ -644,10 +644,10 @@
       formData.append("upload_preset", UPLOAD_PRESET);
       const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
       const data = await res.json();
-      if (!data.secure_url) { alert("Could not upload the photo. Please try again."); return; }
+      if (!data.secure_url) { alert(t("chat_photo_upload_fail")); return; }
       await sendMessagePayload({ photo_url: data.secure_url });
     } catch (e) {
-      alert("Could not upload the photo.");
+      alert(t("chat_photo_fail"));
     }
     e.target.value = "";
   }
@@ -668,14 +668,14 @@
       if (quickRow) quickRow.style.display = "none";
       if (inputRow) inputRow.style.display = "none";
       recordingRow.style.display = "flex";
-      document.getElementById("recordingText").textContent = "Recording... 0:00";
+      document.getElementById("recordingText").textContent = t("chat_recording").replace("{time}", "0:00");
 
       recordingTimer = setInterval(() => {
         recordingSeconds++;
-        document.getElementById("recordingText").textContent = `Recording... ${formatDuration(recordingSeconds)}`;
+        document.getElementById("recordingText").textContent = t("chat_recording").replace("{time}", formatDuration(recordingSeconds));
       }, 1000);
     } catch (e) {
-      alert("We need microphone access to record a voice note.");
+      alert(t("chat_mic_denied"));
     }
   }
 
@@ -708,11 +708,11 @@
 
         const res = await fetch(CLOUDINARY_AUDIO_URL, { method: "POST", body: formData });
         const data = await res.json();
-        if (!data.secure_url) { alert("Could not upload the voice note. Please try again."); restoreComposerAfterRecording(); return; }
+        if (!data.secure_url) { alert(t("chat_voice_upload_fail")); restoreComposerAfterRecording(); return; }
 
         await sendMessagePayload({ audio_url: data.secure_url, audio_duration: duration });
       } catch (e) {
-        alert("Could not save the voice note.");
+        alert(t("chat_voice_fail"));
       }
       recordingSeconds = 0;
       restoreComposerAfterRecording();
@@ -753,7 +753,7 @@
       messages = messages.filter(m => m.id !== messageId);
       renderMessages();
     } catch (e) {
-      alert("Could not delete message.");
+      alert(t("chat_delete_fail"));
     }
   }
 
@@ -762,10 +762,10 @@
     try {
       const res = await fetch(`${API_URL}/messages/${messageId}/delete-for-everyone`, { method: "PUT", headers: authHeaders() });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || "Could not unsend this message."); return; }
+      if (!res.ok) { alert(data.error || t("chat_unsend_fail")); return; }
       loadMessages(false);
     } catch (e) {
-      alert("Could not unsend message.");
+      alert(t("chat_unsend_fail_generic"));
     }
   }
 
@@ -782,7 +782,7 @@
     document.getElementById("menuOverlay").classList.remove("open");
     if (otherUser?.is_admin) return;
     if (!otherUser?.phone) return;
-    if (confirm(`${otherUser.display_name}\n${otherUser.phone}\n\nTap OK to call.`)) {
+    if (confirm(t("chat_call_confirm").replace("{name}", otherUser.display_name).replace("{phone}", otherUser.phone))) {
       window.location.href = `tel:${otherUser.phone}`;
     }
   });
@@ -795,24 +795,24 @@
   document.getElementById("blockToggleBtn").addEventListener("click", async () => {
     document.getElementById("menuOverlay").classList.remove("open");
     if (iBlockedThem) {
-      if (!confirm("Unblock this user? You will be able to message each other again.")) return;
+      if (!confirm(t("chat_unblock_confirm"))) return;
       try {
         const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "DELETE", headers: authHeaders() });
-        if (!res.ok) { alert("Could not unblock this user. Please try again."); return; }
+        if (!res.ok) { alert(t("chat_unblock_fail")); return; }
         iBlockedThem = false;
         loadMessages(false);
       } catch (e) {
-        alert("Could not connect to the server.");
+        alert(t("chat_server_fail"));
       }
     } else {
-      if (!confirm("Block this user? They will no longer be able to message you.")) return;
+      if (!confirm(t("chat_block_confirm"))) return;
       try {
         const res = await fetch(`${API_URL}/messages/block/${userId}`, { method: "POST", headers: authHeaders() });
-        if (!res.ok) { alert("Could not block this user. Please try again."); return; }
+        if (!res.ok) { alert(t("chat_block_fail")); return; }
         iBlockedThem = true;
         loadMessages(false);
       } catch (e) {
-        alert("Could not connect to the server.");
+        alert(t("chat_server_fail"));
       }
     }
   });
@@ -836,7 +836,11 @@
     loadMessages(true);
     refreshPresence();
     startPollers();
-    window.addEventListener("langchange", refreshPresence);
+    window.addEventListener("langchange", () => {
+      refreshPresence();
+      renderBlockedBanner();
+      if (!messages.length) renderMessages(true);
+    });
 
     function stopPollers() {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }

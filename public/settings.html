@@ -147,6 +147,16 @@
   </div>
 
   <div class="section-label" data-i18n="section_notifications">Notifications</div>
+  <div class="row" id="pushNotificationsRow">
+    <div style="flex:1; margin-right:10px;">
+      <div class="row-title" data-i18n="push_notifications">Message Notifications</div>
+      <div class="row-sub" data-i18n="push_notifications_sub">On by default — turn off here if you don't want message alerts</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="pushNotificationsToggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
   <div class="row">
     <div style="flex:1; margin-right:10px;">
       <div class="row-title" data-i18n="daily_digest">Daily Digest</div>
@@ -159,6 +169,12 @@
   </div>
 
   <div class="section-label" data-i18n="section_safety">Safety</div>
+  <div class="row" id="saleConfirmationsRow">
+    <div>
+      <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span data-i18n="sale_confirmations">Confirm Purchases</span></div>
+      <div class="row-sub" data-i18n="sale_confirmations_sub">Review purchases sellers marked as sold to you</div>
+    </div>
+  </div>
   <div class="row" id="reportUserRow">
     <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg><span data-i18n="report_user">Report a User</span></div>
   </div>
@@ -222,6 +238,7 @@
 <script src="/js/lang.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
+<script src="/js/push-notifications.js"></script>
 <script>
   initLangPicker("langRow");
 
@@ -287,10 +304,40 @@
       });
     } catch (e) {
       digestToggle.checked = !value;
-      alert("Could not update your notification setting.");
+      alert(t("digest_update_fail"));
     }
   });
   loadDigestSetting();
+
+  const pushToggle = document.getElementById("pushNotificationsToggle");
+  if (user && token) {
+    refreshPushToggle(pushToggle);
+    autoEnablePushNotifications().finally(() => refreshPushToggle(pushToggle));
+    pushToggle.addEventListener("change", async () => {
+      if (pushToggle.checked) {
+        setPushOptOut(false);
+        try {
+          await enablePushNotifications();
+          startMessageNotificationPoll(API_URL, token, user.id);
+        } catch (e) {
+          pushToggle.checked = false;
+          setPushEnabled(false);
+          if (e.message === "denied") alert(t("push_denied"));
+          else if (e.message === "unsupported") alert(t("push_unsupported"));
+          else if (e.message === "vapid_unavailable" || e.message === "subscribe_failed") {
+            alert(t("push_server_unavailable"));
+          } else alert(t("push_enable_failed"));
+        }
+      } else {
+        setPushOptOut(true);
+        await unsubscribeFromPush();
+        stopMessageNotificationPoll();
+      }
+    });
+  } else {
+    document.getElementById("pushNotificationsRow").style.opacity = "0.5";
+    pushToggle.disabled = true;
+  }
 
   let settingsCoords = null;
   let settingsLocationLabel = "";
@@ -400,6 +447,11 @@
   document.getElementById("referralsRow").addEventListener("click", () => {
     if (!user) { window.location.href = "/login.html"; return; }
     window.location.href = "/referrals.html";
+  });
+
+  document.getElementById("saleConfirmationsRow").addEventListener("click", () => {
+    if (!user) { window.location.href = "/login.html"; return; }
+    window.location.href = "/sale-confirmations.html";
   });
 
   document.getElementById("reportUserRow").addEventListener("click", () => {

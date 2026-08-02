@@ -69,12 +69,13 @@
   window.addEventListener("pageshow", applyDarkMode);
 </script>
 <div class="topbar">
-  <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-  <div class="header-title">Confirm Your Purchases</div>
+  <button class="back-button" onclick="history.back()" data-i18n-aria="back" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="header-title" data-i18n="sale_confirm_title">Confirm Your Purchases</div>
 </div>
 
 <div id="content"><div class="center-box"><div class="spinner"></div></div></div>
 
+<script src="/js/lang.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
   const token = localStorage.getItem("zm_token");
@@ -92,7 +93,7 @@
       confirmations = await res.json();
       render();
     } catch (e) {
-      content.innerHTML = `<div class="center-box"><div class="empty-text">Could not load confirmations.</div></div>`;
+      content.innerHTML = `<div class="center-box"><div class="empty-text">${t("sale_confirm_load_fail")}</div></div>`;
     }
   }
 
@@ -101,14 +102,14 @@
       content.innerHTML = `
         <div class="center-box">
           <div class="empty-icon">—</div>
-          <div class="empty-text">No purchases waiting for your confirmation.</div>
+          <div class="empty-text">${t("sale_confirm_empty")}</div>
         </div>`;
       return;
     }
 
     content.innerHTML = `
       <div class="list">
-        <div class="subtitle">Confirming a real purchase helps build trust for sellers on ZedMarket. Only confirm if you actually bought the item.</div>
+        <div class="subtitle">${t("sale_confirm_subtitle")}</div>
         ${confirmations.map(renderCard).join("")}
       </div>`;
 
@@ -119,13 +120,14 @@
   }
 
   function renderCard(c) {
+    const fromLabel = t("sale_confirm_from").replace("{name}", c.shop_name || c.seller_name || "");
     return `
       <div class="card">
         <div class="card-title">"${c.listing_title}"</div>
-        <div class="card-sub">From ${c.shop_name || c.seller_name}</div>
+        <div class="card-sub">${fromLabel}</div>
         <div class="card-actions">
-          <button class="confirm-btn" id="confirm-${c.id}">Yes, I bought this</button>
-          <button class="deny-btn" id="deny-${c.id}">Not me</button>
+          <button class="confirm-btn" id="confirm-${c.id}">${t("yes_bought")}</button>
+          <button class="deny-btn" id="deny-${c.id}">${t("not_me")}</button>
         </div>
       </div>`;
   }
@@ -133,30 +135,30 @@
   async function handleConfirm(id) {
     const btn = document.getElementById(`confirm-${id}`);
     btn.disabled = true;
-    btn.textContent = "Confirming…";
+    btn.textContent = t("sale_confirm_confirming");
     try {
       const res = await fetch(`${API_URL}/sale-confirmations/${id}/confirm`, {
         method: "PUT",
         headers: authHeaders()
       });
       if (!res.ok) {
-        alert("Could not confirm this sale.");
+        alert(t("sale_confirm_fail"));
         btn.disabled = false;
-        btn.textContent = "Yes, I bought this";
+        btn.textContent = t("yes_bought");
         return;
       }
       confirmations = confirmations.filter(c => c.id !== id);
       render();
-      alert("Thanks! Your confirmation helps build trust on ZedMarket.");
+      alert(t("sale_confirm_thanks"));
     } catch (e) {
-      alert("Could not connect to the server.");
+      alert(t("chat_server_fail"));
       btn.disabled = false;
-      btn.textContent = "Yes, I bought this";
+      btn.textContent = t("yes_bought");
     }
   }
 
   async function handleDeny(id) {
-    if (!confirm("Not your purchase? Let the seller know this wasn't a confirmed sale?")) return;
+    if (!confirm(t("sale_confirm_deny_prompt"))) return;
     const btn = document.getElementById(`deny-${id}`);
     btn.disabled = true;
     try {
@@ -167,10 +169,21 @@
       confirmations = confirmations.filter(c => c.id !== id);
       render();
     } catch (e) {
-      alert("Could not connect to the server.");
+      alert(t("chat_server_fail"));
       btn.disabled = false;
     }
   }
+
+  window.addEventListener("langchange", () => {
+    if (confirmations.length) render();
+    else if (!content.querySelector(".spinner")) {
+      content.innerHTML = `
+        <div class="center-box">
+          <div class="empty-icon">—</div>
+          <div class="empty-text">${t("sale_confirm_empty")}</div>
+        </div>`;
+    }
+  });
 
   if (!token) {
     window.location.href = "/login.html";

@@ -23,7 +23,26 @@
   },
   "appVersionName": "1.0.2",
   "appVersionCode": 5,
-  "shortcuts": [],
+  "shortcuts": [
+    {
+      "name": "Sell",
+      "shortName": "Sell",
+      "url": "https://zedmarket.app/post-listing.html?utm_source=android_shortcut",
+      "chosenIconUrl": "https://zedmarket.app/icon-192.png"
+    },
+    {
+      "name": "Messages",
+      "shortName": "Messages",
+      "url": "https://zedmarket.app/chat-list.html?utm_source=android_shortcut",
+      "chosenIconUrl": "https://zedmarket.app/icon-192.png"
+    },
+    {
+      "name": "Wanted",
+      "shortName": "Wanted",
+      "url": "https://zedmarket.app/wanted.html?utm_source=android_shortcut",
+      "chosenIconUrl": "https://zedmarket.app/icon-192.png"
+    }
+  ],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://zedmarket.app/manifest.json",
   "fallbackType": "webview",
