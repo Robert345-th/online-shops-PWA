@@ -4,7 +4,7 @@
     if (!phone) return "";
     if (phone.startsWith("+")) phone = phone.slice(1);
     if (phone.startsWith("260")) phone = phone.slice(3);
-    if (phone.length === 9 && /^(573|574|77|97)\d+$/.test(phone)) {
+    if (phone.length === 9 && /^(573|574|750|77|97)\d+$/.test(phone)) {
       phone = "0" + phone;
     }
     return phone;
@@ -12,7 +12,7 @@
 
   function isValidZambianPhone(raw) {
     const phone = normalizeZambianPhone(raw);
-    return /^(0573\d{6}|0574\d{6}|077\d{7}|097\d{7})$/.test(phone);
+    return /^(0573\d{6}|0574\d{6}|0750\d{6}|077\d{7}|097\d{7})$/.test(phone);
   }
 
   window.normalizeZambianPhone = normalizeZambianPhone;

@@ -109,7 +109,7 @@
       <div class="phone-prefix"><span>🇿🇲 +260</span></div>
       <input class="phone-input" id="phoneInput" placeholder="e.g. 0977123456 or 977123456" maxlength="10" inputmode="tel" autocomplete="tel" />
     </div>
-    <div class="phone-hint">Only <b>Airtel</b> allowed</div>
+    <div class="phone-hint">Airtel and Zamtel allowed (<b>0573</b>, <b>0574</b>, <b>077</b>, <b>097</b>, <b>0750</b>)</div>
 
     <div class="label">Referral Code (optional)</div>
     <input class="field-input" id="referralInput" placeholder="Have a friend's code? Enter it here" style="text-transform:uppercase;" />
@@ -265,7 +265,7 @@
       return;
     }
     if (!isValidZambianPhone(phone)) {
-      showError("Only Airtel allowed.");
+      showError("Only Airtel and Zamtel allowed (0573, 0574, 077, 097, 0750).");
       return;
     }
     step = 2;
