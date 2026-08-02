@@ -3,7 +3,7 @@
   "host": "zedmarket.app",
   "name": "ZedMarket",
   "launcherName": "ZedMarket",
-  "display": "standalone",
+  "display": "fullscreen-sticky",
   "themeColor": "#111111",
   "themeColorDark": "#111111",
   "navigationColor": "#111111",
@@ -21,8 +21,8 @@
     "path": "./android.keystore",
     "alias": "zedmarket"
   },
-  "appVersionName": "1.0.2",
-  "appVersionCode": 5,
+  "appVersionName": "1.0.3",
+  "appVersionCode": 6,
   "shortcuts": [
     {
       "name": "Sell",
