@@ -24,7 +24,8 @@ const launcherPath = findLauncherActivity(path.join(__dirname, "app", "src", "ma
 const manifestPath = path.join(__dirname, "app", "src", "main", "AndroidManifest.xml");
 const webViewSrc = path.join(__dirname, "webview-shell", "ZedMarketWebViewActivity.java");
 const webViewDest = path.join(packageDir, "ZedMarketWebViewActivity.java");
-const stringsPath = path.join(__dirname, "app", "src", "main", "res", "values", "loc_strings.xml");
+const locStringsSrc = path.join(__dirname, "webview-shell", "loc_strings.xml");
+const locStringsDest = path.join(__dirname, "app", "src", "main", "res", "values", "loc_strings.xml");
 
 if (!launcherPath || !fs.existsSync(manifestPath)) {
   console.error("Android project not found. Run: npx bubblewrap update --manifest twa-manifest.json");
@@ -35,9 +36,9 @@ fs.mkdirSync(packageDir, { recursive: true });
 fs.copyFileSync(webViewSrc, webViewDest);
 console.log("Copied:", webViewDest);
 
-if (fs.existsSync(stringsPath)) {
-  console.log("Location strings:", stringsPath);
-}
+fs.mkdirSync(path.dirname(locStringsDest), { recursive: true });
+fs.copyFileSync(locStringsSrc, locStringsDest);
+console.log("Copied:", locStringsDest);
 
 let launcher = fs.readFileSync(launcherPath, "utf8");
 
