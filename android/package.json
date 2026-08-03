@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "sync": "bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade",
-    "patch": "node patch-webview-only.js && node patch-offline-shell.js",
+    "patch": "node patch-webview-only.js && node patch-offline-shell.js && node patch-webview-location.js",
     "build": "npm run sync && npm run patch && bubblewrap build --skipPwaValidation && node copy-apk.js",
     "build:aab": "npm run sync && npm run patch && bubblewrap build --skipPwaValidation",
     "fingerprint": "bubblewrap fingerprint list"

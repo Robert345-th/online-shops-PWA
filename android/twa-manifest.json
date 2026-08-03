@@ -21,8 +21,8 @@
     "path": "./upload.keystore",
     "alias": "upload"
   },
-  "appVersionName": "1.0.6",
-  "appVersionCode": 6,
+  "appVersionName": "1.0.7",
+  "appVersionCode": 7,
   "shortcuts": [
     {
       "name": "Sell",
