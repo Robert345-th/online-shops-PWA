@@ -3,7 +3,7 @@
   "host": "zedmarket.app",
   "name": "ZedMarket",
   "launcherName": "ZedMarket",
-  "display": "fullscreen-sticky",
+  "display": "fullscreen",
   "themeColor": "#111111",
   "themeColorDark": "#111111",
   "navigationColor": "#111111",
@@ -18,11 +18,11 @@
   "monochromeIconUrl": "https://zedmarket.app/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "./android.keystore",
-    "alias": "zedmarket"
+    "path": "./upload.keystore",
+    "alias": "upload"
   },
-  "appVersionName": "1.0.2",
-  "appVersionCode": 3,
+  "appVersionName": "1.0.6",
+  "appVersionCode": 6,
   "shortcuts": [
     {
       "name": "Sell",
@@ -48,7 +48,7 @@
   "fallbackType": "webview",
   "features": {
     "locationDelegation": {
-      "enabled": true
+      "enabled": false
     }
   },
   "alphaDependencies": {

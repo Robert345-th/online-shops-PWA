@@ -225,24 +225,6 @@
   }
   .empty-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 4px; }
   .error { color: var(--price-red); }
-
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: var(--card); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0;
-    padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
-  }
-  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text); }
-  .modal-text { font-size: 14px; line-height: 1.5; color: var(--subtext); margin-bottom: 16px; }
-  .loc-button {
-    width: 100%; border: none; border-radius: 12px; padding: 14px;
-    background: var(--gold); color: var(--black); font-weight: 800; font-size: 14px; cursor: pointer;
-  }
-  .loc-button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .modal-later-btn {
-    width: 100%; margin-top: 10px; background: none; border: none; color: var(--subtext);
-    font-weight: 600; font-size: 14px; padding: 12px; cursor: pointer;
-  }
 </style>
 </head>
 <body data-nav-active="home">
@@ -298,15 +280,6 @@
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
 <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
   <button type="button" class="load-more-btn" id="loadMoreBtn" data-i18n="load_more">Load more</button>
-</div>
-
-<div class="modal-overlay" id="locationPromptModal">
-  <div class="modal-box">
-    <div class="modal-title" data-i18n="loc_prompt_title">Turn on your location</div>
-    <div class="modal-text" data-i18n="loc_prompt_body">ZedMarket uses your area to show nearby listings and distance (like 2 km away). This helps buyers and sellers find each other.</div>
-    <button type="button" class="loc-button" id="locationPromptAllow" data-i18n="loc_allow">Allow location</button>
-    <button type="button" class="modal-later-btn" id="locationPromptLater" data-i18n="loc_prompt_later">Not now</button>
-  </div>
 </div>
 
 <script src="/js/utils.js"></script>
@@ -398,58 +371,6 @@
     myCoords = readSavedCoords("zm_home_location");
   }
 
-  const LOCATION_PROMPT_KEY = "zm_location_prompt_dismissed";
-
-  function shouldShowLocationPrompt() {
-    if (readSavedCoords("zm_home_location")) return false;
-    return localStorage.getItem(LOCATION_PROMPT_KEY) !== "1";
-  }
-
-  function showLocationPrompt() {
-    if (!shouldShowLocationPrompt()) return;
-    const modal = document.getElementById("locationPromptModal");
-    if (typeof applyTranslations === "function") applyTranslations(modal);
-    modal.classList.add("open");
-  }
-
-  function hideLocationPrompt(dismiss) {
-    document.getElementById("locationPromptModal").classList.remove("open");
-    if (dismiss) localStorage.setItem(LOCATION_PROMPT_KEY, "1");
-  }
-
-  async function saveHomeLocationFromDevice() {
-    const btn = document.getElementById("locationPromptAllow");
-    btn.disabled = true;
-    btn.textContent = t("loc_getting");
-    try {
-      const coords = await requestUserLocationCoords();
-      const label = await reverseGeocodeLabel(coords.lat, coords.lng);
-      localStorage.setItem("zm_home_location", JSON.stringify(coords));
-      localStorage.setItem("zm_user_location_label", label);
-      loadMyCoords();
-      sortBy = "Nearest";
-      renderChips();
-      renderFeed();
-      hideLocationPrompt(false);
-    } catch (err) {
-      if (err && err.code === 1) {
-        alert(t("loc_prompt_denied", "Location was blocked. Allow it in your phone settings, or add your area in Settings."));
-      } else {
-        alert(t("listing_location_gps_fail", "Could not get GPS. Add your area in Settings."));
-      }
-      hideLocationPrompt(true);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = t("loc_allow");
-    }
-  }
-
-  document.getElementById("locationPromptAllow").addEventListener("click", saveHomeLocationFromDevice);
-  document.getElementById("locationPromptLater").addEventListener("click", () => hideLocationPrompt(true));
-  document.getElementById("locationPromptModal").addEventListener("click", (e) => {
-    if (e.target.id === "locationPromptModal") hideLocationPrompt(true);
-  });
-
   function getDistanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -473,18 +394,7 @@
     ).join("");
 
     sortRow.querySelectorAll("[data-sort]").forEach(el =>
-      el.addEventListener("click", () => {
-        const next = el.dataset.sort;
-        if (next === "Nearest" && !readSavedCoords("zm_home_location")) {
-          sortBy = "Nearest";
-          renderChips();
-          showLocationPrompt();
-          return;
-        }
-        sortBy = next;
-        renderChips();
-        renderFeed();
-      })
+      el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
     );
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
       el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); renderFeed(); })
@@ -808,7 +718,6 @@
     if (feed.classList.contains("grid")) renderFeed();
   });
   loadListings(true);
-  setTimeout(showLocationPrompt, 800);
   setTimeout(syncLoggedInServices, 0);
   document.addEventListener("DOMContentLoaded", () => {
     refreshAuthState();
