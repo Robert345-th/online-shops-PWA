@@ -10,6 +10,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,6 +29,7 @@ import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.RenderProcessGoneDetail;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -52,6 +54,7 @@ import java.util.Map;
 public class ZedMarketWebViewActivity extends Activity {
     private static final String TAG = "ZedMarketWebView";
     private static final int REQ_LOCATION = 9001;
+    private static final int REQ_FILE_CHOOSER = 9002;
 
     private static final String KEY_PREFIX =
             "app.zedmarket.twa.ZedMarketWebViewActivity.";
@@ -68,6 +71,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private String mPendingGeoOrigin;
     private GeolocationPermissions.Callback mPendingGeoCallback;
     private boolean mRetryLocationAfterSettings;
+    private ValueCallback<Uri[]> mFilePathCallback;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -190,6 +194,33 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_FILE_CHOOSER) {
+            if (mFilePathCallback == null) {
+                return;
+            }
+            Uri[] results = null;
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                ClipData clipData = data.getClipData();
+                if (clipData != null && clipData.getItemCount() > 0) {
+                    results = new Uri[clipData.getItemCount()];
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        results[i] = clipData.getItemAt(i).getUri();
+                    }
+                } else if (data.getData() != null) {
+                    results = new Uri[]{data.getData()};
+                } else if (data.getDataString() != null) {
+                    results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                }
+            }
+            mFilePathCallback.onReceiveValue(results);
+            mFilePathCallback = null;
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -204,7 +235,14 @@ public class ZedMarketWebViewActivity extends Activity {
         mPendingGeoCallback = null;
         mPendingGeoOrigin = null;
 
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        boolean granted = false;
+        for (int result : grantResults) {
+            if (result == PackageManager.PERMISSION_GRANTED) {
+                granted = true;
+                break;
+            }
+        }
+        if (granted) {
             callback.invoke(origin, true, false);
             return;
         }
@@ -338,6 +376,30 @@ public class ZedMarketWebViewActivity extends Activity {
                                 Manifest.permission.ACCESS_COARSE_LOCATION
                         },
                         REQ_LOCATION);
+            }
+
+            @Override
+            public boolean onShowFileChooser(
+                    WebView webView,
+                    ValueCallback<Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = filePathCallback;
+                Intent intent = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(intent, REQ_FILE_CHOOSER);
+                } catch (ActivityNotFoundException ex) {
+                    mFilePathCallback = null;
+                    Toast.makeText(
+                            ZedMarketWebViewActivity.this,
+                            "No app found to pick photos",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return false;
+                }
+                return true;
             }
 
             @Override

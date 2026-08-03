@@ -395,8 +395,8 @@
     btn.textContent = t("loc_getting");
     try {
       const coords = await withTimeout(
-        getDeviceCoords({ maximumAge: 0, timeout: 10000, enableHighAccuracy: false }),
-        12000
+        requestUserLocationCoords(),
+        70000
       );
       if (!isValidCoords(coords)) throw new Error("invalid");
       settingsCoords = coords;
