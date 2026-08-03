@@ -43,11 +43,27 @@
     const style = document.createElement("style");
     style.id = "play-store-webview-insets";
     style.textContent = `
+      html.play-store-webview {
+        --ps-top-inset: max(env(safe-area-inset-top, 0px), 28px);
+      }
       html.play-store-webview .topbar {
-        padding-top: calc(16px + max(env(safe-area-inset-top, 0px), 28px));
+        padding-top: calc(16px + var(--ps-top-inset));
       }
       html.play-store-webview .sticky-header {
         padding-top: 0;
+      }
+      html.play-store-webview .hero-wrap .round-btn,
+      html.play-store-webview .hero-wrap .hero-actions {
+        top: calc(14px + var(--ps-top-inset));
+      }
+      html.play-store-webview .viewer-back {
+        top: calc(40px + var(--ps-top-inset));
+      }
+      html.play-store-webview .camera-modal {
+        padding-top: calc(16px + var(--ps-top-inset));
+      }
+      html.play-store-webview .preview-overlay .preview-close-btn {
+        top: calc(50px + var(--ps-top-inset));
       }
     `;
     document.head.appendChild(style);
