@@ -28,7 +28,29 @@
     const ref = document.referrer || "";
     if (/^android-app:\/\/app\.zedmarket\.twa/i.test(ref)) return true;
     if (/[?&]utm_source=(android|pwa)\b/i.test(location.search)) return true;
+    if (isAndroid() && /;\s*wv\)|\bwv\b/i.test(navigator.userAgent)) return true;
     return false;
+  }
+
+  function isAndroidWebView() {
+    return isAndroid() && /;\s*wv\)|\bwv\b|WebView/i.test(navigator.userAgent);
+  }
+
+  function applyPlayStoreWebViewInsets() {
+    if (!isPlayStoreApp() || !isAndroidWebView()) return;
+    document.documentElement.classList.add("play-store-webview");
+    if (document.getElementById("play-store-webview-insets")) return;
+    const style = document.createElement("style");
+    style.id = "play-store-webview-insets";
+    style.textContent = `
+      html.play-store-webview .topbar {
+        padding-top: calc(16px + max(env(safe-area-inset-top, 0px), 28px));
+      }
+      html.play-store-webview .sticky-header {
+        padding-top: 0;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function isSamsungBrowser() {
@@ -139,6 +161,7 @@
   }
 
   window.isPlayStoreApp = isPlayStoreApp;
+  window.isAndroidWebView = isAndroidWebView;
   window.openInChrome = openInChrome;
   window.buildChromeIntentUrl = buildChromeIntentUrl;
   window.isAndroidChrome = isAndroidChrome;
@@ -149,8 +172,12 @@
   window.goToInstallHelp = goToInstallHelp;
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", maybeRedirectToChrome);
+    document.addEventListener("DOMContentLoaded", () => {
+      applyPlayStoreWebViewInsets();
+      maybeRedirectToChrome();
+    });
   } else {
+    applyPlayStoreWebViewInsets();
     maybeRedirectToChrome();
   }
 })();
