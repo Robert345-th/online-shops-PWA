@@ -36,6 +36,11 @@
     return isAndroid() && /;\s*wv\)|\bwv\b|WebView/i.test(navigator.userAgent);
   }
 
+  function registerPlayStoreServiceWorker() {
+    if (!isPlayStoreApp() || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+  }
+
   function applyPlayStoreWebViewInsets() {
     if (!isPlayStoreApp() || !isAndroidWebView()) return;
     document.documentElement.classList.add("play-store-webview");
@@ -189,10 +194,12 @@
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
+      registerPlayStoreServiceWorker();
       applyPlayStoreWebViewInsets();
       maybeRedirectToChrome();
     });
   } else {
+    registerPlayStoreServiceWorker();
     applyPlayStoreWebViewInsets();
     maybeRedirectToChrome();
   }

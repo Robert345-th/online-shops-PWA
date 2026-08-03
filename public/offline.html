@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ZedMarket — Offline</title>
+<meta name="theme-color" content="#111111" />
+<style>
+  :root { --bg: #F4F1EC; --black: #111111; --gold: #F5C518; --subtext: #6B6B66; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+  }
+  .card {
+    width: 100%;
+    max-width: 360px;
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  .logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    margin: 0 auto 16px;
+    display: block;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; color: var(--black); }
+  p { font-size: 14px; line-height: 1.5; color: var(--subtext); margin-bottom: 20px; }
+  .retry {
+    display: inline-block;
+    background: var(--black);
+    color: var(--gold);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .hint { font-size: 12px; color: var(--subtext); margin-top: 16px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/icon-192.png" alt="ZedMarket" width="64" height="64" />
+    <h1>You’re offline</h1>
+    <p>Turn on mobile data or Wi‑Fi, then try again. ZedMarket needs internet to load listings.</p>
+    <button class="retry" type="button" onclick="retry()">Try again</button>
+    <div class="hint">ZedMarket — Zambia’s buy &amp; sell marketplace</div>
+  </div>
+  <script>
+    function retry() {
+      if (navigator.onLine) {
+        window.location.replace("/?utm_source=android");
+      } else {
+        window.location.reload();
+      }
+    }
+    window.addEventListener("online", retry);
+  </script>
+</body>
+</html>

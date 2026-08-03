@@ -2,7 +2,10 @@
   "name": "zedmarket-android",
   "private": true,
   "scripts": {
-    "build": "bubblewrap build && node copy-apk.js",
+    "sync": "bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade",
+    "patch": "node patch-webview-only.js && node patch-offline-shell.js",
+    "build": "npm run sync && npm run patch && bubblewrap build --skipPwaValidation && node copy-apk.js",
+    "build:aab": "npm run sync && npm run patch && bubblewrap build --skipPwaValidation",
     "fingerprint": "bubblewrap fingerprint list"
   },
   "devDependencies": {
