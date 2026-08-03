@@ -6,13 +6,11 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import androidx.core.view.WindowCompat;
 
 public class OfflineShellActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        WindowCompat.enableEdgeToEdge(getWindow());
 
         WebView webView = new WebView(this);
         WebSettings settings = webView.getSettings();
