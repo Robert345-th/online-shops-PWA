@@ -52,8 +52,24 @@ Copy the SHA-256 into `public/.well-known/assetlinks.json`, then deploy.
 - First build creates `android/android.keystore` — **back this up safely**
 - Use the **same keystore** when you upload to Play Store later
 
-## Deploy
+## PWABuilder settings (Play Store)
 
-Push to GitHub so Railway redeploys. Users download from:
+| Setting | Value |
+|---------|--------|
+| Package ID | `app.zedmarket.twa` |
+| Host | `zedmarket.app` |
+| Start URL | `/?utm_source=android` |
+| Display | **Fullscreen sticky** |
+| Fallback type | **Web View** (not Custom Tabs — hides URL bar on Tecno/Infinix) |
+| Monochrome icon URL | `https://zedmarket.app/icon-512.png` (must be absolute) |
+| Signing | **Use mine** → `upload.keystore` or package (3) `signing.keystore`, alias `upload`, password `ZmUpload2026!` |
 
-**https://zedmarket.app/download.html**
+After download, folder must contain **`ZedMarket.aab`** (signed). Never upload `ZedMarket-unsigned.aab`.
+
+## Phone still shows Chrome bar?
+
+1. Update **Google Chrome** from Play Store.
+2. **Settings → Apps → Default apps → Browser** → choose **Chrome**.
+3. Clear Chrome data, uninstall ZedMarket, restart, reinstall from Internal testing.
+4. Rebuild with **Web View** fallback (above) if bar remains.
+

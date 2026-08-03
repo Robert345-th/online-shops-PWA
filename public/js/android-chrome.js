@@ -27,7 +27,7 @@
     if (isStandalone()) return true;
     const ref = document.referrer || "";
     if (/^android-app:\/\/app\.zedmarket\.twa/i.test(ref)) return true;
-    if (/[?&]utm_source=android\b/i.test(location.search)) return true;
+    if (/[?&]utm_source=(android|pwa)\b/i.test(location.search)) return true;
     return false;
   }
 
