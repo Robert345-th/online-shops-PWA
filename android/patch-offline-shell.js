@@ -52,9 +52,17 @@ if (!launcher.includes("isNetworkAvailable()")) {
   const networkHelper = `
     private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
-        return caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        if (cm == null) return true;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                return caps == null || caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+            }
+            android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+            return info == null || info.isConnected();
+        } catch (Exception e) {
+            return true;
+        }
     }
 `;
   launcher = launcher.replace(/\n}\s*$/, `\n${networkHelper}\n}\n`);

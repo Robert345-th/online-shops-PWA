@@ -70,17 +70,26 @@ if (!manifest.includes(".ZedMarketWebViewActivity")) {
   manifest = manifest.replace(
     "<activity android:name=\"com.google.androidbrowserhelper.trusted.WebViewFallbackActivity\"\n            android:configChanges=\"orientation|screenSize\" />",
     `<activity android:name=".ZedMarketWebViewActivity"
-            android:configChanges="orientation|screenSize"
-            android:exported="false" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
 
         <activity android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
             android:configChanges="orientation|screenSize" />`
   );
-  fs.writeFileSync(manifestPath, manifest);
   console.log("Registered ZedMarketWebViewActivity + location permissions in AndroidManifest.xml");
-} else {
-  fs.writeFileSync(manifestPath, manifest);
-  console.log("AndroidManifest already patched for location.");
+} else if (!manifest.includes('android:name=".ZedMarketWebViewActivity"') || !manifest.includes("Theme.Black.NoTitleBar")) {
+  // Ensure solid theme (translucent app theme crashes WebView on many phones).
+  manifest = manifest.replace(
+    /<activity android:name="\.ZedMarketWebViewActivity"[\s\S]*?\/>/,
+    `<activity android:name=".ZedMarketWebViewActivity"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />`
+  );
+  console.log("Updated ZedMarketWebViewActivity theme to solid black.");
 }
+
+fs.writeFileSync(manifestPath, manifest);
 
 console.log("Native location handling ready for next AAB build (Internal testing).");

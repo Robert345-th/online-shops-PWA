@@ -1,8 +1,5 @@
 /*
- * Full-screen WebView for Play Store testing app with native location handling.
- * - Retries GPS on each website request (not blocked like Chrome site permissions).
- * - Opens app Settings only when Android location is permanently denied.
- * - Shows a notice when the user declines (No thanks / GPS unavailable).
+ * Full-screen WebView for Play Store testing app with native location + photo picker.
  */
 package app.zedmarket.twa;
 
@@ -55,6 +52,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final String TAG = "ZedMarketWebView";
     private static final int REQ_LOCATION = 9001;
     private static final int REQ_FILE_CHOOSER = 9002;
+    private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
     private static final String KEY_PREFIX =
             "app.zedmarket.twa.ZedMarketWebViewActivity.";
@@ -64,9 +62,9 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final String KEY_EXTRA_ORIGINS = KEY_PREFIX + "EXTRA_ORIGINS";
 
     private Uri mLaunchUrl;
-    private int mStatusBarColor;
+    private int mStatusBarColor = FALLBACK_COLOR;
     private WebView mWebView;
-    private List<Uri> mExtraOrigins = new ArrayList<>();
+    private final List<Uri> mExtraOrigins = new ArrayList<>();
 
     private String mPendingGeoOrigin;
     private GeolocationPermissions.Callback mPendingGeoCallback;
@@ -79,10 +77,8 @@ public class ZedMarketWebViewActivity extends Activity {
             LauncherActivityMetadata metadata) {
         Intent intent = new Intent(context, ZedMarketWebViewActivity.class);
         intent.putExtra(KEY_LAUNCH_URI, launchUrl);
-        intent.putExtra(KEY_STATUS_BAR_COLOR,
-                ContextCompat.getColor(context, metadata.statusBarColorId));
-        intent.putExtra(KEY_NAVIGATION_BAR_COLOR,
-                ContextCompat.getColor(context, metadata.navigationBarColorId));
+        intent.putExtra(KEY_STATUS_BAR_COLOR, safeColor(context, metadata.statusBarColorId));
+        intent.putExtra(KEY_NAVIGATION_BAR_COLOR, safeColor(context, metadata.navigationBarColorId));
         if (metadata.additionalTrustedOrigins != null) {
             intent.putStringArrayListExtra(KEY_EXTRA_ORIGINS,
                     new ArrayList<>(metadata.additionalTrustedOrigins));
@@ -90,65 +86,77 @@ public class ZedMarketWebViewActivity extends Activity {
         return intent;
     }
 
+    private static int safeColor(Context context, int colorResId) {
+        try {
+            if (colorResId != 0) {
+                return ContextCompat.getColor(context, colorResId);
+            }
+        } catch (Exception ignored) {
+            // Fall through to default brand color.
+        }
+        return FALLBACK_COLOR;
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mLaunchUrl = getIntent().getParcelableExtra(KEY_LAUNCH_URI);
-        if (mLaunchUrl == null || !"https".equals(mLaunchUrl.getScheme())) {
-            throw new IllegalArgumentException("launchUrl must use https");
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                && Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            if (getIntent().hasExtra(KEY_NAVIGATION_BAR_COLOR)) {
-                getWindow().setNavigationBarColor(
-                        getIntent().getIntExtra(KEY_NAVIGATION_BAR_COLOR, 0));
+        try {
+            mLaunchUrl = getIntent().getParcelableExtra(KEY_LAUNCH_URI);
+            if (mLaunchUrl == null || mLaunchUrl.getScheme() == null
+                    || !"https".equalsIgnoreCase(mLaunchUrl.getScheme())) {
+                mLaunchUrl = Uri.parse("https://zedmarket.app/?utm_source=android");
             }
-        }
 
-        if (getIntent().hasExtra(KEY_STATUS_BAR_COLOR)) {
-            mStatusBarColor = getIntent().getIntExtra(KEY_STATUS_BAR_COLOR, 0);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                    && Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                getWindow().setStatusBarColor(mStatusBarColor);
+            mStatusBarColor = getIntent().getIntExtra(KEY_STATUS_BAR_COLOR, FALLBACK_COLOR);
+            int navigationBarColor = getIntent().getIntExtra(KEY_NAVIGATION_BAR_COLOR, FALLBACK_COLOR);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                try {
+                    getWindow().setStatusBarColor(mStatusBarColor);
+                    getWindow().setNavigationBarColor(navigationBarColor);
+                } catch (Exception ignored) {
+                    // Some OEMs reject status/nav bar color changes.
+                }
             }
-        } else {
-            mStatusBarColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
-                    ? getWindow().getStatusBarColor() : Color.WHITE;
-        }
 
-        if (getIntent().hasExtra(KEY_EXTRA_ORIGINS)) {
-            List<String> extraOrigins = getIntent().getStringArrayListExtra(KEY_EXTRA_ORIGINS);
-            if (extraOrigins != null) {
-                for (String extraOrigin : extraOrigins) {
-                    Uri extraOriginUri = Uri.parse(extraOrigin);
-                    if ("https".equalsIgnoreCase(extraOriginUri.getScheme())) {
-                        mExtraOrigins.add(extraOriginUri);
+            if (getIntent().hasExtra(KEY_EXTRA_ORIGINS)) {
+                List<String> extraOrigins = getIntent().getStringArrayListExtra(KEY_EXTRA_ORIGINS);
+                if (extraOrigins != null) {
+                    for (String extraOrigin : extraOrigins) {
+                        Uri extraOriginUri = Uri.parse(extraOrigin);
+                        if (extraOriginUri != null
+                                && "https".equalsIgnoreCase(extraOriginUri.getScheme())) {
+                            mExtraOrigins.add(extraOriginUri);
+                        }
                     }
                 }
             }
+
+            mWebView = new WebView(this);
+            mWebView.addJavascriptInterface(new LocationBridge(), "ZedMarketLocation");
+            mWebView.setWebViewClient(createWebViewClient());
+            mWebView.setWebChromeClient(createWebChromeClient());
+            setupWebSettings(mWebView.getSettings());
+
+            setContentView(mWebView, new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+
+            if (savedInstanceState != null) {
+                mWebView.restoreState(savedInstanceState);
+                return;
+            }
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Referer", "android-app://" + getPackageName() + "/");
+            mWebView.loadUrl(mLaunchUrl.toString(), headers);
+        } catch (Exception ex) {
+            Log.e(TAG, "Failed to start WebView", ex);
+            Toast.makeText(this, "Could not open ZedMarket. Update Android System WebView.", Toast.LENGTH_LONG).show();
+            finish();
         }
-
-        mWebView = new WebView(this);
-        mWebView.addJavascriptInterface(new LocationBridge(), "ZedMarketLocation");
-        mWebView.setWebViewClient(createWebViewClient());
-        mWebView.setWebChromeClient(createWebChromeClient());
-        setupWebSettings(mWebView.getSettings());
-
-        setContentView(mWebView, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        if (savedInstanceState != null) {
-            mWebView.restoreState(savedInstanceState);
-            return;
-        }
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Referer", "android-app://" + getPackageName() + "/");
-        mWebView.loadUrl(mLaunchUrl.toString(), headers);
     }
 
     @Override
@@ -209,7 +217,7 @@ public class ZedMarketWebViewActivity extends Activity {
                     }
                 } else if (data.getData() != null) {
                     results = new Uri[]{data.getData()};
-                } else if (data.getDataString() != null) {
+                } else {
                     results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
                 }
             }
@@ -307,20 +315,34 @@ public class ZedMarketWebViewActivity extends Activity {
 
             @Override
             public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
-                ViewGroup parent = (ViewGroup) view.getParent();
-                parent.removeView(view);
-                view.destroy();
-                mWebView = new WebView(ZedMarketWebViewActivity.this);
-                mWebView.addJavascriptInterface(new LocationBridge(), "ZedMarketLocation");
-                mWebView.setWebViewClient(this);
-                mWebView.setWebChromeClient(createWebChromeClient());
-                setupWebSettings(mWebView.getSettings());
-                parent.addView(mWebView);
-                mWebView.loadUrl(mLaunchUrl.toString());
+                try {
+                    ViewGroup parent = (ViewGroup) view.getParent();
+                    if (parent != null) {
+                        parent.removeView(view);
+                    }
+                    view.destroy();
+                    mWebView = new WebView(ZedMarketWebViewActivity.this);
+                    mWebView.addJavascriptInterface(new LocationBridge(), "ZedMarketLocation");
+                    mWebView.setWebViewClient(this);
+                    mWebView.setWebChromeClient(createWebChromeClient());
+                    setupWebSettings(mWebView.getSettings());
+                    if (parent != null) {
+                        parent.addView(mWebView);
+                    } else {
+                        setContentView(mWebView);
+                    }
+                    mWebView.loadUrl(mLaunchUrl.toString());
+                } catch (Exception ex) {
+                    Log.e(TAG, "WebView recovery failed", ex);
+                    finish();
+                }
                 return true;
             }
 
             private boolean shouldOverrideUrlLoading(Uri navigationUrl) {
+                if (navigationUrl == null) {
+                    return false;
+                }
                 if ("data".equals(navigationUrl.getScheme())) {
                     return false;
                 }
@@ -440,6 +462,11 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private static boolean uriOriginsMatch(Uri uriA, Uri uriB) {
+        if (uriA == null || uriB == null
+                || uriA.getScheme() == null || uriB.getScheme() == null
+                || uriA.getHost() == null || uriB.getHost() == null) {
+            return false;
+        }
         return uriA.getScheme().equalsIgnoreCase(uriB.getScheme())
                 && uriA.getHost().equalsIgnoreCase(uriB.getHost())
                 && uriA.getPort() == uriB.getPort();
