@@ -148,6 +148,26 @@
     width: 100%; background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 12px; font-size: 14px; color: var(--text);
   }
+  .loc-row { display: flex; gap: 8px; padding: 0 12px 10px; }
+  .loc-chip { flex: 1; text-align: center; }
+  .loc-toast {
+    position: fixed; left: 12px; right: 12px; bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    z-index: 190; background: var(--card); border: 1px solid var(--orange); border-radius: 14px;
+    padding: 14px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    display: none; align-items: flex-start; gap: 10px;
+    animation: locToastIn 0.25s ease;
+  }
+  .loc-toast.show { display: flex; }
+  .loc-toast-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+  .loc-toast-text { font-size: 13px; line-height: 1.45; color: var(--text); flex: 1; }
+  .loc-toast-close {
+    background: none; border: none; color: var(--subtext); font-size: 20px;
+    line-height: 1; cursor: pointer; padding: 0 2px; flex-shrink: 0;
+  }
+  @keyframes locToastIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   .chips-row {
     display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 8px;
     -ms-overflow-style: none; scrollbar-width: none;
@@ -288,6 +308,11 @@
     <input class="search-input" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="Search listings..." />
   </div>
 
+  <div class="loc-row" id="locRow">
+    <div class="chip loc-chip active" id="locHome"><span data-i18n="loc_home">Home area</span></div>
+    <div class="chip loc-chip" id="locCurrent"><span data-i18n="loc_current">Use current location</span></div>
+  </div>
+
   <div class="chips-row" id="sortRow"></div>
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
   </div>
@@ -304,9 +329,15 @@
   <div class="modal-box">
     <div class="modal-title" data-i18n="loc_prompt_title">Turn on your location</div>
     <div class="modal-text" data-i18n="loc_prompt_body">ZedMarket uses your area to show nearby listings and distance (like 2 km away). This helps buyers and sellers find each other.</div>
-    <button type="button" class="loc-button" id="locationPromptAllow" data-i18n="loc_allow">Allow location</button>
+    <button type="button" class="loc-button" id="locationPromptAllow" data-i18n="loc_turn_on">Turn on location</button>
     <button type="button" class="modal-later-btn" id="locationPromptLater" data-i18n="loc_prompt_later">Not now</button>
   </div>
+</div>
+
+<div class="loc-toast" id="locToast" role="status" aria-live="polite">
+  <span class="loc-toast-icon" aria-hidden="true">📍</span>
+  <div class="loc-toast-text" id="locToastText"></div>
+  <button type="button" class="loc-toast-close" id="locToastClose" aria-label="Dismiss">×</button>
 </div>
 
 <script src="/js/utils.js"></script>
@@ -399,14 +430,16 @@
   }
 
   const LOCATION_PROMPT_KEY = "zm_location_prompt_dismissed";
+  let locToastTimer = null;
+  let locRetryAfterGrant = false;
 
   function shouldShowLocationPrompt() {
     if (readSavedCoords("zm_home_location")) return false;
     return localStorage.getItem(LOCATION_PROMPT_KEY) !== "1";
   }
 
-  function showLocationPrompt() {
-    if (!shouldShowLocationPrompt()) return;
+  function showLocationPrompt(force) {
+    if (!force && !shouldShowLocationPrompt()) return;
     const modal = document.getElementById("locationPromptModal");
     if (typeof applyTranslations === "function") applyTranslations(modal);
     modal.classList.add("open");
@@ -417,12 +450,90 @@
     if (dismiss) localStorage.setItem(LOCATION_PROMPT_KEY, "1");
   }
 
+  function hideLocationToast() {
+    const toast = document.getElementById("locToast");
+    if (!toast) return;
+    toast.classList.remove("show");
+    if (locToastTimer) {
+      clearTimeout(locToastTimer);
+      locToastTimer = null;
+    }
+  }
+
+  function showLocationDeclinedNotice() {
+    hideLocationToast();
+    const toast = document.getElementById("locToast");
+    const text = document.getElementById("locToastText");
+    if (!toast || !text) return;
+    text.textContent = t("loc_no_thanks_notice");
+    toast.classList.add("show");
+    if (locToastTimer) clearTimeout(locToastTimer);
+    locToastTimer = setTimeout(hideLocationToast, 8000);
+    showLocationPrompt(true);
+  }
+
+  function switchToHomeArea() {
+    document.getElementById("locHome")?.classList.add("active");
+    document.getElementById("locCurrent")?.classList.remove("active");
+    loadMyCoords();
+    renderFeed();
+  }
+
+  function setLocCurrentLoading(loading) {
+    const label = document.querySelector("#locCurrent span");
+    if (!label) return;
+    label.textContent = loading ? t("loc_getting") : t("loc_current");
+  }
+
+  async function applyCoordsFromDevice(coords, saveHome) {
+    if (!isValidCoords(coords)) return false;
+    myCoords = coords;
+    if (saveHome) {
+      localStorage.setItem("zm_home_location", JSON.stringify(coords));
+      const label = await reverseGeocodeLabel(coords.lat, coords.lng);
+      localStorage.setItem("zm_user_location_label", label);
+    }
+    loadMyCoords();
+    renderFeed();
+    return true;
+  }
+
+  async function handleUseCurrentLocation() {
+    hideLocationToast();
+    hideLocationPrompt(false);
+    document.getElementById("locCurrent")?.classList.add("active");
+    document.getElementById("locHome")?.classList.remove("active");
+    setLocCurrentLoading(true);
+
+    try {
+      const coords = await requestCurrentLocationCoords();
+      const ok = await applyCoordsFromDevice(coords, true);
+      if (ok) {
+        locRetryAfterGrant = false;
+        sortBy = "Nearest";
+        renderChips();
+        return;
+      }
+      switchToHomeArea();
+      showLocationDeclinedNotice();
+    } catch (err) {
+      if (err && err.code === 1) {
+        locRetryAfterGrant = true;
+        openLocationPermissionSettings();
+      }
+      switchToHomeArea();
+      showLocationDeclinedNotice();
+    } finally {
+      setLocCurrentLoading(false);
+    }
+  }
+
   async function saveHomeLocationFromDevice() {
     const btn = document.getElementById("locationPromptAllow");
     btn.disabled = true;
     btn.textContent = t("loc_getting");
     try {
-      const coords = await requestUserLocationCoords();
+      const coords = await requestCurrentLocationCoords();
       const label = await reverseGeocodeLabel(coords.lat, coords.lng);
       localStorage.setItem("zm_home_location", JSON.stringify(coords));
       localStorage.setItem("zm_user_location_label", label);
@@ -431,16 +542,20 @@
       renderChips();
       renderFeed();
       hideLocationPrompt(false);
+      hideLocationToast();
+      document.getElementById("locCurrent")?.classList.add("active");
+      document.getElementById("locHome")?.classList.remove("active");
+      locRetryAfterGrant = false;
     } catch (err) {
       if (err && err.code === 1) {
-        alert(t("loc_prompt_denied", "Location was blocked. Allow it in your phone settings, or add your area in Settings."));
-      } else {
-        alert(t("listing_location_gps_fail", "Could not get GPS. Add your area in Settings."));
+        locRetryAfterGrant = true;
+        openLocationPermissionSettings();
       }
-      hideLocationPrompt(true);
+      switchToHomeArea();
+      showLocationDeclinedNotice();
     } finally {
       btn.disabled = false;
-      btn.textContent = t("loc_allow");
+      btn.textContent = t("loc_turn_on");
     }
   }
 
@@ -449,6 +564,21 @@
   document.getElementById("locationPromptModal").addEventListener("click", (e) => {
     if (e.target.id === "locationPromptModal") hideLocationPrompt(true);
   });
+  document.getElementById("locHome")?.addEventListener("click", () => {
+    hideLocationToast();
+    hideLocationPrompt(false);
+    switchToHomeArea();
+  });
+  document.getElementById("locCurrent")?.addEventListener("click", handleUseCurrentLocation);
+  document.getElementById("locToastClose")?.addEventListener("click", hideLocationToast);
+
+  watchLocationPermission((state) => {
+    if (state === "granted" && locRetryAfterGrant) handleUseCurrentLocation();
+  });
+
+  function initLocationOnOpen() {
+    switchToHomeArea();
+  }
 
   function getDistanceKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -808,6 +938,7 @@
     if (feed.classList.contains("grid")) renderFeed();
   });
   loadListings(true);
+  initLocationOnOpen();
   setTimeout(showLocationPrompt, 800);
   setTimeout(syncLoggedInServices, 0);
   document.addEventListener("DOMContentLoaded", () => {
@@ -820,11 +951,20 @@
     loadMyCoords();
     applyListingDistances();
     loadFavoriteIds().then(() => renderFeed());
+    initLocationOnOpen();
+    getLocationPermissionState().then((state) => {
+      if (state === "granted" && locRetryAfterGrant) handleUseCurrentLocation();
+    });
   });
   window.addEventListener("langchange", () => {
     refreshAuthState();
     renderChips();
     loadTopSellers();
+    const toast = document.getElementById("locToast");
+    if (toast?.classList.contains("show")) {
+      document.getElementById("locToastText").textContent = t("loc_no_thanks_notice");
+    }
+    setLocCurrentLoading(false);
     if (feed.classList.contains("empty")) {
       feed.innerHTML = `
         <div>${t("feed_empty")}</div>
