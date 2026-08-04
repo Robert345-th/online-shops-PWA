@@ -43,5 +43,14 @@ if (fs.existsSync(proguardSrc)) {
   console.log("Installed ProGuard keep rules for WebView activities.");
 }
 
+if (!gradle.includes("play-services-location")) {
+  gradle = gradle.replace(
+    /dependencies\s*\{/,
+    `dependencies {
+    implementation 'com.google.android.gms:play-services-location:21.3.0'`
+  );
+  console.log("Added play-services-location for Turn on location dialog.");
+}
+
 fs.writeFileSync(gradlePath, gradle);
 console.log(`Set version to ${name} (${code}) in build.gradle`);

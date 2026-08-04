@@ -1,5 +1,8 @@
 /*
- * Full-screen WebView for Play Store testing app with native location + photo picker.
+ * Full-screen WebView for Play Store testing app with:
+ * - App location permission
+ * - System "Turn on location" / Location Accuracy dialog
+ * - Photo file picker
  */
 package app.zedmarket.twa;
 
@@ -10,9 +13,11 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,6 +46,11 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.Priority;
 import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata;
 
 import java.util.ArrayList;
@@ -52,6 +62,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final String TAG = "ZedMarketWebView";
     private static final int REQ_LOCATION = 9001;
     private static final int REQ_FILE_CHOOSER = 9002;
+    private static final int REQ_TURN_ON_LOCATION = 9003;
     private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
     private static final String KEY_PREFIX =
@@ -203,6 +214,21 @@ public class ZedMarketWebViewActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_TURN_ON_LOCATION) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (mPendingGeoCallback != null) {
+                    finishGeoGrant(true);
+                } else {
+                    showLocationNotice(getString(R.string.loc_settings_enabled_retry));
+                }
+            } else {
+                if (mPendingGeoCallback != null) {
+                    finishGeoGrant(false);
+                }
+                showLocationNotice(getString(R.string.loc_declined_notice));
+            }
+            return;
+        }
         if (requestCode == REQ_FILE_CHOOSER) {
             if (mFilePathCallback == null) {
                 return;
@@ -235,13 +261,6 @@ public class ZedMarketWebViewActivity extends Activity {
         if (requestCode != REQ_LOCATION) {
             return;
         }
-        if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
-            return;
-        }
-        GeolocationPermissions.Callback callback = mPendingGeoCallback;
-        String origin = mPendingGeoOrigin;
-        mPendingGeoCallback = null;
-        mPendingGeoOrigin = null;
 
         boolean granted = false;
         for (int result : grantResults) {
@@ -250,12 +269,14 @@ public class ZedMarketWebViewActivity extends Activity {
                 break;
             }
         }
+
         if (granted) {
-            callback.invoke(origin, true, false);
+            // App permission granted — now ask to Turn on system location / Location Accuracy.
+            ensureSystemLocationOnThenGrant();
             return;
         }
 
-        callback.invoke(origin, false, false);
+        finishGeoGrant(false);
         if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)) {
             openAppLocationSettings(true);
@@ -264,11 +285,94 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
+    private void finishGeoGrant(boolean allow) {
+        if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
+            return;
+        }
+        mPendingGeoCallback.invoke(mPendingGeoOrigin, allow, false);
+        mPendingGeoCallback = null;
+        mPendingGeoOrigin = null;
+    }
+
     private boolean hasLocationPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean isSystemLocationEnabled() {
+        try {
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            if (lm == null) {
+                return true;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return lm.isLocationEnabled();
+            }
+            return lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                    || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    /**
+     * Shows the system "Turn on location" / Location Accuracy dialog (Turn on / No thanks).
+     * This is separate from the "Allow ZedMarket to access location?" permission dialog.
+     */
+    private void ensureSystemLocationOnThenGrant() {
+        if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
+            return;
+        }
+
+        try {
+            LocationRequest request = new LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY, 10000L)
+                    .setMinUpdateIntervalMillis(5000L)
+                    .build();
+
+            LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(request)
+                    .setAlwaysShow(true)
+                    .build();
+
+            LocationServices.getSettingsClient(this)
+                    .checkLocationSettings(settingsRequest)
+                    .addOnSuccessListener(this, response -> finishGeoGrant(true))
+                    .addOnFailureListener(this, e -> {
+                        if (e instanceof ResolvableApiException) {
+                            try {
+                                ((ResolvableApiException) e)
+                                        .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
+                            } catch (IntentSender.SendIntentException ex) {
+                                openLocationSourceSettings();
+                            }
+                        } else if (!isSystemLocationEnabled()) {
+                            openLocationSourceSettings();
+                        } else {
+                            // Settings check failed but location looks on — let WebView try GPS.
+                            finishGeoGrant(true);
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Location settings check failed", e);
+            if (!isSystemLocationEnabled()) {
+                openLocationSourceSettings();
+            } else {
+                finishGeoGrant(true);
+            }
+        }
+    }
+
+    private void openLocationSourceSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            showLocationNotice(getString(R.string.loc_turn_on_settings));
+        } catch (ActivityNotFoundException ex) {
+            openAppLocationSettings(false);
+        }
+        finishGeoGrant(false);
     }
 
     private void openAppLocationSettings(boolean retryAfter) {
@@ -285,6 +389,24 @@ public class ZedMarketWebViewActivity extends Activity {
 
     private void showLocationNotice(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void handleGeolocationPrompt(String origin, GeolocationPermissions.Callback callback) {
+        mPendingGeoOrigin = origin;
+        mPendingGeoCallback = callback;
+
+        if (!hasLocationPermission()) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    },
+                    REQ_LOCATION);
+            return;
+        }
+
+        ensureSystemLocationOnThenGrant();
     }
 
     private void injectLocationHelper(WebView view) {
@@ -381,23 +503,7 @@ public class ZedMarketWebViewActivity extends Activity {
             @Override
             public void onGeolocationPermissionsShowPrompt(
                     String origin, GeolocationPermissions.Callback callback) {
-                mPendingGeoOrigin = origin;
-                mPendingGeoCallback = callback;
-
-                if (hasLocationPermission()) {
-                    callback.invoke(origin, true, false);
-                    mPendingGeoCallback = null;
-                    mPendingGeoOrigin = null;
-                    return;
-                }
-
-                ActivityCompat.requestPermissions(
-                        ZedMarketWebViewActivity.this,
-                        new String[]{
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                        },
-                        REQ_LOCATION);
+                handleGeolocationPrompt(origin, callback);
             }
 
             @Override
@@ -483,6 +589,53 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
+    /** Show Turn on location dialog even when WebView already has permission. */
+    private void promptTurnOnLocationDialog() {
+        try {
+            LocationRequest request = new LocationRequest.Builder(
+                    Priority.PRIORITY_HIGH_ACCURACY, 10000L)
+                    .setMinUpdateIntervalMillis(5000L)
+                    .build();
+            LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(request)
+                    .setAlwaysShow(true)
+                    .build();
+            LocationServices.getSettingsClient(this)
+                    .checkLocationSettings(settingsRequest)
+                    .addOnSuccessListener(this, response ->
+                            showLocationNotice(getString(R.string.loc_settings_enabled_retry)))
+                    .addOnFailureListener(this, e -> {
+                        if (e instanceof ResolvableApiException) {
+                            try {
+                                ((ResolvableApiException) e)
+                                        .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
+                            } catch (IntentSender.SendIntentException ex) {
+                                try {
+                                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                                } catch (ActivityNotFoundException ignored) {
+                                    // ignore
+                                }
+                            }
+                        } else if (!isSystemLocationEnabled()) {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                            } catch (ActivityNotFoundException ignored) {
+                                // ignore
+                            }
+                        } else {
+                            showLocationNotice(getString(R.string.loc_declined_notice));
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "promptTurnOnLocationDialog failed", e);
+            try {
+                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            } catch (ActivityNotFoundException ignored) {
+                // ignore
+            }
+        }
+    }
+
     private final class LocationBridge {
         @JavascriptInterface
         public void onGeolocationError(int code) {
@@ -491,7 +644,18 @@ public class ZedMarketWebViewActivity extends Activity {
                     openAppLocationSettings(false);
                     return;
                 }
-                showLocationNotice(getString(R.string.loc_declined_notice));
+                // GPS off / timeout / unavailable → show Turn on location again.
+                if (!hasLocationPermission()) {
+                    ActivityCompat.requestPermissions(
+                            ZedMarketWebViewActivity.this,
+                            new String[]{
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                            },
+                            REQ_LOCATION);
+                    return;
+                }
+                promptTurnOnLocationDialog();
             });
         }
     }
