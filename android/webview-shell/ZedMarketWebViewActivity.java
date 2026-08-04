@@ -306,14 +306,15 @@ public class ZedMarketWebViewActivity extends Activity {
         cb.invoke(origin, allow, false);
     }
 
-    /** Tell the page to drop "Getting location…" immediately after No thanks. */
+    /** Kill in-flight GPS immediately so "Getting location…" does not sit for ~20s. */
     private void notifyWebLocationCancelled() {
         if (mWebView == null) {
             return;
         }
         mWebView.evaluateJavascript(
                 "(function(){try{"
-                        + "window.dispatchEvent(new CustomEvent('zm-location-cancelled'));"
+                        + "if(window.__zmCancelLocation)window.__zmCancelLocation();"
+                        + "else window.dispatchEvent(new CustomEvent('zm-location-cancelled'));"
                         + "}catch(e){}})();",
                 null);
     }
@@ -475,20 +476,35 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void injectLocationHelper(WebView view) {
+        // Always refresh hook so cancel works even if an older hook was already installed.
         view.evaluateJavascript(
                 "(function(){"
-                        + "if(window.__zmLocHook)return;"
-                        + "window.__zmLocHook=1;"
                         + "var g=navigator.geolocation;"
                         + "if(!g)return;"
-                        + "var gp=g.getCurrentPosition.bind(g);"
+                        + "if(!window.__zmGeoOrig)window.__zmGeoOrig=g.getCurrentPosition.bind(g);"
+                        + "var gp=window.__zmGeoOrig;"
+                        + "var pending=[];"
                         + "g.getCurrentPosition=function(ok,err,opt){"
-                        + "gp(function(p){if(ok)ok(p);},function(e){"
-                        + "try{ZedMarketLocation.onGeolocationError(e&&e.code!=null?e.code:-1);}"
-                        + "catch(x){}"
+                        + "var done=false;"
+                        + "function finishErr(e){"
+                        + "if(done)return;done=true;"
+                        + "var i=pending.indexOf(finishErr);if(i>=0)pending.splice(i,1);"
+                        + "try{ZedMarketLocation.onGeolocationError(e&&e.code!=null?e.code:-1);}catch(x){}"
                         + "if(err)err(e);"
-                        + "},opt);"
+                        + "}"
+                        + "pending.push(finishErr);"
+                        + "gp(function(p){"
+                        + "if(done)return;done=true;"
+                        + "var i=pending.indexOf(finishErr);if(i>=0)pending.splice(i,1);"
+                        + "if(ok)ok(p);"
+                        + "},finishErr,opt||{});"
                         + "};"
+                        + "window.__zmCancelLocation=function(){"
+                        + "var list=pending.slice();pending.length=0;"
+                        + "for(var i=0;i<list.length;i++){try{list[i]({code:1,message:'cancelled'});}catch(e){}}"
+                        + "try{window.dispatchEvent(new CustomEvent('zm-location-cancelled'));}catch(e){}"
+                        + "};"
+                        + "window.__zmLocHook=3;"
                         + "})();",
                 null);
     }

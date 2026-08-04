@@ -1,9 +1,11 @@
 (function () {
   const GEO_OPTIONS = {
     enableHighAccuracy: false,
-    timeout: 20000,
+    timeout: 12000,
     maximumAge: 60000,
   };
+
+  let cancelPendingLocation = null;
 
   function isValidCoords(coords) {
     return (
@@ -21,29 +23,55 @@
         reject({ code: "UNSUPPORTED" });
         return;
       }
+      let settled = false;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        if (cancelPendingLocation === rejectPending) {
+          cancelPendingLocation = null;
+        }
+        fn(value);
+      };
+      const rejectPending = (err) => finish(reject, err || { code: 1, message: "cancelled" });
+      cancelPendingLocation = rejectPending;
+
       navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => reject(err),
+        (pos) =>
+          finish(resolve, {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          }),
+        (err) => finish(reject, err),
         { ...GEO_OPTIONS, ...(options || {}) }
       );
     });
   }
 
+  function abortLocationRequest() {
+    if (typeof cancelPendingLocation === "function") {
+      const reject = cancelPendingLocation;
+      cancelPendingLocation = null;
+      reject({ code: 1, message: "cancelled" });
+    }
+  }
+
+  window.addEventListener("zm-location-cancelled", abortLocationRequest);
+
   async function requestUserLocationCoords() {
     const perm = await getLocationPermissionState();
     if (perm === "denied") throw { code: 1 };
 
-    // One attempt, no high-accuracy force (avoids Location Accuracy dialog loops).
+    // One attempt only — No thanks / cancel must end this immediately (see abort above).
     return getDeviceCoords({
       enableHighAccuracy: false,
       maximumAge: 0,
-      timeout: 15000,
+      timeout: 12000,
     });
   }
 
   async function requestDeviceCoords(forceFresh) {
     const freshOpts = forceFresh
-      ? { maximumAge: 0, timeout: 15000, enableHighAccuracy: false }
+      ? { maximumAge: 0, timeout: 12000, enableHighAccuracy: false }
       : {};
     return getDeviceCoords(freshOpts);
   }
@@ -128,4 +156,5 @@
   window.readSavedCoords = readSavedCoords;
   window.formatDistanceKm = formatDistanceKm;
   window.showLocHint = showLocHint;
+  window.abortLocationRequest = abortLocationRequest;
 })();

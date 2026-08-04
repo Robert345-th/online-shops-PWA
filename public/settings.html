@@ -404,7 +404,7 @@
     window.addEventListener("zm-location-cancelled", onCancelled, { once: true });
     btn.textContent = t("loc_getting");
     try {
-      const coords = await withTimeout(requestUserLocationCoords(), 15000);
+      const coords = await withTimeout(requestUserLocationCoords(), 12000);
       if (cancelled) return;
       if (!isValidCoords(coords)) throw new Error("invalid");
       settingsCoords = coords;
