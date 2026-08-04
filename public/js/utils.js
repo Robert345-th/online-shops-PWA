@@ -1,6 +1,6 @@
 (function () {
   const API_URL = "https://online-shops-production.up.railway.app";
-  const SESSION_POLL_MS = 5000;
+  const SESSION_POLL_MS = 4000;
   let sessionPollTimer = null;
   let forcingLogout = false;
 
@@ -36,10 +36,15 @@
     }
   }
 
-  function isSuspendedResponse(res) {
-    if (!res) return false;
+  async function responseIsSuspended(res) {
+    if (!res || res.status !== 403) return false;
     if (res.headers && res.headers.get("X-Account-Suspended") === "1") return true;
-    return false;
+    try {
+      const data = await res.clone().json();
+      return !!(data && data.suspended);
+    } catch (e) {
+      return false;
+    }
   }
 
   function handleAuthResponse(res) {
@@ -51,9 +56,14 @@
       }
       return false;
     }
-    if (res.status === 403 && isSuspendedResponse(res)) {
-      forceLogoutSuspended("Your account has been suspended. Contact support.");
-      return false;
+    if (res.status === 403) {
+      if (res.headers && res.headers.get("X-Account-Suspended") === "1") {
+        forceLogoutSuspended("Your account has been suspended. Contact support.");
+        return false;
+      }
+      responseIsSuspended(res).then((suspended) => {
+        if (suspended) forceLogoutSuspended("Your account has been suspended. Contact support.");
+      });
     }
     return true;
   }
@@ -74,20 +84,11 @@
         if (!/login\.html/i.test(location.pathname)) location.href = "/login.html";
         return;
       }
-      if (res.status === 403) {
-        let suspended = isSuspendedResponse(res);
-        if (!suspended) {
-          try {
-            const data = await res.clone().json();
-            suspended = !!(data && data.suspended);
-          } catch (e) {}
-        }
-        if (suspended) {
-          forceLogoutSuspended("Your account has been suspended. Contact support.");
-        }
+      if (await responseIsSuspended(res)) {
+        forceLogoutSuspended("Your account has been suspended. Contact support.");
       }
     } catch (e) {
-      /* offline — keep session until next check */
+      /* offline — try again on next poll */
     }
   }
 
@@ -110,7 +111,33 @@
     }
   }
 
-  if ("serviceWorker" in navigator) {
+  function installFetchAuthGuard() {
+    if (window.__zmFetchGuard) return;
+    window.__zmFetchGuard = true;
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+      const res = await origFetch(input, init);
+      const url = typeof input === "string" ? input : (input && input.url) || "";
+      const isApi =
+        /online-shops-production\.up\.railway\.app/i.test(url) ||
+        (url.startsWith("/") && url.includes("/api/"));
+      if (!isApi || !localStorage.getItem("zm_token")) return res;
+
+      if (res.status === 401) {
+        clearAuth();
+        if (!/login\.html/i.test(location.pathname)) location.href = "/login.html";
+        return res;
+      }
+      if (res.status === 403 && (await responseIsSuspended(res))) {
+        forceLogoutSuspended("Your account has been suspended. Contact support.");
+      }
+      return res;
+    };
+  }
+
+  function registerSiteServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
     navigator.serviceWorker.addEventListener("message", (event) => {
       if (event.data && event.data.type === "force_logout") {
         forceLogoutSuspended(
@@ -128,9 +155,7 @@
   window.stopSessionWatch = stopSessionWatch;
   window.ZM_API_URL = API_URL;
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", startSessionWatch);
-  } else {
-    startSessionWatch();
-  }
+  installFetchAuthGuard();
+  registerSiteServiceWorker();
+  startSessionWatch();
 })();
