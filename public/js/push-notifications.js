@@ -250,6 +250,7 @@
       const res = await fetch(`${apiUrl}/messages/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       if (!res.ok) return;
       const conversations = await res.json();
       conversations.forEach((conv) => {

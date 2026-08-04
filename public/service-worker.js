@@ -58,15 +58,27 @@ self.addEventListener("push", (event) => {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (e) {}
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
+  const forceLogout = data.type === "force_logout";
+
+  event.waitUntil((async () => {
+    if (forceLogout) {
+      const clientsList = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clientsList) {
+        client.postMessage({
+          type: "force_logout",
+          message: data.body || "Your account has been suspended. Contact support.",
+        });
+      }
+    }
+
+    await self.registration.showNotification(data.title, {
       body: data.body,
       icon: data.icon,
       badge: data.icon,
       tag: data.tag,
-      data: { url: data.url },
-    })
-  );
+      data: { url: data.url || (forceLogout ? "/login.html?suspended=1" : "/chat-list.html") },
+    });
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {

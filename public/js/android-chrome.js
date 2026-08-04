@@ -192,15 +192,28 @@
   window.showInAppBrowserGuide = goToInstallHelp;
   window.goToInstallHelp = goToInstallHelp;
 
+  function ensureSessionWatchScript() {
+    if (window.startSessionWatch || document.querySelector('script[src="/js/utils.js"]')) {
+      if (window.startSessionWatch) window.startSessionWatch();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "/js/utils.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       registerPlayStoreServiceWorker();
       applyPlayStoreWebViewInsets();
       maybeRedirectToChrome();
+      ensureSessionWatchScript();
     });
   } else {
     registerPlayStoreServiceWorker();
     applyPlayStoreWebViewInsets();
     maybeRedirectToChrome();
+    ensureSessionWatchScript();
   }
 })();

@@ -199,7 +199,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
     if (!process.env.PUSH_WEBHOOK_SECRET || secret !== process.env.PUSH_WEBHOOK_SECRET) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { user_id, title, body, url, tag } = req.body;
+    const { user_id, title, body, url, tag, type } = req.body;
     if (!user_id) return res.status(400).json({ error: "user_id required" });
     const result = await sendPushToUser(user_id, {
       title: title || "ZedMarket",
@@ -207,6 +207,7 @@ function registerPushRoutes(app, getUserIdFromToken) {
       url: url || "/chat-list.html",
       tag: tag || `zedmarket-${user_id}`,
       icon: "https://zedmarket.app/icon-192.png",
+      type: type || undefined,
     });
     res.json({ ok: true, ...result });
   });

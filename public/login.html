@@ -82,6 +82,18 @@
 
   <div class="form-banner error" id="errorBanner"></div>
   <div class="form-banner success" id="successBanner"></div>
+  <script>
+    (function () {
+      const params = new URLSearchParams(location.search);
+      let reason = "";
+      try { reason = sessionStorage.getItem("zm_logout_reason") || ""; sessionStorage.removeItem("zm_logout_reason"); } catch (e) {}
+      if (params.get("suspended") === "1" || reason) {
+        const banner = document.getElementById("errorBanner");
+        banner.textContent = reason || "Your account has been suspended. Contact support.";
+        banner.classList.add("show");
+      }
+    })();
+  </script>
 
   <div class="label" data-i18n="phone_number">Phone Number</div>
   <div class="phone-row">
