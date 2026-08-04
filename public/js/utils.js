@@ -18,6 +18,27 @@
     localStorage.removeItem("zm_user");
   }
 
+  function zmIsLoggedIn() {
+    if (!localStorage.getItem("zm_token")) return false;
+    try {
+      const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+      return !!(user && typeof user === "object");
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function zmLoginUrl(nextPath) {
+    const next = nextPath || (location.pathname + location.search);
+    return `/login.html?next=${encodeURIComponent(next)}`;
+  }
+
+  function zmRequireLogin(nextPath) {
+    if (zmIsLoggedIn()) return true;
+    location.href = zmLoginUrl(nextPath);
+    return false;
+  }
+
   function forceLogoutSuspended(message) {
     if (forcingLogout) return;
     forcingLogout = true;
@@ -149,6 +170,9 @@
 
   window.escHtml = escHtml;
   window.clearAuth = clearAuth;
+  window.zmIsLoggedIn = zmIsLoggedIn;
+  window.zmRequireLogin = zmRequireLogin;
+  window.zmLoginUrl = zmLoginUrl;
   window.handleAuthResponse = handleAuthResponse;
   window.forceLogoutSuspended = forceLogoutSuspended;
   window.startSessionWatch = startSessionWatch;

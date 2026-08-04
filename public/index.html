@@ -240,7 +240,7 @@
 <div class="sticky-header">
   <div class="topbar">
     <div class="topbar-left">
-      <button class="gear" onclick="window.location.href='/settings.html'">
+      <button class="gear" type="button" onclick="if (zmRequireLogin('/settings.html')) location.href='/settings.html'">
         <div class="icon">☰</div>
         <div class="label" data-i18n="settings">Settings</div>
       </button>
@@ -256,8 +256,8 @@
       </button>
       <div class="icon-row">
       <button class="icon-btn" onclick="window.location.href='/map-view.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
-      <button class="icon-btn" id="chatNavBtn" onclick="window.location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge" id="chatUnreadBadge" style="display:none"></span></button>
-      <button class="icon-btn" onclick="window.location.href='/favorites.html'" aria-label="Favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+      <button class="icon-btn" id="chatNavBtn" type="button" onclick="if (zmRequireLogin('/chat-list.html')) location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge" id="chatUnreadBadge" style="display:none"></span></button>
+      <button class="icon-btn" type="button" onclick="if (zmRequireLogin('/favorites.html')) location.href='/favorites.html'" aria-label="Favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
       </div>
     </div>
   </div>
@@ -501,8 +501,8 @@
         <div>${t("feed_empty")}</div>
         <button type="button" class="empty-btn" id="emptyPostBtn">${t("post_listing")}</button>`;
       document.getElementById("emptyPostBtn")?.addEventListener("click", () => {
-        if (!getAuthUser() || !localStorage.getItem("zm_token")) window.location.href = "/login.html";
-        else window.location.href = "/post-listing.html";
+        if (!zmRequireLogin("/post-listing.html")) return;
+        window.location.href = "/post-listing.html";
       });
       updateLoadMoreButton();
       return;
@@ -550,10 +550,7 @@
   }
 
   async function toggleFavorite(listingId, btn) {
-    if (!isLoggedIn()) {
-      window.location.href = "/login.html";
-      return;
-    }
+    if (!zmRequireLogin()) return;
     const id = String(listingId);
     const token = localStorage.getItem("zm_token");
     const wasFav = favoriteIds.has(id);
@@ -739,8 +736,8 @@
         <div>${t("feed_empty")}</div>
         <button type="button" class="empty-btn" id="emptyPostBtn">${t("post_listing")}</button>`;
       document.getElementById("emptyPostBtn")?.addEventListener("click", () => {
-        if (!getAuthUser() || !localStorage.getItem("zm_token")) window.location.href = "/login.html";
-        else window.location.href = "/post-listing.html";
+        if (!zmRequireLogin("/post-listing.html")) return;
+        window.location.href = "/post-listing.html";
       });
     }
     if (feed.classList.contains("error")) renderFeedError();

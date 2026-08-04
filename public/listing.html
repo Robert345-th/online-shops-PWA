@@ -281,6 +281,7 @@
   }
 
   function requireContactSafety(action) {
+    if (!zmRequireLogin()) return;
     if (isOwnListing()) {
       action();
       return;
@@ -472,10 +473,7 @@
   }
 
   async function toggleFavorite() {
-    if (!currentUser || !token) {
-      window.location.href = "/login.html";
-      return;
-    }
+    if (!zmRequireLogin()) return;
     if (isOwnListing()) {
       alert(t("cant_save_own"));
       return;
@@ -554,7 +552,10 @@
     document.getElementById("shareListingBtn").addEventListener("click", handleShareListing);
     document.getElementById("reportOpenBtn").addEventListener("click", openReportModal);
     document.getElementById("safetyOpenBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.add("open"));
-    document.getElementById("shareMeetupBtn").addEventListener("click", handleShareMeetup);
+    document.getElementById("shareMeetupBtn").addEventListener("click", () => {
+      if (!zmRequireLogin()) return;
+      handleShareMeetup();
+    });
 
     const heroPhoto = document.getElementById("heroPhoto");
     if (heroPhoto) heroPhoto.addEventListener("click", () => openViewer(mainPhotoIndex, photos));
@@ -648,7 +649,7 @@
     });
   }
   function handleMessage() {
-    if (!currentUser) { window.location.href = "/login.html"; return; }
+    if (!zmRequireLogin()) return;
     if (isOwnListing()) {
       alert(t("cant_message_own"));
       return;
@@ -669,7 +670,7 @@
   }
 
   function openReviewModal() {
-    if (!currentUser) { window.location.href = "/login.html"; return; }
+    if (!zmRequireLogin()) return;
     document.getElementById("reviewModalTitle").textContent = t("rate_seller_title", { name: listing.shop_name || listing.seller_name });
     myRating = 5;
     renderStars();
@@ -707,6 +708,7 @@
   });
 
   function openReportModal() {
+    if (!zmRequireLogin()) return;
     selectedReason = "";
     document.getElementById("reasonsList").innerHTML = REPORT_REASONS.map(r =>
       `<div class="reason-row" data-reason="${r.id}"><div class="radio-circle"><div class="radio-dot" style="display:none;"></div></div><span>${t(r.key)}</span></div>`

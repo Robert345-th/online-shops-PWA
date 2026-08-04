@@ -95,6 +95,26 @@
     });
   }
 
+  function wireNavAuth() {
+    const mount = document.getElementById("bottomNav");
+    if (!mount || mount.dataset.authWired === "1") return;
+    mount.dataset.authWired = "1";
+    mount.querySelectorAll(".nav-item[href]").forEach((el) => {
+      const href = el.getAttribute("href") || "";
+      if (href === "/index.html" || href === "/") return;
+      el.addEventListener("click", (e) => {
+        if (typeof zmRequireLogin === "function") {
+          if (!zmRequireLogin(href)) e.preventDefault();
+          return;
+        }
+        if (!localStorage.getItem("zm_token")) {
+          e.preventDefault();
+          location.href = `/login.html?next=${encodeURIComponent(href)}`;
+        }
+      });
+    });
+  }
+
   function renderBottomNav(active) {
     injectStyles();
     let mount = document.getElementById("bottomNav");
@@ -121,6 +141,7 @@
     }).join("") + renderInstallNavItem();
     if (typeof applyTranslations === "function") applyTranslations(mount);
     wireInstallNavButton();
+    wireNavAuth();
     refreshNavConfirmBadge();
   }
 
