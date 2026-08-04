@@ -729,7 +729,7 @@
   }
   document.getElementById("reportCancelBtn").addEventListener("click", () => document.getElementById("reportModal").classList.remove("open"));
   document.getElementById("reportSubmitBtn").addEventListener("click", async () => {
-    if (!currentUser) { window.location.href = "/login.html"; return; }
+    if (!zmRequireLogin()) return;
     if (!selectedReason) { alert(t("report_select_required")); return; }
     const details = document.getElementById("reportDetails").value.trim();
     if (selectedReason === "other" && !details) { alert(t("report_describe_required")); return; }
