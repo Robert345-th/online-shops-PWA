@@ -33,32 +33,19 @@
     const perm = await getLocationPermissionState();
     if (perm === "denied") throw { code: 1 };
 
-    // One attempt only — do not force a second high-accuracy retry after decline/timeout.
-    // A second call was keeping "Getting location…" stuck and re-opening system dialogs.
+    // One attempt, no high-accuracy force (avoids Location Accuracy dialog loops).
     return getDeviceCoords({
-      enableHighAccuracy: true,
+      enableHighAccuracy: false,
       maximumAge: 0,
-      timeout: 25000,
+      timeout: 15000,
     });
   }
 
   async function requestDeviceCoords(forceFresh) {
     const freshOpts = forceFresh
-      ? { maximumAge: 0, timeout: 30000, enableHighAccuracy: true }
+      ? { maximumAge: 0, timeout: 15000, enableHighAccuracy: false }
       : {};
-
-    try {
-      return await getDeviceCoords(freshOpts);
-    } catch (err) {
-      if (err && (err.code === 2 || err.code === 3)) {
-        return await getDeviceCoords({
-          maximumAge: 0,
-          timeout: 30000,
-          enableHighAccuracy: false,
-        });
-      }
-      throw err;
-    }
+    return getDeviceCoords(freshOpts);
   }
 
   async function reverseGeocodeLabel(lat, lng) {

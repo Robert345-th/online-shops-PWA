@@ -393,12 +393,19 @@
     settingsGettingLocation = true;
     const btn = document.getElementById("settingsLocButton");
     const previousLabel = btn.textContent;
+    let cancelled = false;
+    const onCancelled = () => {
+      cancelled = true;
+      btn.textContent = previousLabel && previousLabel !== t("loc_getting")
+        ? previousLabel
+        : "Use my current location";
+      settingsGettingLocation = false;
+    };
+    window.addEventListener("zm-location-cancelled", onCancelled, { once: true });
     btn.textContent = t("loc_getting");
     try {
-      const coords = await withTimeout(
-        requestUserLocationCoords(),
-        30000
-      );
+      const coords = await withTimeout(requestUserLocationCoords(), 15000);
+      if (cancelled) return;
       if (!isValidCoords(coords)) throw new Error("invalid");
       settingsCoords = coords;
       let label;
@@ -407,15 +414,18 @@
       } catch {
         label = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`;
       }
+      if (cancelled) return;
       settingsLocationLabel = label;
       document.getElementById("settingsLocationInput").value = label;
       btn.textContent = label;
     } catch {
-      // Decline / timeout — stop "Getting location…" immediately, no forced retry.
-      btn.textContent = previousLabel && previousLabel !== t("loc_getting")
-        ? previousLabel
-        : "Use my current location";
+      if (!cancelled) {
+        btn.textContent = previousLabel && previousLabel !== t("loc_getting")
+          ? previousLabel
+          : "Use my current location";
+      }
     } finally {
+      window.removeEventListener("zm-location-cancelled", onCancelled);
       settingsGettingLocation = false;
     }
   });

@@ -82,8 +82,11 @@ public class ZedMarketWebViewActivity extends Activity {
     private GeolocationPermissions.Callback mPendingGeoCallback;
     private boolean mRetryLocationAfterSettings;
     private ValueCallback<Uri[]> mFilePathCallback;
-    /** After "No thanks", ignore error-hook prompts so the dialog does not reopen instantly. */
+    /** After "No thanks", block more Turn on / Location Accuracy dialogs for a short window. */
     private long mDeclinedTurnOnAtMs;
+    /** Prevents stacking multiple Location Accuracy dialogs from concurrent GPS requests. */
+    private boolean mTurnOnDialogShowing;
+    private boolean mSettingsCheckInFlight;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -218,6 +221,8 @@ public class ZedMarketWebViewActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQ_TURN_ON_LOCATION) {
+            mTurnOnDialogShowing = false;
+            mSettingsCheckInFlight = false;
             if (resultCode == Activity.RESULT_OK) {
                 mDeclinedTurnOnAtMs = 0;
                 if (mPendingGeoCallback != null) {
@@ -226,11 +231,10 @@ public class ZedMarketWebViewActivity extends Activity {
                     showLocationNotice(getString(R.string.loc_settings_enabled_retry));
                 }
             } else {
-                // User tapped No thanks — finish the web request and do NOT re-open the dialog.
+                // One No thanks ends the whole flow — block re-prompts briefly.
                 mDeclinedTurnOnAtMs = SystemClock.elapsedRealtime();
-                if (mPendingGeoCallback != null) {
-                    finishGeoGrant(false);
-                }
+                finishGeoGrant(false);
+                notifyWebLocationCancelled();
                 showLocationNotice(getString(R.string.loc_declined_notice));
             }
             return;
@@ -295,9 +299,23 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
             return;
         }
-        mPendingGeoCallback.invoke(mPendingGeoOrigin, allow, false);
+        GeolocationPermissions.Callback cb = mPendingGeoCallback;
+        String origin = mPendingGeoOrigin;
         mPendingGeoCallback = null;
         mPendingGeoOrigin = null;
+        cb.invoke(origin, allow, false);
+    }
+
+    /** Tell the page to drop "Getting location…" immediately after No thanks. */
+    private void notifyWebLocationCancelled() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{"
+                        + "window.dispatchEvent(new CustomEvent('zm-location-cancelled'));"
+                        + "}catch(e){}})();",
+                null);
     }
 
     private boolean hasLocationPermission() {
@@ -331,14 +349,26 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
             return;
         }
+        if (recentlyDeclinedTurnOn()) {
+            finishGeoGrant(false);
+            return;
+        }
+        // Device location already on — skip Location Accuracy dialog (that was the No thanks loop).
+        if (isSystemLocationEnabled()) {
+            finishGeoGrant(true);
+            return;
+        }
+        if (mTurnOnDialogShowing || mSettingsCheckInFlight) {
+            return;
+        }
 
+        mSettingsCheckInFlight = true;
         try {
             LocationRequest request = new LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY, 10000L)
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY, 10000L)
                     .setMinUpdateIntervalMillis(5000L)
                     .build();
 
-            // Only prompt when settings are actually insufficient — do not force every time.
             LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
                     .addLocationRequest(request)
                     .setAlwaysShow(false)
@@ -346,23 +376,41 @@ public class ZedMarketWebViewActivity extends Activity {
 
             LocationServices.getSettingsClient(this)
                     .checkLocationSettings(settingsRequest)
-                    .addOnSuccessListener(this, response -> finishGeoGrant(true))
+                    .addOnSuccessListener(this, response -> {
+                        mSettingsCheckInFlight = false;
+                        if (recentlyDeclinedTurnOn()) {
+                            finishGeoGrant(false);
+                            return;
+                        }
+                        finishGeoGrant(true);
+                    })
                     .addOnFailureListener(this, e -> {
+                        mSettingsCheckInFlight = false;
+                        if (mPendingGeoCallback == null || recentlyDeclinedTurnOn()) {
+                            finishGeoGrant(false);
+                            return;
+                        }
+                        if (mTurnOnDialogShowing) {
+                            finishGeoGrant(false);
+                            return;
+                        }
                         if (e instanceof ResolvableApiException) {
                             try {
+                                mTurnOnDialogShowing = true;
                                 ((ResolvableApiException) e)
                                         .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
                             } catch (IntentSender.SendIntentException ex) {
+                                mTurnOnDialogShowing = false;
                                 openLocationSourceSettings();
                             }
                         } else if (!isSystemLocationEnabled()) {
                             openLocationSourceSettings();
                         } else {
-                            // Settings check failed but location looks on — let WebView try GPS.
                             finishGeoGrant(true);
                         }
                     });
         } catch (Exception e) {
+            mSettingsCheckInFlight = false;
             Log.e(TAG, "Location settings check failed", e);
             if (!isSystemLocationEnabled()) {
                 openLocationSourceSettings();
@@ -399,10 +447,18 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void handleGeolocationPrompt(String origin, GeolocationPermissions.Callback callback) {
+        // After No thanks, deny extra WebView prompts so Location Accuracy cannot stack.
+        if (recentlyDeclinedTurnOn()) {
+            callback.invoke(origin, false, false);
+            return;
+        }
+        if (mTurnOnDialogShowing || mPendingGeoCallback != null) {
+            callback.invoke(origin, false, false);
+            return;
+        }
+
         mPendingGeoOrigin = origin;
         mPendingGeoCallback = callback;
-        // Fresh user tap — allow Turn on dialog again (even after a prior No thanks).
-        mDeclinedTurnOnAtMs = 0;
 
         if (!hasLocationPermission()) {
             ActivityCompat.requestPermissions(
@@ -599,8 +655,9 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private boolean recentlyDeclinedTurnOn() {
+        // Short window: blocks instant re-open after No thanks; next tap after a moment works.
         return mDeclinedTurnOnAtMs > 0
-                && (SystemClock.elapsedRealtime() - mDeclinedTurnOnAtMs) < 8000L;
+                && (SystemClock.elapsedRealtime() - mDeclinedTurnOnAtMs) < 3000L;
     }
 
     private final class LocationBridge {
