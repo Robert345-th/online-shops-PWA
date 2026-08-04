@@ -392,11 +392,12 @@
     if (settingsGettingLocation) return;
     settingsGettingLocation = true;
     const btn = document.getElementById("settingsLocButton");
+    const previousLabel = btn.textContent;
     btn.textContent = t("loc_getting");
     try {
       const coords = await withTimeout(
         requestUserLocationCoords(),
-        70000
+        30000
       );
       if (!isValidCoords(coords)) throw new Error("invalid");
       settingsCoords = coords;
@@ -410,8 +411,10 @@
       document.getElementById("settingsLocationInput").value = label;
       btn.textContent = label;
     } catch {
-      alert(t("listing_location_gps_fail"));
-      btn.textContent = "Use my current location";
+      // Decline / timeout — stop "Getting location…" immediately, no forced retry.
+      btn.textContent = previousLabel && previousLabel !== t("loc_getting")
+        ? previousLabel
+        : "Use my current location";
     } finally {
       settingsGettingLocation = false;
     }

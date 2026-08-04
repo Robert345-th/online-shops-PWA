@@ -21,6 +21,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
@@ -81,6 +82,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private GeolocationPermissions.Callback mPendingGeoCallback;
     private boolean mRetryLocationAfterSettings;
     private ValueCallback<Uri[]> mFilePathCallback;
+    /** After "No thanks", ignore error-hook prompts so the dialog does not reopen instantly. */
+    private long mDeclinedTurnOnAtMs;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -216,12 +219,15 @@ public class ZedMarketWebViewActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQ_TURN_ON_LOCATION) {
             if (resultCode == Activity.RESULT_OK) {
+                mDeclinedTurnOnAtMs = 0;
                 if (mPendingGeoCallback != null) {
                     finishGeoGrant(true);
                 } else {
                     showLocationNotice(getString(R.string.loc_settings_enabled_retry));
                 }
             } else {
+                // User tapped No thanks — finish the web request and do NOT re-open the dialog.
+                mDeclinedTurnOnAtMs = SystemClock.elapsedRealtime();
                 if (mPendingGeoCallback != null) {
                     finishGeoGrant(false);
                 }
@@ -332,9 +338,10 @@ public class ZedMarketWebViewActivity extends Activity {
                     .setMinUpdateIntervalMillis(5000L)
                     .build();
 
+            // Only prompt when settings are actually insufficient — do not force every time.
             LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
                     .addLocationRequest(request)
-                    .setAlwaysShow(true)
+                    .setAlwaysShow(false)
                     .build();
 
             LocationServices.getSettingsClient(this)
@@ -394,6 +401,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private void handleGeolocationPrompt(String origin, GeolocationPermissions.Callback callback) {
         mPendingGeoOrigin = origin;
         mPendingGeoCallback = callback;
+        // Fresh user tap — allow Turn on dialog again (even after a prior No thanks).
+        mDeclinedTurnOnAtMs = 0;
 
         if (!hasLocationPermission()) {
             ActivityCompat.requestPermissions(
@@ -589,73 +598,24 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
-    /** Show Turn on location dialog even when WebView already has permission. */
-    private void promptTurnOnLocationDialog() {
-        try {
-            LocationRequest request = new LocationRequest.Builder(
-                    Priority.PRIORITY_HIGH_ACCURACY, 10000L)
-                    .setMinUpdateIntervalMillis(5000L)
-                    .build();
-            LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
-                    .addLocationRequest(request)
-                    .setAlwaysShow(true)
-                    .build();
-            LocationServices.getSettingsClient(this)
-                    .checkLocationSettings(settingsRequest)
-                    .addOnSuccessListener(this, response ->
-                            showLocationNotice(getString(R.string.loc_settings_enabled_retry)))
-                    .addOnFailureListener(this, e -> {
-                        if (e instanceof ResolvableApiException) {
-                            try {
-                                ((ResolvableApiException) e)
-                                        .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
-                            } catch (IntentSender.SendIntentException ex) {
-                                try {
-                                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                                } catch (ActivityNotFoundException ignored) {
-                                    // ignore
-                                }
-                            }
-                        } else if (!isSystemLocationEnabled()) {
-                            try {
-                                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                            } catch (ActivityNotFoundException ignored) {
-                                // ignore
-                            }
-                        } else {
-                            showLocationNotice(getString(R.string.loc_declined_notice));
-                        }
-                    });
-        } catch (Exception e) {
-            Log.e(TAG, "promptTurnOnLocationDialog failed", e);
-            try {
-                startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            } catch (ActivityNotFoundException ignored) {
-                // ignore
-            }
-        }
+    private boolean recentlyDeclinedTurnOn() {
+        return mDeclinedTurnOnAtMs > 0
+                && (SystemClock.elapsedRealtime() - mDeclinedTurnOnAtMs) < 8000L;
     }
 
     private final class LocationBridge {
         @JavascriptInterface
         public void onGeolocationError(int code) {
+            // Never auto-reopen Turn on location here. That caused an instant loop after
+            // "No thanks": deny → GPS error → dialog again → deny → …
+            // Dialog only shows from an explicit user tap (handleGeolocationPrompt).
             runOnUiThread(() -> {
-                if (code == 1) {
-                    openAppLocationSettings(false);
+                if (recentlyDeclinedTurnOn()) {
                     return;
                 }
-                // GPS off / timeout / unavailable → show Turn on location again.
-                if (!hasLocationPermission()) {
-                    ActivityCompat.requestPermissions(
-                            ZedMarketWebViewActivity.this,
-                            new String[]{
-                                    Manifest.permission.ACCESS_FINE_LOCATION,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION
-                            },
-                            REQ_LOCATION);
-                    return;
+                if (code == 1 && !hasLocationPermission()) {
+                    showLocationNotice(getString(R.string.loc_open_settings));
                 }
-                promptTurnOnLocationDialog();
             });
         }
     }

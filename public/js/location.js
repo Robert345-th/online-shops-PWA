@@ -33,18 +33,12 @@
     const perm = await getLocationPermissionState();
     if (perm === "denied") throw { code: 1 };
 
-    if (perm !== "granted") {
-      try {
-        await getDeviceCoords({ maximumAge: 0, timeout: 30000 });
-      } catch (err) {
-        if (err && err.code === 1) throw err;
-      }
-    }
-
+    // One attempt only — do not force a second high-accuracy retry after decline/timeout.
+    // A second call was keeping "Getting location…" stuck and re-opening system dialogs.
     return getDeviceCoords({
       enableHighAccuracy: true,
       maximumAge: 0,
-      timeout: 60000,
+      timeout: 25000,
     });
   }
 
