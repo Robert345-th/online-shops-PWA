@@ -28,7 +28,11 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--black); padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
   .back-button {
     width: 40px; height: 40px; padding: 0;
     background: none; border: none; cursor: pointer;
@@ -70,9 +74,20 @@
 
   .version-text { text-align: center; color: var(--subtext); font-size: 11px; margin-top: 24px; }
 
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
+    align-items: flex-end; justify-content: center;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
   .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .modal-box {
+    background: var(--bg); width: 100%; max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    max-height: min(88vh, calc(100dvh - 16px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .modal-title { font-size: 16px; font-weight: 700; color: var(--price-red); margin-bottom: 10px; }
   .modal-warning { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
   .modal-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 14px; text-transform: uppercase; }
@@ -217,8 +232,10 @@
     <div class="modal-warning" data-i18n="listing_location_help">Used as the default when you post listings.</div>
     <button type="button" class="loc-button" id="settingsLocButton">Use my current location</button>
     <input class="loc-input" id="settingsLocationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
-    <button type="button" class="loc-save-btn" id="settingsLocSaveBtn" data-i18n="save">Save</button>
-    <button type="button" class="modal-cancel-btn" id="locationModalClose" style="width:100%; margin-top:10px;" data-i18n="cancel">Cancel</button>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" id="locationModalClose" data-i18n="cancel">Cancel</button>
+      <button type="button" class="loc-save-btn" id="settingsLocSaveBtn" style="flex:1; width:auto; margin:0;" data-i18n="save">Save</button>
+    </div>
   </div>
 </div>
 
