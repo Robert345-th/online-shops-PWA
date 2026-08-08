@@ -51,13 +51,13 @@ body.dark .modal-input {
   border-color: var(--border);
 }
 
-/* Chat typing box — keep visible against dark wallpaper */
+/* Chat look 2 — Gold Bubble (dark variant) */
 body.dark #composerDock {
-  background: #1A1A1A;
-  border-top-color: #666666;
+  background: #1F1C18;
+  border-top-color: #4A4540;
 }
 body.dark .msg-input {
-  background: #2E2E2E;
+  background: #2E2A26;
   border: 1.5px solid #F5C518;
   color: #F5F2ED;
 }
@@ -66,14 +66,23 @@ body.dark .msg-input::placeholder {
   opacity: 1;
 }
 body.dark .photo-btn {
-  background: #2E2E2E;
+  background: #2E2A26;
   border: 1.5px solid #F5C518;
   color: #F5C518;
 }
 body.dark .quick-reply-chip {
-  background: #2E2E2E;
-  border-color: #666666;
+  background: #2E2A26;
+  border-color: #5A5248;
   color: #F5F2ED;
+}
+body.dark .bubble.mine {
+  background: #F5C518;
+  color: #1A1510;
+}
+body.dark .bubble.theirs {
+  background: #2E2A26;
+  color: #F5F2ED;
+  border-color: #4A4540;
 }
 
 body.dark .modal-cancel-btn {
