@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="/js/android-chrome.js"></script>
 <script src="/js/utils.js"></script>
 <script src="/js/app-touch.js"></script>
@@ -110,17 +110,26 @@
   .audio-wave { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; }
 
   #quickReplyWrap, #inputWrap { flex-shrink: 0; }
-  .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 4px; flex-shrink: 0; }
-  .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
-
-  .input-row { display: flex; padding: 12px; gap: 8px; background: var(--bg); border-top: 1px solid var(--border); align-items: flex-end; flex-shrink: 0; }
-  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: var(--subtext); }
-  .msg-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; font-size: 14px; max-height: 100px; resize: none; color: var(--text); user-select: text; -webkit-user-select: text; }
-  .msg-input::placeholder { color: var(--subtext); opacity: 1; }
-  body.dark .input-row {
+  #composerDock {
+    flex-shrink: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 48px);
+    margin-bottom: 0;
+    position: relative;
+    z-index: 20;
+  }
+  body.dark #composerDock {
     background: #1A1A1A;
     border-top-color: #666666;
   }
+  .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 4px; flex-shrink: 0; }
+  .quick-reply-chip { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; flex-shrink: 0; color: var(--text); }
+
+  .input-row { display: flex; padding: 10px 12px 14px; gap: 8px; background: transparent; border-top: none; align-items: flex-end; flex-shrink: 0; }
+  .photo-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: var(--subtext); }
+  .msg-input { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; font-size: 14px; max-height: 100px; resize: none; color: var(--text); user-select: text; -webkit-user-select: text; }
+  .msg-input::placeholder { color: var(--subtext); opacity: 1; }
   body.dark .msg-input {
     background: #2E2E2E;
     border: 1.5px solid #F5C518;
@@ -143,7 +152,7 @@
   .input-icon-filled { fill: currentColor; stroke: none; }
   .audio-play-icon { width: 14px; height: 14px; flex-shrink: 0; fill: currentColor; stroke: none; }
 
-  .recording-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .recording-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: transparent; border-top: none; flex-shrink: 0; }
   .recording-dot { width: 10px; height: 10px; border-radius: 5px; background: var(--red-btn); }
   .recording-text { flex: 1; font-size: 13px; font-weight: 600; }
   .cancel-record-btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; color: var(--subtext); font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -200,8 +209,10 @@
 
 <div class="messages-list" id="messagesList"><div class="empty-text">Loading…</div></div>
 
-<div id="quickReplyWrap"></div>
-<div id="inputWrap"></div>
+<div id="composerDock">
+  <div id="quickReplyWrap"></div>
+  <div id="inputWrap"></div>
+</div>
 
 <div class="viewer-overlay" id="viewerOverlay">
   <button class="back-button viewer-back" id="viewerBackBtn" aria-label="Close photo"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>

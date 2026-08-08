@@ -52,7 +52,7 @@ body.dark .modal-input {
 }
 
 /* Chat typing box — keep visible against dark wallpaper */
-body.dark .input-row {
+body.dark #composerDock {
   background: #1A1A1A;
   border-top-color: #666666;
 }
