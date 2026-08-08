@@ -495,7 +495,7 @@
       chat_photo_upload_fail: "Could not upload the photo. Please try again.",
       chat_photo_fail: "Could not upload the photo.",
       chat_recording: "Recording... {time}",
-      chat_mic_denied: "We need microphone access to record a voice note.",
+      chat_mic_denied: "Allow microphone access, then tap the mic again to record a voice note.",
       chat_voice_upload_fail: "Could not upload the voice note. Please try again.",
       chat_voice_fail: "Could not save the voice note.",
       chat_delete_fail: "Could not delete message.",

@@ -2,6 +2,7 @@
  * Full-screen WebView for Play Store testing app with:
  * - App location permission
  * - System "Turn on location" / Location Accuracy dialog
+ * - Microphone / camera permission for voice notes & selfie
  * - Photo file picker
  */
 package app.zedmarket.twa;
@@ -31,6 +32,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -64,6 +66,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final int REQ_LOCATION = 9001;
     private static final int REQ_FILE_CHOOSER = 9002;
     private static final int REQ_TURN_ON_LOCATION = 9003;
+    private static final int REQ_MEDIA = 9004;
     private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
     private static final String KEY_PREFIX =
@@ -82,6 +85,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private GeolocationPermissions.Callback mPendingGeoCallback;
     private boolean mRetryLocationAfterSettings;
     private ValueCallback<Uri[]> mFilePathCallback;
+    private PermissionRequest mPendingPermissionRequest;
     /** After "No thanks", block more Turn on / Location Accuracy dialogs for a short window. */
     private long mDeclinedTurnOnAtMs;
     /** Prevents stacking multiple Location Accuracy dialogs from concurrent GPS requests. */
@@ -268,6 +272,33 @@ public class ZedMarketWebViewActivity extends Activity {
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQ_MEDIA) {
+            PermissionRequest pending = mPendingPermissionRequest;
+            mPendingPermissionRequest = null;
+            if (pending == null) {
+                return;
+            }
+            boolean granted = false;
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    granted = true;
+                    break;
+                }
+            }
+            if (granted) {
+                grantWebMediaPermissions(pending);
+            } else {
+                pending.deny();
+                Toast.makeText(
+                        this,
+                        "Allow microphone to send voice notes",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+            return;
+        }
+
         if (requestCode != REQ_LOCATION) {
             return;
         }
@@ -293,6 +324,99 @@ public class ZedMarketWebViewActivity extends Activity {
         } else {
             showLocationNotice(getString(R.string.loc_declined_notice));
         }
+    }
+
+    private boolean isTrustedWebOrigin(Uri origin) {
+        if (origin == null || origin.getHost() == null) {
+            return false;
+        }
+        if (mLaunchUrl != null && uriOriginsMatch(mLaunchUrl, origin)) {
+            return true;
+        }
+        if (matchExtraOrigins(origin)) {
+            return true;
+        }
+        String host = origin.getHost();
+        return "zedmarket.app".equalsIgnoreCase(host)
+                || (host != null && host.toLowerCase().endsWith(".zedmarket.app"));
+    }
+
+    private boolean hasRecordAudioPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean hasCameraPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void handleMediaPermissionRequest(PermissionRequest request) {
+        if (request == null) {
+            return;
+        }
+        if (!isTrustedWebOrigin(Uri.parse(String.valueOf(request.getOrigin())))) {
+            request.deny();
+            return;
+        }
+
+        boolean needAudio = false;
+        boolean needCamera = false;
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
+                needAudio = true;
+            } else if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
+                needCamera = true;
+            }
+        }
+
+        List<String> missing = new ArrayList<>();
+        if (needAudio && !hasRecordAudioPermission()) {
+            missing.add(Manifest.permission.RECORD_AUDIO);
+        }
+        if (needCamera && !hasCameraPermission()) {
+            missing.add(Manifest.permission.CAMERA);
+        }
+
+        if (missing.isEmpty()) {
+            grantWebMediaPermissions(request);
+            return;
+        }
+
+        if (mPendingPermissionRequest != null) {
+            mPendingPermissionRequest.deny();
+        }
+        mPendingPermissionRequest = request;
+        ActivityCompat.requestPermissions(
+                this,
+                missing.toArray(new String[0]),
+                REQ_MEDIA
+        );
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void grantWebMediaPermissions(PermissionRequest request) {
+        if (request == null) {
+            return;
+        }
+        List<String> granted = new ArrayList<>();
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                    && hasRecordAudioPermission()) {
+                granted.add(resource);
+            } else if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                    && hasCameraPermission()) {
+                granted.add(resource);
+            } else if (PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID.equals(resource)) {
+                granted.add(resource);
+            }
+        }
+        if (granted.isEmpty()) {
+            request.deny();
+            return;
+        }
+        request.grant(granted.toArray(new String[0]));
     }
 
     private void finishGeoGrant(boolean allow) {
@@ -585,6 +709,21 @@ public class ZedMarketWebViewActivity extends Activity {
             public void onGeolocationPermissionsShowPrompt(
                     String origin, GeolocationPermissions.Callback callback) {
                 handleGeolocationPrompt(origin, callback);
+            }
+
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    return;
+                }
+                runOnUiThread(() -> handleMediaPermissionRequest(request));
+            }
+
+            @Override
+            public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (mPendingPermissionRequest == request) {
+                    mPendingPermissionRequest = null;
+                }
             }
 
             @Override

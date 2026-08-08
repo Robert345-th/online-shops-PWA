@@ -1,5 +1,6 @@
 /**
- * Play Store testing app: custom WebView with native location retry + Settings fallback.
+ * Play Store testing app: custom WebView with native location retry + Settings fallback,
+ * plus microphone/camera permission for voice notes and selfie capture.
  * Run after: node patch-webview-only.js
  */
 const fs = require("fs");
@@ -66,6 +67,19 @@ if (!manifest.includes("ACCESS_FINE_LOCATION")) {
   );
 }
 
+if (!manifest.includes("RECORD_AUDIO")) {
+  const anchor = manifest.includes("ACCESS_FINE_LOCATION")
+    ? "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>"
+    : "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\"/>";
+  if (manifest.includes(anchor)) {
+    manifest = manifest.replace(
+      anchor,
+      `${anchor}\n    \n        <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    \n        <uses-permission android:name="android.permission.CAMERA"/>\n    \n        <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>`
+    );
+    console.log("Added RECORD_AUDIO + CAMERA permissions to AndroidManifest.xml");
+  }
+}
+
 if (!manifest.includes(".ZedMarketWebViewActivity")) {
   manifest = manifest.replace(
     "<activity android:name=\"com.google.androidbrowserhelper.trusted.WebViewFallbackActivity\"\n            android:configChanges=\"orientation|screenSize\" />",
@@ -92,4 +106,4 @@ if (!manifest.includes(".ZedMarketWebViewActivity")) {
 
 fs.writeFileSync(manifestPath, manifest);
 
-console.log("Native location handling ready for next AAB build (Internal testing).");
+console.log("Native location + microphone handling ready for next AAB build.");
