@@ -51,6 +51,31 @@ body.dark .modal-input {
   border-color: var(--border);
 }
 
+/* Chat typing box — keep visible against dark wallpaper */
+body.dark .input-row {
+  background: #1A1A1A;
+  border-top-color: #666666;
+}
+body.dark .msg-input {
+  background: #2E2E2E;
+  border: 1.5px solid #F5C518;
+  color: #F5F2ED;
+}
+body.dark .msg-input::placeholder {
+  color: #C9C0B6;
+  opacity: 1;
+}
+body.dark .photo-btn {
+  background: #2E2E2E;
+  border: 1.5px solid #F5C518;
+  color: #F5C518;
+}
+body.dark .quick-reply-chip {
+  background: #2E2E2E;
+  border-color: #666666;
+  color: #F5F2ED;
+}
+
 body.dark .modal-cancel-btn {
   color: var(--text);
   background: var(--card);
