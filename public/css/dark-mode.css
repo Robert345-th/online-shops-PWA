@@ -1,0 +1,72 @@
+/* Shared dark mode contrast fixes for ZedMarket */
+body.dark {
+  --bg: #121212;
+  --card: #252525;
+  --border: #505050;
+  --text: #F5F2ED;
+  --subtext: #C9C0B6;
+  --black: #111111;
+  --warn-bg: #3D3018;
+  --warn-text: #F5D08A;
+  --thumb-bg: #333333;
+}
+
+body.dark .lang-chip:not(.active),
+body.dark .sort-chip:not(.active),
+body.dark .tab-btn:not(.active) {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--card);
+}
+
+body.dark .edit-profile-btn,
+body.dark .share-shop-btn,
+body.dark .admin-btn,
+body.dark .sms-btn {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: var(--card);
+}
+
+body.dark .section-label,
+body.dark .row-sub,
+body.dark .empty-text,
+body.dark .gate-text,
+body.dark .modal-warning,
+body.dark .version-text,
+body.dark .sold-section-title {
+  color: var(--subtext);
+}
+
+body.dark .row-title,
+body.dark .gate-title,
+body.dark .modal-title:not(.danger) {
+  color: var(--text);
+}
+
+body.dark .loc-input,
+body.dark .modal-input {
+  color: var(--text);
+  background: var(--card);
+  border-color: var(--border);
+}
+
+body.dark .modal-cancel-btn {
+  color: var(--text);
+  background: var(--card);
+  border-color: var(--border);
+}
+
+body.dark .manage-btn {
+  color: var(--text);
+}
+
+body.dark .warning-banner {
+  background: var(--warn-bg);
+  border-color: #C77800;
+}
+
+body.dark .warning-text,
+body.dark .reason-text {
+  color: var(--warn-text);
+}

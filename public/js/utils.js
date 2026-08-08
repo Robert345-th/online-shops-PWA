@@ -1,4 +1,11 @@
 (function () {
+  if (!document.querySelector('link[href="/css/dark-mode.css"]')) {
+    const themeLink = document.createElement("link");
+    themeLink.rel = "stylesheet";
+    themeLink.href = "/css/dark-mode.css";
+    document.head.appendChild(themeLink);
+  }
+
   const API_URL = "https://online-shops-production.up.railway.app";
   const SESSION_POLL_MS = 4000;
   let sessionPollTimer = null;

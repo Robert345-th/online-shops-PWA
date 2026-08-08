@@ -21,8 +21,8 @@
     --gold: #F5C518; --price-red: #A3131C; --red-btn: #E01B27;
   }
   body.dark {
-    --bg: #121212; --card: #1E1E1E; --border: #333333;
-    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+    --bg: #121212; --card: #252525; --border: #505050;
+    --text: #F5F2ED; --subtext: #C9C0B6; --black: #111111;
   }
   body { transition: background 0.2s, color 0.2s; }
   body.dark .row { transition: background 0.2s, border-color 0.2s; }
@@ -70,6 +70,7 @@
   .lang-chip {
     flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+    color: var(--text);
   }
   .lang-chip.active { background: var(--black); border-color: var(--black); color: var(--gold); }
 
