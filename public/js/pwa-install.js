@@ -169,7 +169,7 @@
     const opts = options || {};
     const elementIds = [...(opts.buttonIds || []), ...(opts.rowIds || [])];
 
-    if (opts.registerSw !== false && "serviceWorker" in navigator) {
+    if (opts.registerSw === true && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/service-worker.js").catch(console.error);
       });

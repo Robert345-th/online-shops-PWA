@@ -302,8 +302,4 @@
   window.showLocalMessageNotification = showLocalMessageNotification;
   window.startMessageNotificationPoll = startMessageNotificationPoll;
   window.stopMessageNotificationPoll = stopMessageNotificationPoll;
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js").catch(() => {});
-  }
 })();

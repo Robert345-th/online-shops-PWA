@@ -218,20 +218,15 @@
       <div class="center-box"><div>${t("loading")}</div></div>`;
 
     try {
-      const [listingsRes, shopStatusRes] = await Promise.all([
+      const [listingsRes, shopStatusRes, subRes, statusRes] = await Promise.all([
         fetch(`${API_URL}/listings/mine/all`, { headers: authHeaders() }),
         fetch(`${API_URL}/auth/shop-status`, { headers: authHeaders() }),
-      ]);
-
-      listings = await listingsRes.json();
-      applyShopStatus(await shopStatusRes.json());
-      render();
-
-      const [subRes, statusRes] = await Promise.all([
         fetch(`${API_URL}/subscriptions/mine`, { headers: authHeaders() }),
         fetch(`${API_URL}/settings/payment-status`),
       ]);
 
+      listings = await listingsRes.json();
+      applyShopStatus(await shopStatusRes.json());
       subscription = await subRes.json();
       const statusData = await statusRes.json();
       paymentEnforced = statusData.enforced === true;

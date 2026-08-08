@@ -188,5 +188,103 @@
 
   installFetchAuthGuard();
   registerSiteServiceWorker();
-  startSessionWatch();
+
+  /* ── Faster navigation: preconnect, loading bar, prefetch ── */
+  if (!document.querySelector('link[rel="preconnect"][href*="railway"]')) {
+    const pc = document.createElement("link");
+    pc.rel = "preconnect";
+    pc.href = API_URL;
+    pc.crossOrigin = "anonymous";
+    document.head.appendChild(pc);
+  }
+
+  (function initNavSpeed() {
+    if (window.__zmNavSpeed) return;
+    window.__zmNavSpeed = true;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #zm-nav-bar {
+        position: fixed; top: 0; left: 0; height: 3px;
+        background: var(--orange, #FF7A1A); z-index: 99999;
+        width: 0; pointer-events: none;
+        transition: width 0.25s ease;
+      }
+      body.zm-nav-loading #zm-nav-bar { width: 75%; }
+      body.zm-nav-done #zm-nav-bar { width: 100%; opacity: 0; transition: width 0.15s, opacity 0.3s 0.1s; }
+    `;
+    document.head.appendChild(style);
+    const bar = document.createElement("div");
+    bar.id = "zm-nav-bar";
+    document.documentElement.appendChild(bar);
+
+    const prefetched = new Set();
+    function prefetchUrl(url) {
+      if (!url || prefetched.has(url)) return;
+      let path = url;
+      try {
+        const u = new URL(url, location.origin);
+        if (u.origin !== location.origin) return;
+        path = u.pathname + u.search;
+      } catch (e) { return; }
+      prefetched.add(path);
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = path;
+      document.head.appendChild(link);
+    }
+
+    window.zmShowNavLoading = function () {
+      document.body.classList.add("zm-nav-loading");
+      document.body.classList.remove("zm-nav-done");
+    };
+
+    window.zmPrefetchListing = function (id, data) {
+      try {
+        sessionStorage.setItem("zm_listing_" + id, JSON.stringify({ ts: Date.now(), data }));
+      } catch (e) {}
+      prefetchUrl("/listing.html?id=" + id);
+      if (!prefetched.has("api:" + id)) {
+        prefetched.add("api:" + id);
+        fetch(`${API_URL}/listings/${id}`).catch(() => {});
+      }
+    };
+
+    window.zmGetCachedListing = function (id) {
+      try {
+        const raw = sessionStorage.getItem("zm_listing_" + id);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || Date.now() - parsed.ts > 10 * 60 * 1000) return null;
+        return parsed.data;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    document.addEventListener("touchstart", (e) => {
+      const a = e.target.closest("a[href]");
+      if (a && !a.target && a.origin === location.origin) prefetchUrl(a.href);
+    }, { passive: true });
+
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("a[href]");
+      if (a && !a.target && !e.defaultPrevented && a.origin === location.origin) {
+        window.zmShowNavLoading();
+      }
+    }, true);
+
+    window.addEventListener("pageshow", () => {
+      document.body.classList.remove("zm-nav-loading");
+      document.body.classList.add("zm-nav-done");
+      setTimeout(() => document.body.classList.remove("zm-nav-done"), 400);
+    });
+  })();
+
+  function deferSessionWatch() {
+    const start = () => setTimeout(startSessionWatch, 150);
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+  }
+  deferSessionWatch();
 })();

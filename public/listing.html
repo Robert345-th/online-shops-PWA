@@ -309,11 +309,22 @@
   }
 
   async function fetchListing() {
+    const cached = typeof zmGetCachedListing === "function" ? zmGetCachedListing(listingId) : null;
+    if (cached) {
+      listing = cached;
+      updateListingMeta(listing);
+      render();
+      loadFavoriteStatus();
+      if (listing.seller_id) fetchReviews(listing.seller_id);
+    }
+
     try {
       const res = await fetch(`${API_URL}/listings/${listingId}`);
       const data = await res.json();
       if (!res.ok) {
-        app.innerHTML = `<div class="center-box"><div class="error-text">${data.error || t("could_not_load_listing")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
+        if (!cached) {
+          app.innerHTML = `<div class="center-box"><div class="error-text">${data.error || t("could_not_load_listing")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
+        }
         return;
       }
       listing = data;
@@ -323,8 +334,13 @@
       loadFavoriteStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
       trackRecentlyViewed(listing.id);
+      try {
+        sessionStorage.setItem("zm_listing_" + listingId, JSON.stringify({ ts: Date.now(), data: listing }));
+      } catch (e) {}
     } catch (e) {
-      app.innerHTML = `<div class="center-box"><div class="error-text">${t("chat_server_fail")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
+      if (!cached) {
+        app.innerHTML = `<div class="center-box"><div class="error-text">${t("chat_server_fail")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
+      }
     }
   }
 

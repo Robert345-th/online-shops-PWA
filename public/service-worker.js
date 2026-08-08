@@ -1,10 +1,30 @@
-const CACHE = "zedmarket-offline-v1";
+const CACHE = "zedmarket-shell-v2";
 const OFFLINE_URL = "/offline.html";
-const PRECACHE = [OFFLINE_URL, "/icon-192.png", "/icon-512.png"];
+const PRECACHE = [
+  OFFLINE_URL,
+  "/icon-192.png",
+  "/icon-512.png",
+  "/css/dark-mode.css",
+  "/js/utils.js",
+  "/js/android-chrome.js",
+  "/js/app-touch.js",
+  "/js/lang.js",
+  "/js/bottom-nav.js",
+  "/js/data-saver.js",
+  "/index.html",
+  "/my-shop.html",
+  "/wanted.html",
+  "/sale-confirmations.html",
+  "/settings.html",
+  "/listing.html",
+  "/chat-list.html",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -24,25 +44,65 @@ function isNavigationRequest(request) {
   return request.method === "GET" && accept.includes("text/html");
 }
 
+function isSameOrigin(request) {
+  try {
+    return new URL(request.url).origin === self.location.origin;
+  } catch (e) {
+    return false;
+  }
+}
+
+function isAppShell(request) {
+  const path = new URL(request.url).pathname;
+  return path.endsWith(".html") || path.startsWith("/js/") || path.startsWith("/css/");
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+
+  const networkFetch = fetch(request)
+    .then((response) => {
+      if (response && response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    networkFetch.catch(() => {});
+    return cached;
+  }
+
+  const response = await networkFetch;
+  if (response) return response;
+
+  if (isNavigationRequest(request)) {
+    const offline = await cache.match(OFFLINE_URL);
+    if (offline) return offline;
+  }
+  return new Response("Offline", { status: 503, statusText: "Offline" });
+}
+
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response && response.ok) cache.put(request, response.clone());
+  return response;
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  if (!isSameOrigin(event.request)) return;
 
-  if (isNavigationRequest(event.request)) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.ok) return response;
-          return caches.match(OFFLINE_URL);
-        })
-        .catch(() => caches.match(OFFLINE_URL))
-    );
+  if (isNavigationRequest(event.request) || isAppShell(event.request)) {
+    event.respondWith(staleWhileRevalidate(event.request));
     return;
   }
 
   if (event.request.url.includes(OFFLINE_URL) || event.request.url.includes("/icon-")) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
-    );
+    event.respondWith(cacheFirst(event.request));
   }
 });
 

@@ -513,7 +513,11 @@
 
     items.forEach(item => {
       const card = document.getElementById(`card-${item.id}`);
-      if (card) card.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
+      if (card) card.addEventListener("click", () => {
+        if (typeof zmPrefetchListing === "function") zmPrefetchListing(item.id, item);
+        if (typeof zmShowNavLoading === "function") zmShowNavLoading();
+        window.location.href = `/listing.html?id=${item.id}`;
+      });
     });
     feed.querySelectorAll(".fav-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
