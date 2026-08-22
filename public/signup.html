@@ -47,9 +47,11 @@
   .phone-hint b { color: var(--text); }
 
   .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: -8px; margin-bottom: 14px; cursor: pointer; }
+  .checkbox-row.multiline { align-items: flex-start; }
   .checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--subtext); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
   .checkbox.checked { background: var(--red-btn); border-color: var(--red-btn); }
-  .checkbox-label { font-size: 12px; color: var(--subtext); flex: 1; }
+  .checkbox-label { font-size: 12px; color: var(--subtext); flex: 1; line-height: 1.4; }
+  .checkbox-label a { color: var(--price-red); text-decoration: underline; }
 
   .loc-button {
     width: 100%; background: var(--card); border: 1px solid var(--red-btn); border-radius: 10px;
@@ -147,6 +149,14 @@
       <div class="checkbox-label" data-i18n="age_confirm">I confirm that I am 18 years of age or older</div>
     </div>
 
+    <div class="checkbox-row multiline" id="termsConfirmRow">
+      <div class="checkbox" id="termsConfirmBox"></div>
+      <div class="checkbox-label">
+        I agree to the <a href="/terms.htm" target="_blank" id="termsLink">Terms & Conditions</a>
+        and <a href="/privacy.html" target="_blank" id="privacyLink">Privacy Policy</a>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button type="button" class="back-btn" id="back3Btn" data-i18n="back">Back</button>
       <button type="button" class="submit-btn" id="signupBtn" disabled data-i18n="sign_up">Sign Up</button>
@@ -165,6 +175,7 @@
   let step = 1;
   let showPassword = false;
   let ageConfirmed = false;
+  let termsAccepted = false;
   let gettingLocation = false;
   let signupCoords = null;
   let signupLocationLabel = "";
@@ -208,13 +219,29 @@
     document.getElementById("confirmPasswordInput").type = showPassword ? "text" : "password";
   });
 
+  function updateSignupBtnState() {
+    signupBtn.disabled = !(ageConfirmed && termsAccepted);
+  }
+
   document.getElementById("ageConfirmRow").addEventListener("click", () => {
     ageConfirmed = !ageConfirmed;
     const box = document.getElementById("ageConfirmBox");
     box.classList.toggle("checked", ageConfirmed);
     box.textContent = ageConfirmed ? "✓" : "";
-    signupBtn.disabled = !ageConfirmed;
+    updateSignupBtnState();
   });
+
+  document.getElementById("termsConfirmRow").addEventListener("click", (e) => {
+    if (e.target.id === "termsLink" || e.target.id === "privacyLink") return;
+    termsAccepted = !termsAccepted;
+    const box = document.getElementById("termsConfirmBox");
+    box.classList.toggle("checked", termsAccepted);
+    box.textContent = termsAccepted ? "✓" : "";
+    updateSignupBtnState();
+  });
+
+  document.getElementById("termsLink").addEventListener("click", (e) => e.stopPropagation());
+  document.getElementById("privacyLink").addEventListener("click", (e) => e.stopPropagation());
 
   document.getElementById("locationInput").addEventListener("input", (e) => {
     signupLocationLabel = e.target.value.trim();
@@ -324,6 +351,10 @@
       showError(t("signup_err_age"));
       return;
     }
+    if (!termsAccepted) {
+      showError("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
 
     if (signupCoords && isValidCoords(signupCoords)) {
       localStorage.setItem("zm_home_location", JSON.stringify(signupCoords));
@@ -342,6 +373,7 @@
         password,
         confirmPassword,
         referral_code: referralCode || undefined,
+        terms_accepted: true,
       };
       if (signupLocationLabel) body.location_label = signupLocationLabel;
       if (signupCoords && isValidCoords(signupCoords)) {
@@ -365,7 +397,7 @@
     } catch {
       showError(t("chat_server_fail"));
     } finally {
-      signupBtn.disabled = !ageConfirmed;
+      updateSignupBtnState();
       signupBtn.textContent = t("sign_up");
     }
   });
