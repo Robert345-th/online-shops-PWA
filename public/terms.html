@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ZedMarket - Terms & Conditions</title>
+<meta name="theme-color" content="#111111" />
+<link rel="icon" type="image/png" href="https://zedmarket.app/icon-192.png" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #111111; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --orange: #FF7A1A;
+  }
+  body.dark {
+    --bg: #121212; --card: #1E1E1E; --border: #333333;
+    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 40px; height: 40px; padding: 0; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .back-button svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+  .content { padding: 20px; max-width: 620px; margin: 0 auto; }
+  .updated { font-size: 12px; color: var(--subtext); margin-bottom: 20px; }
+  h2 { font-size: 15px; margin: 22px 0 8px; color: var(--text); }
+  p, li { font-size: 13.5px; color: var(--subtext); line-height: 1.6; margin-bottom: 8px; }
+  ul { padding-left: 18px; margin-bottom: 8px; }
+  .intro { font-size: 13.5px; color: var(--text); line-height: 1.6; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<script>
+  document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
+</script>
+<div class="topbar">
+  <button class="back-button" id="backBtn" aria-label="Go back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="header-title">Terms & Conditions</div>
+</div>
+<div class="content">
+  <div class="updated">Last updated: August 23, 2026</div>
+  <p class="intro">These Terms & Conditions ("Terms") govern your use of ZedMarket, a free online classifieds marketplace operated by Robert Zulu Enterprises ("we", "us", "ZedMarket"). By creating an account, registering a shop, or using the app in any way, you agree to these Terms.</p>
+
+  <h2>1. Eligibility</h2>
+  <p>You must be at least 18 years old to use ZedMarket. By using the app, you confirm that you meet this requirement and that any information you provide (including your date of birth) is accurate.</p>
+
+  <h2>2. What ZedMarket Is</h2>
+  <p>ZedMarket is a listings platform that connects buyers and sellers in Zambia. We provide the space for people to post, browse, and communicate about items for sale. ZedMarket is currently free to use — we do not charge listing fees or commissions.</p>
+
+  <h2>3. We Are Not a Party to Transactions</h2>
+  <ul>
+    <li>ZedMarket does not buy, sell, or handle payment for any item listed on the platform.</li>
+    <li>All payments, meetups, deliveries, and exchanges are arranged directly between buyers and sellers, entirely outside of ZedMarket.</li>
+    <li>We do not verify the identity of users, the condition of items, or the accuracy of listings.</li>
+    <li>Any agreement to buy or sell is strictly between the buyer and the seller. ZedMarket is not responsible for the outcome of that agreement.</li>
+  </ul>
+
+  <h2>4. User Responsibilities</h2>
+  <ul>
+    <li>Provide accurate information when registering an account or a shop.</li>
+    <li>Only post listings for items you have the legal right to sell.</li>
+    <li>Do not post prohibited, stolen, counterfeit, or illegal items.</li>
+    <li>Communicate respectfully with other users — harassment, threats, or abusive behavior may result in account suspension.</li>
+    <li>Use your own judgment and take reasonable precautions when meeting other users or exchanging payment, including meeting in safe, public locations.</li>
+  </ul>
+
+  <h2>5. Prohibited Listings</h2>
+  <p>You may not list items that are illegal, stolen, counterfeit, hazardous, or that violate the rights of any third party. ZedMarket reserves the right to remove any listing or suspend any account that violates these Terms, at our discretion.</p>
+
+  <h2>6. No Warranty</h2>
+  <p>ZedMarket is provided "as is." We do not guarantee that listings are accurate, that users are who they claim to be, or that any transaction will be completed successfully. Use the platform at your own risk.</p>
+
+  <h2>7. Limitation of Liability</h2>
+  <p>To the fullest extent permitted by law, ZedMarket and Robert Zulu Enterprises are not liable for any loss, damage, fraud, or dispute arising from a transaction, meetup, or communication between users. We are a listings platform only.</p>
+
+  <h2>8. Reporting & Enforcement</h2>
+  <p>If you encounter a suspicious listing or user, please use the "Report a User" feature in Settings or contact support. We may investigate reports and take action including removing content or suspending accounts, but we are not obligated to resolve disputes between users.</p>
+
+  <h2>9. Account Suspension & Termination</h2>
+  <p>We may suspend or terminate your account if you violate these Terms, engage in fraudulent activity, or misuse the platform. You may delete your account at any time from Settings.</p>
+
+  <h2>10. Changes to These Terms</h2>
+  <p>We may update these Terms from time to time as ZedMarket grows, including if we introduce paid features in the future. Continued use of the app after changes means you accept the updated Terms.</p>
+
+  <h2>11. Contact</h2>
+  <p>Questions about these Terms can be sent through the Contact Support option in Settings.</p>
+</div>
+<script>
+  document.getElementById("backBtn").addEventListener("click", () => history.back());
+</script>
+</body>
+</html>
