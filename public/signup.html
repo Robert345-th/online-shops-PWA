@@ -152,8 +152,8 @@
     <div class="checkbox-row multiline" id="termsConfirmRow">
       <div class="checkbox" id="termsConfirmBox"></div>
       <div class="checkbox-label">
-        I agree to the <a href="/terms.html" target="_blank" id="termsLink">Terms & Conditions</a>
-        and <a href="/privacy-policy.html" target="_blank" id="privacyLink">Privacy Policy</a>
+        I agree to the <a href="/terms.html" id="termsLink">Terms & Conditions</a>
+        and <a href="/privacy-policy.html" id="privacyLink">Privacy Policy</a>
       </div>
     </div>
 
@@ -240,8 +240,70 @@
     updateSignupBtnState();
   });
 
-  document.getElementById("termsLink").addEventListener("click", (e) => e.stopPropagation());
-  document.getElementById("privacyLink").addEventListener("click", (e) => e.stopPropagation());
+  const SIGNUP_DRAFT_KEY = "zm_signup_draft";
+
+  function saveDraft() {
+    const draft = {
+      step,
+      name: document.getElementById("nameInput").value,
+      phone: document.getElementById("phoneInput").value,
+      referral: document.getElementById("referralInput").value,
+      password: document.getElementById("passwordInput").value,
+      confirmPassword: document.getElementById("confirmPasswordInput").value,
+      location: document.getElementById("locationInput").value,
+      signupCoords,
+      signupLocationLabel,
+      ageConfirmed,
+      termsAccepted,
+    };
+    try {
+      sessionStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) {}
+  }
+
+  function restoreDraft() {
+    let draft;
+    try {
+      draft = JSON.parse(sessionStorage.getItem(SIGNUP_DRAFT_KEY) || "null");
+    } catch (e) {
+      draft = null;
+    }
+    if (!draft) return;
+
+    document.getElementById("nameInput").value = draft.name || "";
+    document.getElementById("phoneInput").value = draft.phone || "";
+    document.getElementById("referralInput").value = draft.referral || "";
+    document.getElementById("passwordInput").value = draft.password || "";
+    document.getElementById("confirmPasswordInput").value = draft.confirmPassword || "";
+    document.getElementById("locationInput").value = draft.location || "";
+    signupCoords = draft.signupCoords || null;
+    signupLocationLabel = draft.signupLocationLabel || "";
+    if (signupLocationLabel && signupCoords) {
+      locButton.textContent = signupLocationLabel;
+    }
+
+    if (draft.ageConfirmed) {
+      ageConfirmed = true;
+      const box = document.getElementById("ageConfirmBox");
+      box.classList.add("checked");
+      box.textContent = "✓";
+    }
+    if (draft.termsAccepted) {
+      termsAccepted = true;
+      const box = document.getElementById("termsConfirmBox");
+      box.classList.add("checked");
+      box.textContent = "✓";
+    }
+    updateSignupBtnState();
+
+    step = draft.step || 1;
+    updateStepUI();
+
+    sessionStorage.removeItem(SIGNUP_DRAFT_KEY);
+  }
+
+  document.getElementById("termsLink").addEventListener("click", saveDraft);
+  document.getElementById("privacyLink").addEventListener("click", saveDraft);
 
   document.getElementById("locationInput").addEventListener("input", (e) => {
     signupLocationLabel = e.target.value.trim();
@@ -411,6 +473,8 @@
       signupBtn.textContent = t("sign_up");
     }
   });
+
+  restoreDraft();
 </script>
 </body>
 </html>
