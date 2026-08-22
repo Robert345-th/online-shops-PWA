@@ -67,6 +67,12 @@
   }
   .step-panel { display: none; }
   .step-panel.active { display: block; }
+  .terms-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 4px 0 18px; font-size: 13px; color: var(--subtext); line-height: 1.4;
+  }
+  .terms-row input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; width: 16px; height: 16px; }
+  .terms-row a { color: var(--orange); text-decoration: underline; }
   .btn-row { display: flex; gap: 10px; margin-top: 8px; }
   .submit-btn {
     flex: 1; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px;
@@ -162,6 +168,15 @@
       <div class="label">Home Area / Address</div>
       <input class="field-input" id="homeAddressInput" placeholder="e.g. Kabulonga, near mall" />
     </div>
+
+    <div class="terms-row">
+      <input type="checkbox" id="agreeTerms" />
+      <label for="agreeTerms">
+        I agree to the <a href="/terms.htm" target="_blank">Terms & Conditions</a>
+        and <a href="/privacy.html" target="_blank">Privacy Policy</a>
+      </label>
+    </div>
+
     <div class="btn-row">
       <button type="button" class="back-btn" id="back4Btn">Back</button>
       <button type="button" class="submit-btn" id="submitBtn">Submit for Review</button>
@@ -317,6 +332,11 @@
   document.getElementById("back4Btn").addEventListener("click", () => { step = 3; updateStepUI(); });
 
   document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (!document.getElementById("agreeTerms").checked) {
+      showError("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
+
     if (!sellingType) {
       showError("Please choose where you sell — shop, home, or both.");
       return;
@@ -365,6 +385,7 @@
           shop_location_label: sellingType === "shop" || sellingType === "both" ? shopLabel : null,
           home_location_label: sellingType === "home" || sellingType === "both" ? homeLabel : null,
           location_label: locationLabel,
+          terms_accepted: true,
         }),
       });
       const data = await res.json();
