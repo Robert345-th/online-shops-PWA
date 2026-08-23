@@ -52,42 +52,43 @@
 
   .content { padding: 20px; max-width: 560px; margin: 0 auto; }
   .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center; }
-  .avatar { width: 72px; height: 72px; border-radius: 36px; background: #E01B27; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: #fff; font-size: 30px; font-weight: 700; }
-  .name { font-size: 20px; font-weight: 700; }
-  .verified-badge { background: var(--approved-bg); color: #fff; padding: 4px 10px; border-radius: 20px; margin-top: 8px; font-size: 11px; font-weight: 700; }
+  .avatar { width: 72px; height: 72px; border-radius: 0; background: var(--black); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--gold); font-size: 30px; font-weight: 900; }
+  .name { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
+  .verified-badge { background: var(--approved-bg); color: #fff; padding: 4px 10px; border-radius: 0; margin-top: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .verified-badge.subscribed { background: var(--orange); }
-  .trust-badge { background: var(--orange); color: #fff; padding: 5px 12px; border-radius: 20px; margin-top: 8px; font-size: 12px; font-weight: 700; }
-  .member-since { font-size: 11px; color: var(--subtext); margin-top: 8px; }
+  .trust-badge { background: var(--orange); color: #fff; padding: 5px 12px; border-radius: 0; margin-top: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .member-since { font-size: 11px; color: var(--subtext); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
 
-  .stats-row { display: flex; background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 14px; margin-bottom: 14px; }
-  .stat-box { flex: 1; text-align: center; }
-  .stat-number { font-size: 18px; font-weight: 700; color: var(--price-red); }
-  .stat-label { font-size: 10px; color: var(--subtext); margin-top: 4px; }
+  .stats-row { display: flex; background: var(--card); border-radius: 0; border: 2px solid var(--text); margin-bottom: 14px; }
+  .stat-box { flex: 1; text-align: center; padding: 14px 6px; border-right: 2px solid var(--text); }
+  .stat-box:last-child { border-right: none; }
+  .stat-number { font-size: 18px; font-weight: 900; color: var(--price-red); }
+  .stat-label { font-size: 9px; color: var(--subtext); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
 
-  .progress-box { background: var(--warn-bg); border-radius: 10px; padding: 10px; margin-bottom: 14px; text-align: center; }
-  .progress-text { font-size: 11px; color: var(--warn-text); font-weight: 600; }
+  .progress-box { background: var(--warn-bg); border-radius: 0; border: 2px solid var(--orange); padding: 10px; margin-bottom: 14px; text-align: center; }
+  .progress-text { font-size: 11px; color: var(--warn-text); font-weight: 700; }
 
-  .section-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .section-title { font-size: 13px; font-weight: 800; margin: 20px 0 10px; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 2px solid var(--text); padding-bottom: 8px; }
   .empty-text { color: var(--subtext); font-size: 12px; }
-  .review-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .review-card { background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 12px; margin-bottom: 8px; }
   .review-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .reviewer-name { font-size: 13px; font-weight: 600; }
+  .reviewer-name { font-size: 13px; font-weight: 700; }
   .review-stars { font-size: 12px; color: var(--gold); }
   .review-comment { font-size: 12px; color: var(--subtext); }
 
   .grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-  .card { width: calc(47% - 5px); background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+  .card { width: calc(47% - 5px); background: var(--card); border: 2px solid var(--border); border-radius: 0; overflow: hidden; cursor: pointer; }
   .thumb { height: 110px; background: #E9E2D3; display: flex; align-items: center; justify-content: center; }
   body.dark .thumb { background: #2A2A2A; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
   .card-info { padding: 8px; }
-  .card-price { font-weight: 700; font-size: 13px; color: var(--price-red); }
+  .card-price { font-weight: 800; font-size: 13px; color: var(--price-red); }
   .card-title { font-size: 11px; color: var(--text); margin: 2px 0; }
   .card-loc { font-size: 10px; color: var(--subtext); }
-  .sold-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-  .sold-item-title { font-size: 13px; font-weight: 600; }
+  .sold-item { background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 10px 12px; margin-bottom: 8px; }
+  .sold-item-title { font-size: 13px; font-weight: 700; }
   .sold-item-date { font-size: 10px; color: var(--subtext); margin-top: 3px; }
 </style>
 </head>
