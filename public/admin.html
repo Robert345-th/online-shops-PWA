@@ -53,70 +53,78 @@
   .tab-scroll { overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
   .tab-scroll::-webkit-scrollbar { display: none; }
   .tab-row { display: flex; padding: 12px; gap: 6px; }
-  .tab-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--subtext); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+  .tab-btn { background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 10px 14px; font-size: 10px; font-weight: 800; color: var(--subtext); white-space: nowrap; cursor: pointer; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em; }
   .tab-btn.active { background: var(--black); border-color: var(--black); color: var(--gold); }
 
-  .search-box { padding: 4px 14px 8px; }
-  .search-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .search-box { padding: 4px 14px 12px; }
+  .search-input { width: 100%; background: transparent; border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 10px 2px; font-size: 14px; }
 
   .list { padding: 14px; max-width: 640px; margin: 0 auto; }
   .empty-text { text-align: center; color: var(--subtext); }
   .section-note { font-size: 11px; color: var(--subtext); margin-bottom: 10px; font-style: italic; }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-  .card-name { font-size: 14px; font-weight: 700; }
-  .card-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .card { background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 14px; margin-bottom: 10px; }
+  .card-name { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
+  .card-sub { font-size: 11px; color: var(--subtext); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.03em; }
   .card-detail { font-size: 12px; margin-top: 4px; }
-  .doc-image { width: 100%; height: 180px; border-radius: 10px; margin-top: 4px; background: var(--thumb-bg); object-fit: cover; display: block; cursor: pointer; }
+  .doc-image { width: 100%; height: 180px; border-radius: 0; margin-top: 4px; background: var(--thumb-bg); object-fit: cover; display: block; cursor: pointer; }
   .doc-tap-hint { font-size: 10px; color: var(--subtext); margin-top: 4px; font-style: italic; }
   .photo-viewer {
     display: none; position: fixed; inset: 0; z-index: 400;
     background: rgba(0,0,0,0.92); flex-direction: column; align-items: center; justify-content: center; padding: 16px;
   }
   .photo-viewer.open { display: flex; }
-  .photo-viewer img { max-width: 100%; max-height: 78vh; object-fit: contain; border-radius: 8px; }
+  .photo-viewer img { max-width: 100%; max-height: 78vh; object-fit: contain; border-radius: 0; }
   .photo-viewer-caption { color: #fff; font-size: 12px; margin-top: 10px; text-align: center; }
   .photo-viewer-close {
-    margin-top: 14px; background: var(--card); border: none; border-radius: 10px;
-    padding: 12px 20px; font-weight: 700; cursor: pointer;
+    margin-top: 14px; background: var(--card); border: 2px solid #fff; border-radius: 0;
+    padding: 12px 20px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px;
   }
   .detail-grid { margin-top: 10px; }
   .detail-row { font-size: 12px; margin-top: 6px; line-height: 1.45; }
-  .detail-label { font-weight: 700; color: var(--subtext); }
-  .doc-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .doc-section-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; color: var(--subtext); letter-spacing: 0.03em; }
-  .view-link { margin-top: 6px; display: inline-block; font-size: 12px; color: var(--price-red); font-weight: 600; cursor: pointer; background: none; border: none; }
+  .detail-label { font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.02em; }
+  .doc-section { margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--border); }
+  .doc-section-title { font-size: 11px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; color: var(--subtext); letter-spacing: 0.05em; }
+  .view-link { margin-top: 6px; display: inline-block; font-size: 12px; color: var(--price-red); font-weight: 700; cursor: pointer; background: none; border: none; text-transform: uppercase; letter-spacing: 0.03em; text-decoration: underline; }
   .shop-app-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .shop-app-row-main { min-width: 0; flex: 1; }
   .view-btn {
-    background: var(--black); border: none; border-radius: 10px; padding: 10px 16px;
-    color: var(--gold); font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0;
+    background: var(--black); border: none; border-radius: 0; padding: 10px 18px;
+    color: var(--gold); font-weight: 800; font-size: 11px; cursor: pointer; flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: 0.05em;
   }
+  .row-btn-group { display: flex; gap: 8px; flex-shrink: 0; }
+  .suspend-btn-sm { border: none; border-radius: 0; padding: 10px 14px; font-weight: 800; font-size: 11px; cursor: pointer; color: #fff; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  .suspend-btn-sm.suspend { background: var(--price-red); }
+  .suspend-btn-sm.unsuspend { background: var(--green-btn); }
+  .status-pill { display: inline-block; font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 0; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; border: 1.5px solid currentColor; }
+  .status-pill.active { background: transparent; color: var(--green-btn); }
+  .status-pill.suspended { background: transparent; color: var(--price-red); }
   .detail-scroll { max-height: 60vh; overflow-y: auto; margin-bottom: 14px; }
 
   .card-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .approve-btn { flex: 1; background: var(--green-btn); border: none; padding: 10px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
-  .reject-btn { flex: 1; background: var(--price-red); border: none; padding: 10px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .approve-btn { flex: 1; background: var(--green-btn); border: none; border-radius: 0; padding: 10px; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
+  .reject-btn { flex: 1; background: var(--price-red); border: none; border-radius: 0; padding: 10px; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
   .approve-btn:disabled, .reject-btn:disabled { opacity: 0.7; }
 
   .price-edit-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-  .price-edit-prefix { font-size: 14px; font-weight: 700; }
-  .price-edit-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 14px; }
-  .price-save-btn { background: var(--black); padding: 10px 16px; border-radius: 10px; color: var(--gold); font-weight: 700; font-size: 13px; border: none; cursor: pointer; }
+  .price-edit-prefix { font-size: 14px; font-weight: 800; }
+  .price-edit-input { flex: 1; background: var(--bg); border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 10px 2px; font-size: 14px; }
+  .price-save-btn { background: var(--black); padding: 10px 16px; border-radius: 0; color: var(--gold); font-weight: 800; font-size: 12px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
 
-  .input-label { font-size: 11px; font-weight: 600; color: var(--subtext); margin-top: 12px; margin-bottom: 6px; text-transform: uppercase; }
-  .broadcast-title-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; }
-  .broadcast-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 100px; font-size: 13px; resize: vertical; }
+  .input-label { font-size: 11px; font-weight: 800; color: var(--subtext); margin-top: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .broadcast-title-input { width: 100%; background: var(--bg); border: none; border-bottom: 2px solid var(--border); border-radius: 0; padding: 10px 2px; font-size: 13px; }
+  .broadcast-input { width: 100%; background: var(--bg); border: 2px solid var(--border); border-radius: 0; padding: 10px; min-height: 100px; font-size: 13px; resize: vertical; }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
-  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-  .modal-subtitle { font-size: 12px; color: var(--subtext); margin-bottom: 14px; }
-  .modal-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 100px; margin-bottom: 14px; font-size: 13px; resize: vertical; }
+  .modal-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 88vh; overflow-y: auto; border-top: 3px solid var(--black); }
+  .modal-title { font-size: 16px; font-weight: 900; margin-bottom: 6px; text-transform: uppercase; letter-spacing: -0.01em; }
+  .modal-subtitle { font-size: 12px; color: var(--subtext); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .modal-input { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 12px; min-height: 100px; margin-bottom: 14px; font-size: 13px; resize: vertical; }
   .modal-actions { display: flex; gap: 10px; }
-  .modal-cancel-btn { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 13px; border-radius: 12px; text-align: center; color: var(--subtext); font-weight: 600; cursor: pointer; }
-  .modal-submit-btn { flex: 1; background: var(--price-red); border: none; padding: 13px; border-radius: 12px; text-align: center; color: #fff; font-weight: 700; cursor: pointer; }
+  .modal-cancel-btn { flex: 1; background: var(--card); border: 2px solid var(--border); border-radius: 0; padding: 13px; text-align: center; color: var(--text); font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+  .modal-submit-btn { flex: 1; background: var(--price-red); border: none; border-radius: 0; padding: 13px; text-align: center; color: #fff; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -172,6 +180,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <div class="modal-title">User Details</div>
+    <div class="modal-subtitle" id="userModalSubtitle"></div>
+    <div class="detail-scroll" id="userModalBody"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" id="userCloseBtn">Close</button>
+      <button class="reject-btn" id="userSuspendBtn" style="flex:1;">Suspend</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="rejectModal">
   <div class="modal-box">
     <div class="modal-title">Reject Shop Application</div>
@@ -208,6 +228,7 @@
   let rejectTargetType = "shop";
   let viewShopTargetId = null;
   let viewNrcTargetId = null;
+  let viewUserTargetId = null;
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
@@ -239,6 +260,13 @@
     if (type === "home") return "Home only";
     if (type === "both") return "Shop & home";
     return type || "";
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   }
 
   function docImageHtml(url, label) {
@@ -328,6 +356,85 @@
     document.getElementById("shopAppModal").classList.remove("open");
     viewShopTargetId = null;
   }
+
+  // ---- User identity detail (Users tab "View") ----
+  function buildUserDetailHtml(u) {
+    const phone = formatZambianPhone(u.phone);
+    const cityProvince = [u.city, u.province].filter(Boolean).join(", ");
+
+    const detailRows = [
+      ["Name", u.name],
+      ["Phone", phone],
+      ["Account type", u.account_type === "shop" ? "Shop seller" : "Individual"],
+      ["Date of birth", u.date_of_birth],
+      ["City / Province", cityProvince],
+      ["Shop name", u.shop_name],
+      ["Shop status", u.shop_status],
+      ["Shop address", u.shop_address],
+      ["Home address", u.home_address],
+      ["Listing area", u.location_label],
+      ["NRC number", u.nrc_number],
+      ["NRC status", u.nrc_status],
+      ["Referral code", u.referral_code],
+      ["Joined", formatDate(u.created_at)],
+    ].filter(([, value]) => value);
+
+    let html = `<div class="status-pill ${u.is_suspended ? "suspended" : "active"}">${u.is_suspended ? "Suspended" : "Active"}</div>`;
+    html += detailRows.map(([label, value]) =>
+      `<div class="detail-row"><span class="detail-label">${escHtml(label)}:</span> ${escHtml(value)}</div>`
+    ).join("");
+
+    if (u.nrc_photo_url) html += docImageHtml(u.nrc_photo_url, "NRC front");
+    if (u.nrc_back_photo_url) html += docImageHtml(u.nrc_back_photo_url, "NRC back");
+    if (u.selfie_photo_url) html += docImageHtml(u.selfie_photo_url, "Selfie");
+
+    return html;
+  }
+
+  function renderUserListRow(u) {
+    const title = escHtml(u.name);
+    const phone = formatZambianPhone(u.phone);
+    return `
+      <div class="card shop-app-row">
+        <div class="shop-app-row-main">
+          <div class="card-name">${title}</div>
+          <div class="card-sub">${escHtml(phone)} · ${escHtml(u.account_type)}</div>
+          <div class="status-pill ${u.is_suspended ? "suspended" : "active"}">${u.is_suspended ? "Suspended" : "Active"}</div>
+        </div>
+        <button type="button" class="view-btn" data-view-user="${u.id}">View</button>
+      </div>`;
+  }
+
+  function openUserDetail(id) {
+    const target = users.find((u) => String(u.id) === String(id));
+    if (!target) return;
+    viewUserTargetId = target.id;
+    document.getElementById("userModalSubtitle").textContent = `${target.name} · ${formatZambianPhone(target.phone)}`;
+    document.getElementById("userModalBody").innerHTML = buildUserDetailHtml(target);
+    wireDocImages(document.getElementById("userModalBody"));
+    const suspendBtn = document.getElementById("userSuspendBtn");
+    suspendBtn.textContent = target.is_suspended ? "Unsuspend" : "Suspend";
+    suspendBtn.className = target.is_suspended ? "approve-btn" : "reject-btn";
+    suspendBtn.style.flex = "1";
+    document.getElementById("userModal").classList.add("open");
+  }
+
+  function closeUserDetail() {
+    document.getElementById("userModal").classList.remove("open");
+    viewUserTargetId = null;
+  }
+
+  document.getElementById("userCloseBtn").addEventListener("click", closeUserDetail);
+  document.getElementById("userModal").addEventListener("click", (e) => {
+    if (e.target.id === "userModal") closeUserDetail();
+  });
+  document.getElementById("userSuspendBtn").addEventListener("click", async () => {
+    if (!viewUserTargetId) return;
+    const target = users.find((u) => String(u.id) === String(viewUserTargetId));
+    if (!target) return;
+    await toggleSuspend(viewUserTargetId, target.is_suspended);
+    closeUserDetail();
+  });
 
   async function loadAll() {
     await Promise.all([
@@ -465,18 +572,11 @@
         <div class="search-box"><input class="search-input" id="userSearchInput" placeholder="Search by name or phone..." value="${userSearchText}" /></div>
         <div class="list">${
           filtered.length === 0 ? `<div class="empty-text">No users match your search.</div>` :
-          filtered.map(u => `
-            <div class="card">
-              <div class="card-name">${u.name}</div>
-              <div class="card-sub">${formatZambianPhone(u.phone)} · ${u.account_type}</div>
-              <button class="${u.is_suspended ? "approve-btn" : "reject-btn"}" style="margin-top:10px; width:100%;" data-toggle-suspend="${u.id}" data-suspended="${u.is_suspended}">
-                ${u.is_suspended ? "Unsuspend" : "Suspend"}
-              </button>
-            </div>`).join("")
+          filtered.map(u => renderUserListRow(u)).join("")
         }</div>`;
       document.getElementById("userSearchInput").addEventListener("input", (e) => { userSearchText = e.target.value; renderTabContent(); });
-      content.querySelectorAll("[data-toggle-suspend]").forEach(el =>
-        el.addEventListener("click", () => toggleSuspend(el.dataset.toggleSuspend, el.dataset.suspended === "true"))
+      content.querySelectorAll("[data-view-user]").forEach(el =>
+        el.addEventListener("click", () => openUserDetail(el.dataset.viewUser))
       );
 
     } else if (tab === "reports") {
