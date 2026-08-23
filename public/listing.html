@@ -42,6 +42,7 @@
   #app { height: 100dvh; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
   .listing-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; flex: 1; }
+  .top-strip { background: var(--black); height: calc(16px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
   .hero-wrap { position: relative; flex: 1 1 auto; max-height: 480px; min-height: 200px; background: var(--thumb-bg); }
   .hero-photo { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
   .hero-photo-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -412,6 +413,7 @@
 
     app.innerHTML = `
       <div class="listing-shell">
+      <div class="top-strip"></div>
       <div class="hero-wrap">
         <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
         <div class="hero-actions">
