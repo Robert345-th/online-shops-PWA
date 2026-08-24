@@ -144,8 +144,10 @@
         return;
       }
       const secondsLeft = Math.ceil(remainingMs / 1000);
-      resendBtn.textContent = t("resend_available_in", { seconds: secondsLeft }) ||
-        `Resend available in ${secondsLeft}s`;
+      const translated = t("resend_available_in", { seconds: secondsLeft });
+      resendBtn.textContent = (translated && translated !== "resend_available_in")
+        ? translated
+        : `Resend available in ${secondsLeft}s`;
     }
 
     tick();
@@ -155,7 +157,16 @@
   function checkExistingCooldown() {
     const stored = parseInt(localStorage.getItem(RESEND_STORAGE_KEY) || "0", 10);
     if (stored && stored > Date.now()) {
+      // A cooldown from a previous resend is still running — resume it
+      // from the real remaining time, not from zero.
       startResendCountdown(stored);
+    } else {
+      // No active cooldown — landing on this page always follows a fresh
+      // code being sent (signup, login, or password reset), so start the
+      // same 60s wait immediately rather than only after tapping Resend.
+      const until = Date.now() + RESEND_COOLDOWN_MS;
+      localStorage.setItem(RESEND_STORAGE_KEY, String(until));
+      startResendCountdown(until);
     }
   }
   checkExistingCooldown();
