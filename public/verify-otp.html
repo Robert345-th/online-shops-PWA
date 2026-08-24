@@ -37,7 +37,7 @@
   .submit-btn { width: 100%; background: var(--red-btn); border: none; border-radius: 12px; padding: 15px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-bottom: 20px; }
   .submit-btn:disabled { opacity: 0.7; }
   .link { display: block; width: 100%; text-align: center; color: var(--price-red); font-size: 13px; background: none; border: none; cursor: pointer; }
-  .link:disabled { opacity: 0.6; cursor: default; }
+  .link:disabled { opacity: 0.6; cursor: default; color: var(--subtext); }
 
   .form-banner {
     display: none;
@@ -89,12 +89,17 @@
   const params = new URLSearchParams(window.location.search);
   const phone = params.get("phone") || "";
 
+  const RESEND_COOLDOWN_MS = 60 * 1000;
+  const RESEND_STORAGE_KEY = "zm_otp_resend_until_" + (phone || "unknown");
+
   const otpInput = document.getElementById("otpInput");
   const verifyBtn = document.getElementById("verifyBtn");
   const resendBtn = document.getElementById("resendBtn");
   const errorBanner = document.getElementById("errorBanner");
   const successBanner = document.getElementById("successBanner");
   const subtitleText = document.getElementById("subtitleText");
+
+  let countdownInterval = null;
 
   function updateSubtitle() {
     subtitleText.textContent = phone
@@ -119,6 +124,41 @@
     errorBanner.classList.remove("show");
     successBanner.classList.remove("show");
   }
+
+  // Persistent resend cooldown — stores the timestamp resend becomes available
+  // again in localStorage, so closing/reloading the page (or trying to cheat
+  // the timer) doesn't reset it. The countdown always resumes from the real
+  // remaining time, not from zero.
+  function startResendCountdown(untilTimestamp) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    resendBtn.disabled = true;
+
+    function tick() {
+      const remainingMs = untilTimestamp - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        localStorage.removeItem(RESEND_STORAGE_KEY);
+        resendBtn.disabled = false;
+        resendBtn.textContent = t("resend_code");
+        return;
+      }
+      const secondsLeft = Math.ceil(remainingMs / 1000);
+      resendBtn.textContent = t("resend_available_in", { seconds: secondsLeft }) ||
+        `Resend available in ${secondsLeft}s`;
+    }
+
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+  }
+
+  function checkExistingCooldown() {
+    const stored = parseInt(localStorage.getItem(RESEND_STORAGE_KEY) || "0", 10);
+    if (stored && stored > Date.now()) {
+      startResendCountdown(stored);
+    }
+  }
+  checkExistingCooldown();
 
   verifyBtn.addEventListener("click", async () => {
     clearBanners();
@@ -171,13 +211,17 @@
 
       if (!res.ok) {
         showError(data.error || t("otp_resend_fail"));
+        resendBtn.disabled = false;
+        resendBtn.textContent = t("resend_code");
         return;
       }
 
       showSuccess(t("otp_sent"));
+      const until = Date.now() + RESEND_COOLDOWN_MS;
+      localStorage.setItem(RESEND_STORAGE_KEY, String(until));
+      startResendCountdown(until);
     } catch (e) {
       showError(t("chat_server_fail"));
-    } finally {
       resendBtn.disabled = false;
       resendBtn.textContent = t("resend_code");
     }
@@ -186,7 +230,6 @@
   window.addEventListener("langchange", () => {
     updateSubtitle();
     if (!verifyBtn.disabled) verifyBtn.textContent = t("verify");
-    if (!resendBtn.disabled) resendBtn.textContent = t("resend_code");
   });
 </script>
 </body>
