@@ -60,10 +60,12 @@
     font-size: 11px; font-weight: 700; border: none; cursor: pointer;
   }
   .add-photo-box {
-    width: 80px; height: 80px; border: 2px dashed var(--red-btn); border-radius: 0;
-    display: flex; align-items: center; justify-content: center; background: var(--card);
-    cursor: pointer; color: var(--price-red); font-weight: 800; font-size: 11px; text-transform: uppercase;
+    width: 100%; height: 140px; border: 2px solid var(--text); border-radius: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: var(--card); cursor: pointer; color: var(--text); margin-bottom: 18px;
   }
+  .add-plus { font-size: 32px; font-weight: 900; line-height: 1; color: var(--price-red); }
+  .add-text { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
 
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .chip {
@@ -158,11 +160,12 @@
       <div class="step-title">Photos</div>
       <div class="subtitle">Add up to 5 photos. Good photos help your item sell faster.</div>
       <div class="label">Photos (<span id="photoCount">0</span>/5)</div>
-      <div class="photo-grid" id="photoGrid">
-        <label class="add-photo-box" id="addPhotoBox">+ Add
-          <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
-        </label>
-      </div>
+      <div class="photo-grid" id="photoGrid"></div>
+      <label class="add-photo-box" id="addPhotoBox">
+        <div class="add-plus">+</div>
+        <div class="add-text">Add Photos</div>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
+      </label>
       <div class="btn-row">
         <button type="button" class="back-btn" id="back2Btn">Back</button>
         <button type="button" class="submit-btn" id="next2Btn">Next</button>
@@ -506,7 +509,6 @@
   function renderPhotoGrid() {
     const grid = document.getElementById("photoGrid");
     document.getElementById("photoCount").textContent = photos.length;
-    const addBox = `<label class="add-photo-box" id="addPhotoBox">+ Add<input type="file" id="photoInput" accept="image/*" multiple style="display:none;" /></label>`;
 
     grid.innerHTML = photos.map((p) => `
       <div class="photo-thumb-wrap">
@@ -514,7 +516,7 @@
         ${p.uploading ? `<div class="photo-overlay">…</div>` : ""}
         <button type="button" class="remove-btn" data-uri="${p.uri}">✕</button>
       </div>
-    `).join("") + (photos.length < MAX_PHOTOS ? addBox : "");
+    `).join("");
 
     document.querySelectorAll(".remove-btn").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -522,6 +524,12 @@
         renderPhotoGrid();
       })
     );
+
+    const addBoxEl = document.getElementById("addPhotoBox");
+    if (addBoxEl) addBoxEl.style.display = photos.length < MAX_PHOTOS ? "flex" : "none";
+  }
+
+  function initPhotoAddControls() {
     const input = document.getElementById("photoInput");
     if (input) input.addEventListener("change", handlePhotoSelect);
     const addBoxEl = document.getElementById("addPhotoBox");
@@ -734,6 +742,7 @@
   function initWizard() {
     loadSavedListingLocation();
     renderCategoryChips();
+    initPhotoAddControls();
     renderPhotoGrid();
 
     document.querySelectorAll("[data-cond]").forEach((el) =>
@@ -760,6 +769,10 @@
 
     document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
     document.getElementById("next2Btn").addEventListener("click", () => {
+      if (photos.length === 0) {
+        showError("Please add at least one photo.");
+        return;
+      }
       if (photos.some((p) => p.uploading)) {
         showError("Photos are still uploading. Please wait a moment.");
         return;
