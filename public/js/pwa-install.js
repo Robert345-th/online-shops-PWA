@@ -103,13 +103,26 @@
     }
     if (isIOS()) {
       showIosInstallGuide();
-    } else if (isAndroid()) {
-      redirectToChrome();
-    } else {
-      alert(typeof t === "function"
-        ? t("install_desktop_hint")
-        : 'To install: open in Chrome, then use the browser menu → "Install app" or "Add to Home screen".');
+      return;
     }
+    const androidNeedsChrome = typeof window.needsChromeOnAndroid === "function" && window.needsChromeOnAndroid();
+    if (isAndroid() && androidNeedsChrome) {
+      redirectToChrome();
+      return;
+    }
+    if (isAndroid()) {
+      // Already in Chrome, but the native install prompt isn't ready yet
+      // (Chrome hasn't fired beforeinstallprompt) — redirecting to Chrome
+      // here would just reopen the same page and look like nothing happened.
+      // Show manual instructions instead.
+      alert(typeof t === "function"
+        ? t("install_manual_chrome_hint")
+        : 'Tap the ⋮ menu in Chrome, then choose "Install app" or "Add to Home screen".');
+      return;
+    }
+    alert(typeof t === "function"
+      ? t("install_desktop_hint")
+      : 'To install: open in Chrome, then use the browser menu → "Install app" or "Add to Home screen".');
   }
 
   function showInstallBanner() {
