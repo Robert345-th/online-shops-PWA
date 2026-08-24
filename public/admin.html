@@ -219,6 +219,8 @@
   let tab = "subscriptions";
   let pending = [], users = [], reports = [], userReports = [], shopApps = [], nameRequests = [], boostRequests = [], planPrices = [];
   let nrcVerifications = [];
+  let allListings = [];
+  let allListingsSearchText = "";
   let editedPrices = {};
   let userSearchText = "";
   let paymentStatus = null;
@@ -439,9 +441,21 @@
   async function loadAll() {
     await Promise.all([
       loadPending(), loadUsers(), loadReports(), loadUserReports(),
-      loadShopApps(), loadNrcVerifications(), loadNameRequests(), loadBoostRequests(), loadPlanPrices(), loadPaymentStatus(), loadNrcStatus()
+      loadShopApps(), loadNrcVerifications(), loadNameRequests(), loadBoostRequests(), loadPlanPrices(), loadPaymentStatus(), loadNrcStatus(),
+      loadAllListings()
     ]);
     render();
+  }
+
+  async function loadAllListings(search) {
+    try {
+      const query = search ? `?search=${encodeURIComponent(search)}` : "";
+      const res = await fetch(`${API_URL}/listings/admin/all${query}`, { headers: authHeaders() });
+      allListings = await res.json();
+      if (!Array.isArray(allListings)) allListings = [];
+    } catch (e) {
+      allListings = [];
+    }
   }
 
   async function loadPending() {
@@ -517,6 +531,7 @@
       { key: "subscriptions", label: `Pending (${pending.length})` },
       { key: "users", label: `Users (${users.length})` },
       { key: "reports", label: `Listing Reports (${reports.length})` },
+      { key: "allListings", label: `All Listings` },
       { key: "userReports", label: `User Reports (${userReports.length})` },
       { key: "shopApps", label: `Shop Applications (${shopApps.length})` },
       { key: "nrcVerifications", label: `NRC (${nrcVerifications.length})` },
@@ -597,6 +612,38 @@
       content.querySelectorAll("[data-view-listing]").forEach(el => el.addEventListener("click", () => window.location.href = `/listing.html?id=${el.dataset.viewListing}`));
       content.querySelectorAll("[data-dismiss-report]").forEach(el => el.addEventListener("click", () => dismissReport(el.dataset.dismissReport)));
       content.querySelectorAll("[data-remove-listing]").forEach(el => el.addEventListener("click", () => deleteReportedListing(el.dataset.removeListing, el.dataset.listingId)));
+
+    } else if (tab === "allListings") {
+      content.innerHTML = `
+        <div class="search-box"><input class="search-input" id="allListingsSearchInput" placeholder="Search by title, seller name, or phone..." value="${allListingsSearchText}" /></div>
+        <div class="list">${
+          allListings.length === 0 ? `<div class="empty-text">No listings match your search.</div>` :
+          allListings.map(l => `
+            <div class="card">
+              <div class="card-name">${escHtml(l.title)}</div>
+              <div class="card-sub">K${escHtml(l.price)} · ${escHtml(l.category || "")} ${l.seller_suspended ? "· 🔴 Seller Suspended" : ""}</div>
+              <div class="card-detail">Seller: ${escHtml(l.shop_name || l.seller_name || "Unknown")} · ${escHtml(formatZambianPhone(l.seller_phone))}</div>
+              <div class="card-detail">Status: ${escHtml(l.status)}</div>
+              <div class="card-actions">
+                <button class="approve-btn" data-view-all-listing="${l.id}">View</button>
+                <button class="reject-btn" data-remove-all-listing="${l.id}" data-remove-all-title="${escHtml(l.title)}">Remove</button>
+              </div>
+            </div>`).join("")
+        }</div>`;
+      document.getElementById("allListingsSearchInput").addEventListener("input", (e) => {
+        allListingsSearchText = e.target.value;
+        clearTimeout(window.__allListingsSearchTimer);
+        window.__allListingsSearchTimer = setTimeout(async () => {
+          await loadAllListings(allListingsSearchText);
+          renderTabContent();
+        }, 300);
+      });
+      content.querySelectorAll("[data-view-all-listing]").forEach(el =>
+        el.addEventListener("click", () => window.location.href = `/listing.html?id=${el.dataset.viewAllListing}`)
+      );
+      content.querySelectorAll("[data-remove-all-listing]").forEach(el =>
+        el.addEventListener("click", () => removeAnyListing(el.dataset.removeAllListing, el.dataset.removeAllTitle))
+      );
 
     } else if (tab === "userReports") {
       content.innerHTML = `<div class="list">${
@@ -797,6 +844,22 @@
       renderTabContent();
       alert("Removed — the listing has been removed.");
     } catch (e) { alert("Could not remove listing."); }
+  }
+  async function removeAnyListing(listingId, title) {
+    if (!confirm(`Remove "${title}"? The seller will get a push notification that it was removed.`)) return;
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Could not remove listing.");
+        return;
+      }
+      allListings = allListings.filter(l => l.id != listingId);
+      renderTabContent();
+      alert("Removed — the seller has been notified.");
+    } catch (e) {
+      alert("Could not connect to the server.");
+    }
   }
   async function dismissUserReport(reportId) {
     try {
