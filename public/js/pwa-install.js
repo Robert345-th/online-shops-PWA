@@ -88,7 +88,17 @@
     window.location.replace(buildChromeIntentUrl());
   }
 
+  const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=app.zedmarket.twa";
+
   async function promptPwaInstall() {
+    // Android now always goes straight to the Play Store listing instead of
+    // the PWA install flow (native prompt / Chrome redirect / manual
+    // instructions) — the app is live on Play, so that's the real install
+    // path for Android users now. This works from any browser/webview.
+    if (isAndroid()) {
+      window.location.href = PLAY_STORE_URL;
+      return;
+    }
     if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) {
       if (typeof window.goToInstallHelp === "function") {
         window.goToInstallHelp();
@@ -105,21 +115,6 @@
       showIosInstallGuide();
       return;
     }
-    const androidNeedsChrome = typeof window.needsChromeOnAndroid === "function" && window.needsChromeOnAndroid();
-    if (isAndroid() && androidNeedsChrome) {
-      redirectToChrome();
-      return;
-    }
-    if (isAndroid()) {
-      // Already in Chrome, but the native install prompt isn't ready yet
-      // (Chrome hasn't fired beforeinstallprompt) — redirecting to Chrome
-      // here would just reopen the same page and look like nothing happened.
-      // Show manual instructions instead.
-      alert(typeof t === "function"
-        ? t("install_manual_chrome_hint")
-        : 'Tap the ⋮ menu in Chrome, then choose "Install app" or "Add to Home screen".');
-      return;
-    }
     alert(typeof t === "function"
       ? t("install_desktop_hint")
       : 'To install: open in Chrome, then use the browser menu → "Install app" or "Add to Home screen".');
@@ -128,13 +123,15 @@
   function showInstallBanner() {
     if (typeof window.isPlayStoreApp === "function" && window.isPlayStoreApp()) return;
     if (isStandalone() || localStorage.getItem(DISMISS_KEY) === "1") return;
-    if (typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) return;
     if (document.getElementById("pwaInstallBanner")) return;
 
     const ios = isIOS();
-    const androidChrome = typeof window.isAndroidChrome === "function" && window.isAndroidChrome();
-    const androidNeedsChrome = typeof window.needsChromeOnAndroid === "function" && window.needsChromeOnAndroid();
-    if (!ios && !androidNeedsChrome && !androidChrome) return;
+    const android = isAndroid();
+    if (!ios && !android) return;
+    // Android now points straight to the Play Store, which works from any
+    // browser/webview — so unlike iOS, embedded browsers don't need to be
+    // filtered out here.
+    if (!android && typeof window.isEmbeddedBrowser === "function" && window.isEmbeddedBrowser()) return;
 
     const banner = document.createElement("div");
     banner.id = "pwaInstallBanner";
@@ -156,18 +153,15 @@
     banner.innerHTML = `
       <img src="https://zedmarket.app/icon-192.png" alt="" width="40" height="40" style="border-radius:10px;flex-shrink:0;" />
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="${androidNeedsChrome ? "install_android_banner_text" : "install_banner_text"}">Install ZedMarket on your home screen</div>
-        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${androidNeedsChrome ? "install_android_banner_sub" : (androidChrome ? "install_page_ready_sub" : "install_banner_sub")}">${androidNeedsChrome ? "Open in Chrome first — then tap Install app" : (androidChrome ? "You're in a browser that can install ZedMarket." : "Two taps in Safari — no App Store needed")}</div>
+        <div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3;" data-i18n="${android ? "install_play_banner_text" : "install_banner_text"}">${android ? "Get ZedMarket on Google Play" : "Install ZedMarket on your home screen"}</div>
+        <div style="font-size:11px;color:#C9BFAF;margin-top:2px;" data-i18n="${android ? "install_play_banner_sub" : "install_banner_sub"}">${android ? "Download the app from the Play Store" : "Two taps in Safari — no App Store needed"}</div>
       </div>
-      <button type="button" id="pwaInstallBannerBtn" style="background:#F5C518;color:#111;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;" data-i18n="${androidNeedsChrome ? "install_android_banner_btn" : "install_banner_btn"}">${androidNeedsChrome ? "Open in Chrome" : "Install"}</button>
+      <button type="button" id="pwaInstallBannerBtn" style="background:#F5C518;color:#111;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;" data-i18n="${android ? "install_play_banner_btn" : "install_banner_btn"}">${android ? "Get on Play" : "Install"}</button>
       <button type="button" id="pwaInstallBannerDismiss" aria-label="Dismiss" style="background:none;border:none;color:#C9BFAF;font-size:20px;line-height:1;cursor:pointer;padding:0 2px;">×</button>`;
     document.body.appendChild(banner);
 
     if (typeof applyTranslations === "function") applyTranslations(banner);
-    document.getElementById("pwaInstallBannerBtn").addEventListener("click", () => {
-      if (androidNeedsChrome) redirectToChrome();
-      else promptPwaInstall();
-    });
+    document.getElementById("pwaInstallBannerBtn").addEventListener("click", promptPwaInstall);
     document.getElementById("pwaInstallBannerDismiss").addEventListener("click", () => {
       localStorage.setItem(DISMISS_KEY, "1");
       banner.remove();
