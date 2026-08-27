@@ -38,8 +38,16 @@ jobs:
             echo "Add APK_KEYSTORE_BASE64 to repo Secrets before running this workflow."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > android.keystore
-          echo "Restored android.keystore from secret."
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d -i > android.keystore
+          echo "Restored android.keystore from secret ($(wc -c < android.keystore) bytes)."
+
+      - name: Verify signing keystore opens correctly
+        working-directory: android
+        env:
+          KEYSTORE_PASS: ${{ secrets.APK_KEYSTORE_PASSWORD }}
+        run: |
+          keytool -list -v -keystore android.keystore -alias upload -storepass "$KEYSTORE_PASS" > /dev/null
+          echo "Keystore verified OK."
 
       - name: Install Bubblewrap
         working-directory: android
