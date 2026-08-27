@@ -67,9 +67,9 @@ jobs:
         working-directory: android
         run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade
 
-      - name: Patch WebView-only launcher
+      - name: Patch WebView location handling
         working-directory: android
-        run: node patch-webview-only.js && node patch-webview-location.js
+        run: node patch-webview-location.js
 
       - name: Build signed APK
         working-directory: android
