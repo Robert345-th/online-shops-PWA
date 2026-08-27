@@ -19,7 +19,7 @@
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
-    "alias": "zedmarket"
+    "alias": "upload"
   },
   "appVersionName": "1.0.19",
   "appVersionCode": 19,
