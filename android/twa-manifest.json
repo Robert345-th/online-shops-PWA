@@ -18,8 +18,8 @@
   "monochromeIconUrl": "https://zedmarket.app/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "./upload.keystore",
-    "alias": "upload"
+    "path": "./android.keystore",
+    "alias": "zedmarket"
   },
   "appVersionName": "1.0.19",
   "appVersionCode": 19,
