@@ -16,7 +16,7 @@ if (!fs.existsSync(keystore)) {
 }
 
 const out = execSync(
-  `keytool -list -v -keystore "${keystore}" -alias zedmarket -storepass "${pass}"`,
+  `keytool -list -v -keystore "${keystore}" -alias upload -storepass "${pass}"`,
   { encoding: "utf8" }
 );
 const match = out.match(/SHA256:\s*([0-9A-F:]+)/i);
