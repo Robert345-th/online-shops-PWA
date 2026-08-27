@@ -46,7 +46,7 @@ jobs:
         env:
           KEYSTORE_PASS: ${{ secrets.APK_KEYSTORE_PASSWORD }}
         run: |
-          keytool -list -v -keystore android.keystore -alias upload -storepass "$KEYSTORE_PASS" > /dev/null
+          keytool -list -v -keystore android.keystore -alias upload -storepass "$KEYSTORE_PASS"
           echo "Keystore verified OK."
 
       - name: Install Bubblewrap
