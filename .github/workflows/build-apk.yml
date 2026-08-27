@@ -30,11 +30,16 @@ jobs:
       - uses: android-actions/setup-android@v3
 
       - name: Restore signing keystore
-        uses: actions/cache@v4
-        id: keystore-cache
-        with:
-          path: android/android.keystore
-          key: zedmarket-android-keystore-v1
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.APK_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Add APK_KEYSTORE_BASE64 to repo Secrets before running this workflow."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android.keystore
+          echo "Restored android.keystore from secret."
 
       - name: Install Bubblewrap
         working-directory: android
@@ -46,22 +51,6 @@ jobs:
           mkdir -p "$HOME/.bubblewrap"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$SDK_PATH" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
-
-      - name: Create signing keystore
-        working-directory: android
-        env:
-          KEYSTORE_PASS: ${{ secrets.APK_KEYSTORE_PASSWORD }}
-        run: |
-          if [ -z "$KEYSTORE_PASS" ]; then
-            echo "Add APK_KEYSTORE_PASSWORD to repo Secrets before running this workflow."
-            exit 1
-          fi
-          if [ ! -f android.keystore ]; then
-            keytool -genkeypair -alias zedmarket -keyalg RSA -keysize 2048 -validity 10000 \
-              -storetype PKCS12 -keystore android.keystore \
-              -storepass "$KEYSTORE_PASS" -keypass "$KEYSTORE_PASS" \
-              -dname "CN=ZedMarket, OU=Mobile, O=ZedMarket, L=Lusaka, ST=Lusaka, C=ZM"
-          fi
 
       - name: Sync TWA project
         working-directory: android
