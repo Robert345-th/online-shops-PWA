@@ -69,7 +69,7 @@ jobs:
 
       - name: Patch WebView location handling
         working-directory: android
-        run: node patch-webview-location.js
+        run: node patch-offline-shell.js && node patch-webview-location.js && node patch-version.js
 
       - name: Build signed APK
         working-directory: android
