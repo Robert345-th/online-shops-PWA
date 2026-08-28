@@ -212,6 +212,22 @@
   .menu-row svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .menu-row.danger { color: var(--price-red); }
   .menu-cancel-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 4px; }
+
+  .call-confirm-box { padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+  .call-confirm-handle {
+    width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px;
+  }
+  .call-confirm-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .call-confirm-phone { font-size: 20px; font-weight: 800; color: var(--gold); letter-spacing: 0.02em; margin-bottom: 18px; }
+  .call-confirm-actions { display: flex; gap: 10px; }
+  .call-confirm-cancel {
+    flex: 1; background: var(--card); border: 1.5px solid var(--border); padding: 14px;
+    border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--subtext); cursor: pointer;
+  }
+  .call-confirm-call {
+    flex: 1; background: var(--red-btn); border: none; padding: 14px;
+    border-radius: 12px; font-size: 14px; font-weight: 800; color: #fff; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -267,6 +283,18 @@
     <button class="menu-row" id="reportUserBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Report User</button>
     <button class="menu-row danger" id="blockToggleBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Block User</button>
     <button class="menu-cancel-btn" id="menuCancelBtn">Cancel</button>
+  </div>
+</div>
+
+<div class="menu-overlay" id="callConfirmOverlay">
+  <div class="menu-box call-confirm-box">
+    <div class="call-confirm-handle"></div>
+    <div class="call-confirm-title" id="callConfirmTitle">Call?</div>
+    <div class="call-confirm-phone" id="callConfirmPhone"></div>
+    <div class="call-confirm-actions">
+      <button class="call-confirm-cancel" id="callConfirmCancel" type="button" data-i18n="cancel">Cancel</button>
+      <button class="call-confirm-call" id="callConfirmCall" type="button" data-i18n="chat_call_btn">Call</button>
+    </div>
   </div>
 </div>
 
@@ -918,11 +946,21 @@
 
   document.getElementById("viewContactBtn").addEventListener("click", () => {
     document.getElementById("menuOverlay").classList.remove("open");
-    if (otherUser?.is_admin) return;
-    if (!otherUser?.phone) return;
-    if (confirm(t("chat_call_confirm").replace("{name}", otherUser.display_name).replace("{phone}", otherUser.phone))) {
-      window.location.href = `tel:${otherUser.phone}`;
-    }
+    if (otherUser?.is_admin || !otherUser?.phone) return;
+    document.getElementById("callConfirmTitle").textContent = t("chat_call_title", { name: otherUser.display_name || "" });
+    document.getElementById("callConfirmPhone").textContent = otherUser.phone;
+    document.getElementById("callConfirmOverlay").classList.add("open");
+  });
+  document.getElementById("callConfirmCancel").addEventListener("click", () => {
+    document.getElementById("callConfirmOverlay").classList.remove("open");
+  });
+  document.getElementById("callConfirmOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "callConfirmOverlay") e.target.classList.remove("open");
+  });
+  document.getElementById("callConfirmCall").addEventListener("click", () => {
+    const phone = otherUser?.phone;
+    document.getElementById("callConfirmOverlay").classList.remove("open");
+    if (phone) window.location.href = `tel:${phone}`;
   });
 
   document.getElementById("reportUserBtn").addEventListener("click", () => {
