@@ -194,9 +194,13 @@
   }
   .load-more-btn:disabled { opacity: 0.6; cursor: wait; }
   .verified-chip {
-    display: inline-block; background: #1B7A4A; color: #fff;
-    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-top: 4px;
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 3px; margin-top: 4px;
+    letter-spacing: 0.04em; text-transform: uppercase;
   }
+  .verified-chip svg { width: 10px; height: 10px; display: block; }
+  .verified-chip path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
   .top-sellers-wrap { padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
   .top-sellers-head { padding: 0 12px 8px; }
   .top-sellers-title { font-size: 15px; font-weight: 700; }
@@ -730,7 +734,7 @@
           <div class="price">K${escHtml(item.price)}</div>
           <div class="title">${escHtml(item.title)}</div>
           <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
-          ${item.seller_nrc_verified ? `<div class="verified-chip">✓ ${t("seller_id_verified", "ID Verified")}</div>` : ""}
+          ${item.seller_nrc_verified ? `<div class="verified-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${t("seller_id_verified", "ID Verified")}</div>` : ""}
         </div>
       </div>`;
   }

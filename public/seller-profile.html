@@ -64,8 +64,14 @@
   }
   .follow-count-num { font-weight: 800; }
   .follow-dot { color: var(--subtext); }
-  .verified-badge { background: var(--approved-bg); color: #fff; padding: 4px 10px; border-radius: 0; margin-top: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .verified-badge.subscribed { background: var(--orange); }
+  .verified-stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px; margin-top: 8px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
   .trust-badge { background: var(--orange); color: #fff; padding: 5px 12px; border-radius: 0; margin-top: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .member-since { font-size: 11px; color: var(--subtext); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.03em; }
 
@@ -199,6 +205,10 @@
     if (grid && typeof observeLazyImages === "function") observeLazyImages(grid);
   }
 
+  function verifiedStamp(label) {
+    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
+  }
+
   function shopBadgeHtml(profile) {
     const subscribed = profile.subscription_active === true
       || profile.payment_status === "active"
@@ -206,13 +216,13 @@
     const approved = profile.account_type === "shop" && profile.shop_status === "approved";
 
     if (subscribed) {
-      return `<div class="verified-badge subscribed">${t("verified_shop")}</div>`;
+      return verifiedStamp(t("verified_shop"));
     }
     if (profile.nrc_verified) {
-      return `<div class="verified-badge">${t("seller_id_verified", "ID Verified")}</div>`;
+      return verifiedStamp(t("seller_id_verified", "ID Verified"));
     }
     if (approved) {
-      return `<div class="verified-badge">${t("approved_shop")}</div>`;
+      return verifiedStamp(t("approved_shop"));
     }
     if (profile.account_type === "shop") {
       return `<div class="member-since">${t("registered_shop")}</div>`;

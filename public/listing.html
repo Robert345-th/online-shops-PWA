@@ -101,18 +101,15 @@
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
-  .verified-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    background: #1B7A4A; color: #fff; padding: 2px 7px; border-radius: 20px;
-    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  .verified-stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
     flex-shrink: 0;
   }
-  .verified-shop-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    background: var(--orange); color: #fff; padding: 2px 7px; border-radius: 20px;
-    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
-    flex-shrink: 0;
-  }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
   .specs-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .specs-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
   .specs-row { display: flex; justify-content: space-between; padding: 2px 0; }
@@ -683,12 +680,16 @@
     document.getElementById("moreMenu").classList.remove("open");
   }
 
+  function verifiedStamp(label) {
+    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
+  }
+
   function sellerTrustBadge() {
     if (listing.seller_account_type === "shop") {
-      return `<span class="verified-shop-badge">✓ ${t("verified_shop")}</span>`;
+      return verifiedStamp(t("verified_shop"));
     }
     if (listing.seller_nrc_verified) {
-      return `<span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>`;
+      return verifiedStamp(t("seller_id_verified", "ID Verified"));
     }
     return "";
   }
