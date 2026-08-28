@@ -126,5 +126,5 @@ jobs:
             echo "ERROR: APK on disk matches the old committed file. Build did not produce a new APK."
             exit 1
           fi
-          git commit -m "Update ZedMarket download APK v1.0.22."
+          git commit -m "Update ZedMarket download APK v1.0.23."
           git push

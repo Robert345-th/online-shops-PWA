@@ -320,12 +320,8 @@ public class ZedMarketWebViewActivity extends Activity {
         }
 
         finishGeoGrant(false);
-        if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)) {
-            openAppLocationSettings(true);
-        } else {
-            showLocationNotice(getString(R.string.loc_declined_notice));
-        }
+        notifyWebLocationCancelled();
+        showLocationNotice(getString(R.string.loc_declined_notice));
     }
 
     private boolean isTrustedWebOrigin(Uri origin) {
@@ -528,10 +524,14 @@ public class ZedMarketWebViewActivity extends Activity {
                                         .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
                             } catch (IntentSender.SendIntentException ex) {
                                 mTurnOnDialogShowing = false;
-                                openLocationSourceSettings();
+                                finishGeoGrant(false);
+                                notifyWebLocationCancelled();
+                                showLocationNotice(getString(R.string.loc_declined_notice));
                             }
                         } else if (!isSystemLocationEnabled()) {
-                            openLocationSourceSettings();
+                            finishGeoGrant(false);
+                            notifyWebLocationCancelled();
+                            showLocationNotice(getString(R.string.loc_declined_notice));
                         } else {
                             finishGeoGrant(true);
                         }
@@ -540,7 +540,9 @@ public class ZedMarketWebViewActivity extends Activity {
             mSettingsCheckInFlight = false;
             Log.e(TAG, "Location settings check failed", e);
             if (!isSystemLocationEnabled()) {
-                openLocationSourceSettings();
+                finishGeoGrant(false);
+                notifyWebLocationCancelled();
+                showLocationNotice(getString(R.string.loc_declined_notice));
             } else {
                 finishGeoGrant(true);
             }
@@ -860,7 +862,7 @@ public class ZedMarketWebViewActivity extends Activity {
                     return;
                 }
                 if (code == 1 && !hasLocationPermission()) {
-                    showLocationNotice(getString(R.string.loc_open_settings));
+                    showLocationNotice(getString(R.string.loc_declined_notice));
                 }
             });
         }

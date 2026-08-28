@@ -1,6 +1,6 @@
 /**
- * Force the Play Store app to launch in a full-screen WebView.
- * Without this, Bubblewrap uses Chrome Custom Tabs and shows the zedmarket.app URL bar.
+ * Force WebView on every launch (skip Chrome Custom Tab).
+ * Needed when Digital Asset Links verification fails on some phones (Tecno/Infinix).
  * Run after: npx bubblewrap update --manifest twa-manifest.json
  */
 const fs = require("fs");
@@ -20,14 +20,20 @@ function findLauncherActivity(dir) {
   return null;
 }
 
-const launcherPath = findLauncherActivity(path.join(__dirname, "app", "src", "main", "java"));
+const appJava = path.join(__dirname, "app", "src", "main", "java");
+const launcherPath = findLauncherActivity(appJava);
 
 if (!launcherPath) {
-  console.error("Android project not found. Run: npx bubblewrap update --manifest twa-manifest.json");
+  console.error("LauncherActivity.java not found. Run: npx bubblewrap update --manifest twa-manifest.json");
   process.exit(1);
 }
 
-let launcher = fs.readFileSync(launcherPath, "utf8");
+let src = fs.readFileSync(launcherPath, "utf8");
+
+if (src.includes("WebViewFallbackActivity.createLaunchIntent")) {
+  console.log("LauncherActivity already patched for WebView-only launch.");
+  process.exit(0);
+}
 
 const imports = [
   "import android.content.Intent;",
@@ -36,14 +42,17 @@ const imports = [
 ];
 
 for (const imp of imports) {
-  if (!launcher.includes(imp)) {
-    launcher = launcher.replace(/(package [^;]+;\s*\n)/, `$1\n${imp}\n`);
+  if (!src.includes(imp)) {
+    src = src.replace(/(package [^;]+;\s*\n)/, `$1\n${imp}\n`);
   }
 }
 
-const launchTwaMethod = `
+const override = `
     @Override
     protected void launchTwa() {
+        if (isFinishing()) {
+            return;
+        }
         LauncherActivityMetadata metadata = LauncherActivityMetadata.parse(this);
         Intent intent = WebViewFallbackActivity.createLaunchIntent(this, getLaunchingUrl(), metadata);
         startActivity(intent);
@@ -51,18 +60,7 @@ const launchTwaMethod = `
     }
 `;
 
-if (!launcher.includes("WebViewFallbackActivity.createLaunchIntent")) {
-  if (!launcher.replace(/\s+$/, "").endsWith("}")) {
-    console.error("Could not find class closing brace in LauncherActivity.java");
-    process.exit(1);
-  }
-  launcher = launcher.replace(/\n}\s*$/, `\n${launchTwaMethod}\n}\n`);
-}
-
-if (!launcher.includes("WebViewFallbackActivity.createLaunchIntent")) {
-  console.error("Failed to patch LauncherActivity to WebView-only.");
-  process.exit(1);
-}
-
-fs.writeFileSync(launcherPath, launcher);
-console.log("Forced WebView-only launcher (no Chrome URL bar):", launcherPath);
+src = src.replace(/\n}\s*$/, `\n${override}\n}\n`);
+fs.writeFileSync(launcherPath, src);
+console.log("Patched:", launcherPath);
+console.log("App will open in full-screen WebView (no Chrome URL bar).");

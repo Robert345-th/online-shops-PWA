@@ -58,10 +58,8 @@
   window.addEventListener("zm-location-cancelled", abortLocationRequest);
 
   async function requestUserLocationCoords() {
-    const perm = await getLocationPermissionState();
-    if (perm === "denied") throw { code: 1 };
-
-    // One attempt only — No thanks / cancel must end this immediately (see abort above).
+    // Always call getCurrentPosition so the Play Store WebView can show
+    // Allow / Don't allow again. Do not send the user to Settings.
     return getDeviceCoords({
       enableHighAccuracy: false,
       maximumAge: 0,
