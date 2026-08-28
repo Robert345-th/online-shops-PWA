@@ -136,7 +136,7 @@
 
   <div class="step-panel" id="step2">
     <div class="step-title">Photos</div>
-    <div class="subtitle">Add a photo of what you want — up to 3. This helps sellers recognise the item.</div>
+    <div class="subtitle">Optional — add a photo of what you want, up to 3. This helps sellers recognise the item.</div>
     <div class="label">Photos (<span id="photoCount">0</span>/3)</div>
     <div class="photo-grid" id="photoGrid"></div>
     <label class="add-photo-box" id="addPhotoBox">
@@ -403,10 +403,6 @@
   });
   document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
   document.getElementById("next2Btn").addEventListener("click", () => {
-    if (photos.length === 0) {
-      showError("Please add at least one photo.");
-      return;
-    }
     if (photos.some((p) => p.uploading)) {
       showError("Photos are still uploading. Please wait a moment.");
       return;
