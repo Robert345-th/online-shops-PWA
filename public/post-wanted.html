@@ -49,6 +49,23 @@
   }
   textarea.field-input { height: 100px; resize: vertical; border: 2px solid var(--text); padding: 10px; }
 
+  .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .photo-thumb-wrap { width: 80px; height: 80px; border-radius: 0; border: 2px solid var(--text); overflow: hidden; position: relative; }
+  .photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; }
+  .remove-btn {
+    position: absolute; top: 3px; right: 3px; background: var(--black); width: 20px; height: 20px;
+    border-radius: 0; display: flex; align-items: center; justify-content: center; color: #fff;
+    font-size: 11px; font-weight: 700; border: none; cursor: pointer;
+  }
+  .add-photo-box {
+    width: 100%; height: 140px; border: 2px solid var(--text); border-radius: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: var(--card); cursor: pointer; color: var(--text); margin-bottom: 18px;
+  }
+  .add-plus { font-size: 32px; font-weight: 900; line-height: 1; color: var(--price-red); }
+  .add-text { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
   .chip {
     background: var(--card); border: 2px solid var(--text); border-radius: 0;
@@ -100,11 +117,12 @@
 </div>
 
 <div class="content">
-  <div class="step-subtitle" id="stepSubtitle">Step 1 of 3 — Category</div>
+  <div class="step-subtitle" id="stepSubtitle">Step 1 of 4 — Category</div>
   <div class="step-row">
     <div class="step-dot active" id="dot1"></div>
     <div class="step-dot" id="dot2"></div>
     <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
   </div>
   <div class="form-banner" id="formBanner"></div>
 
@@ -117,6 +135,22 @@
   </div>
 
   <div class="step-panel" id="step2">
+    <div class="step-title">Photos</div>
+    <div class="subtitle">Add a photo of what you want — up to 3. This helps sellers recognise the item.</div>
+    <div class="label">Photos (<span id="photoCount">0</span>/3)</div>
+    <div class="photo-grid" id="photoGrid"></div>
+    <label class="add-photo-box" id="addPhotoBox">
+      <div class="add-plus">+</div>
+      <div class="add-text">Add Photos</div>
+      <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
+    </label>
+    <div class="btn-row">
+      <button type="button" class="back-btn" id="back2Btn">Back</button>
+      <button type="button" class="submit-btn" id="next2Btn">Next</button>
+    </div>
+  </div>
+
+  <div class="step-panel" id="step3">
     <div class="step-title">Details</div>
     <div class="subtitle">Tell sellers what you want so they know if they have it.</div>
     <div class="label">What are you looking for?</div>
@@ -126,19 +160,19 @@
     <div class="label">Your budget (optional)</div>
     <input class="field-input" id="budgetInput" type="number" placeholder="e.g. 30000" />
     <div class="btn-row">
-      <button type="button" class="back-btn" id="back2Btn">Back</button>
-      <button type="button" class="submit-btn" id="next2Btn">Next</button>
+      <button type="button" class="back-btn" id="back3Btn">Back</button>
+      <button type="button" class="submit-btn" id="next3Btn">Next</button>
     </div>
   </div>
 
-  <div class="step-panel" id="step3">
+  <div class="step-panel" id="step4">
     <div class="step-title">Location</div>
     <div class="subtitle">Where do you want to find this? Optional — helps sellers near you see this.</div>
     <div class="label">Preferred area</div>
     <div class="loc-button" id="locButton">Use my current location</div>
     <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
     <div class="btn-row">
-      <button type="button" class="back-btn" id="back3Btn">Back</button>
+      <button type="button" class="back-btn" id="back4Btn">Back</button>
       <button type="button" class="submit-btn" id="submitBtn">Post to Wanted Board</button>
     </div>
   </div>
@@ -146,8 +180,12 @@
 
 <script src="/js/lang.js"></script>
 <script src="/js/location.js"></script>
+<script src="/js/upload.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
+  const CLOUDINARY_CLOUD_NAME = "kstg72vx";
+  const CLOUDINARY_UPLOAD_PRESET = "online_shops_uploads";
+  const MAX_PHOTOS = 3;
   const CATEGORY_OPTIONS = [
     { label: "Electronics", id: 1 },
     { label: "Clothing", id: 2 },
@@ -157,9 +195,10 @@
     { label: "Land", id: 6 },
   ];
   const SUBTITLES = {
-    1: "Step 1 of 3 — Category",
-    2: "Step 2 of 3 — Details",
-    3: "Step 3 of 3 — Location",
+    1: "Step 1 of 4 — Category",
+    2: "Step 2 of 4 — Photos",
+    3: "Step 3 of 4 — Details",
+    4: "Step 4 of 4 — Location",
   };
 
   const token = localStorage.getItem("zm_token");
@@ -170,6 +209,7 @@
 
   let step = 1;
   let categoryId = null;
+  let photos = [];
   let coords = null;
   let locationLabel = "";
   let gettingLocation = false;
@@ -198,8 +238,79 @@
     );
   }
 
+  function renderPhotoGrid() {
+    const grid = document.getElementById("photoGrid");
+    document.getElementById("photoCount").textContent = photos.length;
+    grid.innerHTML = photos.map((p) => `
+      <div class="photo-thumb-wrap">
+        <img src="${p.uri}" alt="" />
+        ${p.uploading ? `<div class="photo-overlay">…</div>` : ""}
+        <button type="button" class="remove-btn" data-uri="${p.uri}">✕</button>
+      </div>
+    `).join("");
+    grid.querySelectorAll(".remove-btn").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        photos = photos.filter((p) => p.uri !== btn.dataset.uri);
+        renderPhotoGrid();
+      })
+    );
+    const addBoxEl = document.getElementById("addPhotoBox");
+    if (addBoxEl) addBoxEl.style.display = photos.length < MAX_PHOTOS ? "flex" : "none";
+  }
+
+  function initPhotoAddControls() {
+    const input = document.getElementById("photoInput");
+    if (input) input.addEventListener("change", handlePhotoSelect);
+    const addBoxEl = document.getElementById("addPhotoBox");
+    if (addBoxEl) {
+      addBoxEl.addEventListener("click", (e) => {
+        if (photos.length >= MAX_PHOTOS) {
+          e.preventDefault();
+          showError(`You can add up to ${MAX_PHOTOS} photos.`);
+        }
+      });
+    }
+  }
+
+  function handlePhotoSelect(e) {
+    const files = Array.from(e.target.files).slice(0, MAX_PHOTOS - photos.length);
+    files.forEach((file) => {
+      const uri = URL.createObjectURL(file);
+      photos.push({ uri, url: null, uploading: true, file });
+      uploadToCloudinary(file, uri);
+    });
+    renderPhotoGrid();
+    e.target.value = "";
+  }
+
+  async function uploadToCloudinary(file, uri) {
+    try {
+      const compressed = window.compressImage ? await compressImage(file, 1600, 0.82) : file;
+      const formData = new FormData();
+      formData.append("file", compressed);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      const p = photos.find((item) => item.uri === uri);
+      if (p) {
+        p.url = data.secure_url || null;
+        p.uploading = false;
+      }
+      if (!data.secure_url) showError("One of your photos could not be uploaded.");
+      renderPhotoGrid();
+    } catch {
+      const p = photos.find((item) => item.uri === uri);
+      if (p) p.uploading = false;
+      showError("Could not upload one of the photos.");
+      renderPhotoGrid();
+    }
+  }
+
   function updateStepUI() {
-    [1, 2, 3].forEach((n) => {
+    [1, 2, 3, 4].forEach((n) => {
       document.getElementById(`step${n}`).classList.toggle("active", step === n);
       const dot = document.getElementById(`dot${n}`);
       if (dot) {
@@ -236,6 +347,10 @@
       showError("Please describe what you are looking for.");
       return;
     }
+    if (photos.some((p) => p.uploading)) {
+      showError("Photos are still uploading. Please wait a moment.");
+      return;
+    }
     const description = document.getElementById("descInput").value.trim();
     const budget = document.getElementById("budgetInput").value;
     const typed = document.getElementById("locationInput").value.trim();
@@ -254,6 +369,7 @@
           category_id: categoryId,
           budget: budget ? parseFloat(budget) : null,
           location_label: locationLabel || null,
+          photos: photos.map((p) => p.url).filter(Boolean),
         }),
       });
       const data = await res.json();
@@ -271,6 +387,8 @@
   }
 
   renderCategoryChips();
+  initPhotoAddControls();
+  renderPhotoGrid();
   document.getElementById("locButton").addEventListener("click", handleUseLocation);
   document.getElementById("locationInput").addEventListener("input", (e) => {
     locationLabel = e.target.value.trim();
@@ -285,15 +403,28 @@
   });
   document.getElementById("back2Btn").addEventListener("click", () => { step = 1; updateStepUI(); });
   document.getElementById("next2Btn").addEventListener("click", () => {
-    const title = document.getElementById("titleInput").value.trim();
-    if (!title) {
-      showError("Please describe what you are looking for.");
+    if (photos.length === 0) {
+      showError("Please add at least one photo.");
+      return;
+    }
+    if (photos.some((p) => p.uploading)) {
+      showError("Photos are still uploading. Please wait a moment.");
       return;
     }
     step = 3;
     updateStepUI();
   });
   document.getElementById("back3Btn").addEventListener("click", () => { step = 2; updateStepUI(); });
+  document.getElementById("next3Btn").addEventListener("click", () => {
+    const title = document.getElementById("titleInput").value.trim();
+    if (!title) {
+      showError("Please describe what you are looking for.");
+      return;
+    }
+    step = 4;
+    updateStepUI();
+  });
+  document.getElementById("back4Btn").addEventListener("click", () => { step = 3; updateStepUI(); });
   document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   document.getElementById("backBtn").addEventListener("click", () => {
     if (step === 1) history.back();

@@ -69,6 +69,10 @@
   .badge { background: var(--black); color: var(--gold); padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
   .card-meta { font-size: 12px; color: var(--subtext); }
   .card-poster { font-size: 12px; color: var(--subtext); margin-top: 10px; }
+  .card-photo {
+    width: calc(100% + 32px); height: 160px; object-fit: cover; display: block;
+    margin: -16px -16px 12px; border-bottom: 1.5px solid var(--text);
+  }
   .respond-btn {
     margin-top: 14px; width: 100%; background: var(--card); color: var(--text);
     border: 2px solid var(--text); padding: 11px; font-size: 13px; font-weight: 800; cursor: pointer;
@@ -114,6 +118,7 @@
 <button class="fab" onclick="window.location.href='/post-wanted.html'" data-i18n="post_wanted">+ Post What You Want</button>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script src="/js/bottom-nav.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -164,8 +169,11 @@
   function renderCard(post) {
     const isMine = user && post.user_id === user.id;
     const hasMeta = post.category || post.location_label;
+    const photos = Array.isArray(post.photos) ? post.photos.filter(Boolean) : [];
+    const hero = photos[0] ? (typeof optimizeImageUrl === "function" ? optimizeImageUrl(photos[0], "card") : photos[0]) : "";
     return `
       <div class="card">
+        ${hero ? `<img class="card-photo" src="${hero}" alt="">` : ""}
         <div class="card-header">
           <div class="card-title">${post.title}</div>
           ${post.budget ? `<div class="card-budget">K${post.budget}</div>` : ""}

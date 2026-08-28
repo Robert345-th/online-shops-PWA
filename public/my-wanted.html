@@ -51,6 +51,10 @@
   .badge { background: var(--black); color: var(--gold); padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
   .badge.closed { background: var(--subtext); color: #fff; }
   .card-meta { font-size: 12px; color: var(--subtext); }
+  .card-photo {
+    width: calc(100% + 32px); height: 160px; object-fit: cover; display: block;
+    margin: -16px -16px 12px; border-bottom: 1.5px solid var(--text);
+  }
   .btn-row { display: flex; gap: 10px; margin-top: 14px; }
   .action-btn { flex: 1; border-radius: 0; padding: 11px; font-weight: 800; font-size: 13px; cursor: pointer; }
   .close-btn { background: var(--approved-bg); color: #fff; border: none; }
@@ -87,6 +91,7 @@
 <button type="button" class="fab" id="postWantedBtn" data-i18n="post_wanted">+ Post Wanted</button>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script src="/js/bottom-nav.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -132,8 +137,11 @@
     const date = post.date_posted
       ? new Date(post.date_posted).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
       : "";
+    const photos = Array.isArray(post.photos) ? post.photos.filter(Boolean) : [];
+    const hero = photos[0] ? (typeof optimizeImageUrl === "function" ? optimizeImageUrl(photos[0], "card") : photos[0]) : "";
     return `
       <div class="card">
+        ${hero ? `<img class="card-photo" src="${hero}" alt="">` : ""}
         <div class="card-header">
           <div class="card-title">${post.title}</div>
           ${post.budget ? `<div class="card-budget">K${post.budget}</div>` : ""}
