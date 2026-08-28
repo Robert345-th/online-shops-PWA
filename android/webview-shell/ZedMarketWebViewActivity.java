@@ -104,6 +104,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private volatile long mIgnoreGeoRetryUntilMs;
     private boolean mInAppLocDialogShowing;
     private boolean mLocRationaleBeforeRequest;
+    private boolean mRetryingFromInAppAllow;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -332,6 +333,7 @@ public class ZedMarketWebViewActivity extends Activity {
         }
 
         if (granted) {
+            mRetryingFromInAppAllow = false;
             if (mAwaitingAppLocJs) {
                 mAwaitingAppLocJs = false;
                 notifyAppLocationPermission(true);
@@ -342,6 +344,20 @@ public class ZedMarketWebViewActivity extends Activity {
 
         mAwaitingAppLocJs = false;
         markLocationAsked();
+        if (mRetryingFromInAppAllow) {
+            mRetryingFromInAppAllow = false;
+            if (mWebView != null) {
+                mWebView.post(() -> {
+                    finishGeoGrant(false);
+                    notifyWebLocationCancelled();
+                    mWebView.requestFocus();
+                });
+            } else {
+                finishGeoGrant(false);
+            }
+            notifyAppLocationPermission(false);
+            return;
+        }
         // After two Don't allows the OS returns denied with no dialog. Show ours
         // on this tap instead of going silent.
         if (!mLocRationaleBeforeRequest && !locationShowsRationale()) {
@@ -563,11 +579,13 @@ public class ZedMarketWebViewActivity extends Activity {
                 .setMessage(R.string.loc_declined_notice)
                 .setPositiveButton(R.string.loc_allow, (dialog, which) -> {
                     mInAppLocDialogShowing = false;
-                    mAwaitingAppLocJs = false;
-                    openAppLocationSettings(true);
-                    finishGeoGrant(false);
-                    notifyWebLocationCancelled();
-                    notifyAppLocationPermission(false);
+                    mRetryingFromInAppAllow = true;
+                    mLocRationaleBeforeRequest = locationShowsRationale();
+                    markLocationAsked();
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
+                            REQ_LOCATION);
                 })
                 .setNegativeButton(R.string.loc_dont_allow, (dialog, which) -> denyInAppLocation())
                 .setCancelable(true)
@@ -992,6 +1010,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mUserLocRequestActive = true;
             mAskedRuntimePermissionThisFlow = false;
             mStartedTurnOnThisFlow = false;
+            mRetryingFromInAppAllow = false;
             mIgnoreGeoRetryUntilMs = 0;
         }
 
