@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<script src="/js/android-chrome.js"></script>
+<title>ZedMarket - Chat mark samples</title>
+<meta name="theme-color" content="#111111" />
+<style>
+  :root {
+    --bg: #FFF9F0; --card: #FFFFFF; --border: #E5DCCE;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --red-btn: #E01B27;
+    --chat-wall: #F3EBD9;
+    --bubble-mine-bg: #F5C518;
+    --bubble-mine-text: #1A1510;
+    --bubble-theirs-bg: #FFFFFF;
+  }
+  body.dark {
+    --bg: #161412; --card: #2A2622; --border: #4A4540;
+    --text: #F5F2ED; --subtext: #C9C0B6; --black: #0A0908;
+    --chat-wall: #1A1814;
+    --bubble-theirs-bg: #2E2A26;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .stage { height: 100dvh; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .picker {
+    flex-shrink: 0; background: var(--black); color: var(--gold);
+    padding: 8px 10px 10px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+  .picker-label { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; margin-bottom: 8px; }
+  .picker-row { display: flex; gap: 5px; margin-bottom: 5px; }
+  .picker-row:last-child { margin-bottom: 0; }
+  .pick {
+    flex: 1; background: #2A2A2A; color: #F0EDE8; border: 2px solid #2A2A2A;
+    padding: 8px 2px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .pick.on { background: var(--gold); color: var(--black); border-color: var(--gold); }
+
+  .sheet { flex: 1; min-height: 0; overflow-y: auto; }
+  .caption {
+    padding: 12px 16px 0; font-size: 12px; color: var(--subtext); line-height: 1.4;
+  }
+  .caption b { color: var(--text); }
+
+  .thread {
+    padding: 14px 14px 8px;
+    background-color: var(--chat-wall);
+  }
+  .bubble-row { display: flex; margin-bottom: 10px; align-items: flex-end; gap: 5px; }
+  .bubble-row.mine { justify-content: flex-end; }
+  .bubble-row.theirs { justify-content: flex-start; }
+  .bubble {
+    max-width: 78%; padding: 12px 14px; border-radius: 18px; font-size: 14px; font-weight: 500;
+    line-height: 1.35; box-shadow: 0 2px 8px rgba(33,29,26,0.08);
+  }
+  .bubble.mine {
+    background: var(--bubble-mine-bg); color: var(--bubble-mine-text);
+    border-bottom-right-radius: 5px;
+  }
+  .bubble.theirs {
+    background: var(--bubble-theirs-bg); color: var(--text);
+    border: 1px solid var(--border); border-bottom-left-radius: 5px;
+  }
+  .bubble.inmark {
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 10px 10px 8px 14px;
+  }
+  .bubble.inmark .txt { flex: 1; }
+
+  .mark { display: flex; align-items: flex-end; flex-shrink: 0; line-height: 0; }
+  .status-text { font-size: 10px; color: var(--subtext); margin-bottom: 2px; font-weight: 600; }
+
+  .rc { width: 16px; height: 11px; display: block; }
+  .rc path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .rc.sent { color: #8A8680; }
+  .rc.read { color: #53BDEB; }
+  .rc.gold.read { color: #8A6A00; }
+  .rc.green.read { color: #1B8A4A; }
+  .rc.dark.sent { color: #3A3530; }
+  .rc.dark.read { color: #1A1510; }
+
+  .filled { width: 14px; height: 14px; display: block; }
+  .filled.sent { color: #8A8680; }
+  .filled.read { color: #53BDEB; }
+
+  .clock { width: 12px; height: 12px; color: #8A8680; }
+  .clock circle, .clock path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+
+  .seen-av {
+    width: 14px; height: 14px; border-radius: 7px; background: #E01B27;
+    color: #fff; font-size: 8px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .list-card {
+    margin: 8px 14px 20px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: center;
+  }
+  .av { width: 44px; height: 44px; border-radius: 22px; background: #E01B27; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .list-info { flex: 1; min-width: 0; }
+  .list-name { font-size: 14px; font-weight: 700; }
+  .list-preview { display: flex; align-items: center; gap: 4px; margin-top: 3px; color: var(--subtext); font-size: 12px; }
+  .list-preview .mark { margin-bottom: 0; }
+  .list-time { font-size: 10px; color: var(--subtext); align-self: flex-start; }
+  .list-label { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--subtext); padding: 0 16px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<script>document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");</script>
+<div class="stage">
+  <div class="picker">
+    <div class="picker-label">Chat marks — pick one, then tell me the number</div>
+    <div class="picker-row">
+      <button class="pick on" type="button" data-id="1">1</button>
+      <button class="pick" type="button" data-id="2">2</button>
+      <button class="pick" type="button" data-id="3">3</button>
+      <button class="pick" type="button" data-id="4">4</button>
+      <button class="pick" type="button" data-id="5">5</button>
+    </div>
+    <div class="picker-row">
+      <button class="pick" type="button" data-id="6">6</button>
+      <button class="pick" type="button" data-id="7">7</button>
+      <button class="pick" type="button" data-id="8">8</button>
+      <button class="pick" type="button" data-id="9">9</button>
+      <button class="pick" type="button" data-id="10">10</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="caption" id="caption"></div>
+    <div class="thread" id="thread"></div>
+    <div class="list-label">Chat list</div>
+    <div class="list-card" id="listCard"></div>
+  </div>
+</div>
+<script>
+  const single = (cls) =>
+    `<svg class="rc ${cls}" viewBox="0 0 16 11" aria-hidden="true"><path d="M2 6.2l3 3.1 7.2-8"/></svg>`;
+  const double = (cls) =>
+    `<svg class="rc ${cls}" viewBox="0 0 16 11" aria-hidden="true"><path d="M1.2 6.2l2.8 3 6.4-7.4"/><path d="M5.6 6.4l2.6 2.8 6.6-7.6"/></svg>`;
+
+  const filledSingle = (cls) =>
+    `<svg class="filled ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.2 16.6L4.6 12l1.4-1.4 3.2 3.2 8.8-8.8 1.4 1.4z"/></svg>`;
+  const filledDouble = (cls) =>
+    `<svg class="filled ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.7 16.6L2.1 12l1.4-1.4 3.2 3.2.8.8-.8-.8 1.4 1.4zm6 0L8.1 12l1.4-1.4 3.2 3.2 8.8-8.8 1.4 1.4z"/></svg>`;
+
+  const clock = `<svg class="clock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+  const seenAv = `<span class="seen-av">J</span>`;
+
+  const samples = {
+    1: {
+      name: "1 WhatsApp",
+      note: "Overlapping stroke ticks. Grey when sent, light blue when read. This is the one people already trust.",
+      sent: double("sent"),
+      read: double("read"),
+      listSent: double("sent"),
+      listRead: double("read"),
+    },
+    2: {
+      name: "2 Telegram",
+      note: "One tick sent, two ticks read. Same blue as Telegram.",
+      sent: single("sent"),
+      read: double("read"),
+      listSent: single("sent"),
+      listRead: double("read"),
+    },
+    3: {
+      name: "3 Inside bubble",
+      note: "Ticks sit in the bottom-right of your gold bubble, like WhatsApp. Darker so they show on gold.",
+      inside: true,
+      sent: double("dark sent"),
+      read: double("dark read"),
+      listSent: double("sent"),
+      listRead: double("read"),
+    },
+    4: {
+      name: "4 Gold ticks",
+      note: "Same WhatsApp shape, ZedMarket gold when read.",
+      sent: double("sent"),
+      read: double("gold read"),
+      listSent: double("sent"),
+      listRead: double("gold read"),
+    },
+    5: {
+      name: "5 Green ticks",
+      note: "Old WhatsApp green when read. Matches the verified stamp colour.",
+      sent: double("sent"),
+      read: double("green read"),
+      listSent: double("sent"),
+      listRead: double("green read"),
+    },
+    6: {
+      name: "6 Sent / Read",
+      note: "Tiny words instead of ticks. Closer to iMessage.",
+      text: true,
+      sent: `<span class="status-text">Sent</span>`,
+      read: `<span class="status-text">Read</span>`,
+      listSent: `<span class="status-text">Sent</span>`,
+      listRead: `<span class="status-text">Read</span>`,
+    },
+    7: {
+      name: "7 Clock then ticks",
+      note: "Clock while it is sending, then WhatsApp ticks after it lands.",
+      sending: true,
+      sent: double("sent"),
+      read: double("read"),
+      listSent: double("sent"),
+      listRead: double("read"),
+    },
+    8: {
+      name: "8 Filled checks",
+      note: "Solid check icons, not outlines. One sent, two read.",
+      sent: filledSingle("sent"),
+      read: filledDouble("read"),
+      listSent: filledSingle("sent"),
+      listRead: filledDouble("read"),
+    },
+    9: {
+      name: "9 Seen avatar",
+      note: "Grey ticks until they open it, then their face. Messenger-style.",
+      sent: double("sent"),
+      read: seenAv,
+      listSent: double("sent"),
+      listRead: seenAv,
+    },
+    10: {
+      name: "10 Single tick only",
+      note: "One tick always. Grey sent, blue when read. Cleaner, less WhatsApp-copy.",
+      sent: single("sent"),
+      read: single("read"),
+      listSent: single("sent"),
+      listRead: single("read"),
+    },
+  };
+
+  const caption = document.getElementById("caption");
+  const thread = document.getElementById("thread");
+  const listCard = document.getElementById("listCard");
+  const picks = document.querySelectorAll(".pick");
+
+  function markWrap(html) {
+    return `<div class="mark">${html}</div>`;
+  }
+
+  function mineBubble(text, markHtml, inside) {
+    if (inside) {
+      return `<div class="bubble-row mine"><div class="bubble mine inmark"><span class="txt">${text}</span>${markWrap(markHtml)}</div></div>`;
+    }
+    return `<div class="bubble-row mine"><div class="bubble mine">${text}</div>${markWrap(markHtml)}</div>`;
+  }
+
+  function show(id) {
+    const s = samples[id];
+    caption.innerHTML = `<b>${s.name}</b> — ${s.note}`;
+
+    let html = `<div class="bubble-row theirs"><div class="bubble theirs">Is this still available?</div></div>`;
+    if (s.sending) {
+      html += mineBubble("Sending…", clock, s.inside);
+    }
+    html += mineBubble("Yes, still available", s.sent, s.inside);
+    html += mineBubble("I can meet in Chawama", s.read, s.inside);
+    thread.innerHTML = html;
+
+    listCard.innerHTML = `
+      <div class="av">J</div>
+      <div class="list-info">
+        <div class="list-name">JOEL</div>
+        <div class="list-preview">${markWrap(s.listRead)} I can meet in Chawama</div>
+      </div>
+      <div class="list-time">12:04</div>
+    `;
+
+    picks.forEach((p) => p.classList.toggle("on", p.dataset.id === String(id)));
+  }
+
+  picks.forEach((p) => p.addEventListener("click", () => show(p.dataset.id)));
+  show(1);
+</script>
+</body>
+</html>
