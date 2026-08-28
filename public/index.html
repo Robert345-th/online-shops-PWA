@@ -250,7 +250,7 @@
   .title { font-size: 12px; color: var(--text); margin: 3px 0; }
   .loc { font-size: 10.5px; color: var(--subtext); }
   .loc-dist { color: var(--orange); font-weight: 700; }
-  .empty, .loading, .error {
+  .empty, .loading, .error, .offline {
     text-align: center; padding: 60px 20px; color: var(--subtext);
   }
   .empty-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 4px; }
@@ -348,6 +348,7 @@
       listings = parsed.items;
       serverOffset = parsed.items.length;
       hasMore = parsed.hasMore !== false;
+      feedReady = true;
       applyListingDistances();
       renderFeed();
       return true;
@@ -369,6 +370,7 @@
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
+  let feedReady = false;
   let serverOffset = 0;
   let hasMore = true;
   let loadingMore = false;
@@ -554,17 +556,35 @@
     });
   }
 
+  function isOffline() {
+    return typeof navigator !== "undefined" && navigator.onLine === false;
+  }
+
   function renderFeedError() {
-    feed.className = "error";
+    const offline = isOffline();
+    feed.className = offline ? "offline" : "error";
     feed.innerHTML = `
-      <div>${t("feed_error")}</div>
+      <div>${offline ? t("feed_offline") : t("feed_error")}</div>
       <button type="button" class="empty-btn" id="feedRetryBtn">${t("gate_try_again")}</button>`;
     document.getElementById("feedRetryBtn")?.addEventListener("click", () => loadListings(true));
     updateLoadMoreButton();
   }
 
+  function fetchListingsPage(url) {
+    if (typeof AbortController === "undefined") return fetch(url, { cache: "no-store" });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    return fetch(url, { signal: ctrl.signal, cache: "no-store" }).finally(() => clearTimeout(timer));
+  }
+
   async function loadListings(reset = true) {
     if (loadingMore) return;
+    if (reset && isOffline() && !listings.length) {
+      renderFeedError();
+      return;
+    }
+    const prevOffset = serverOffset;
+    const prevHasMore = hasMore;
     if (reset) {
       serverOffset = 0;
       hasMore = true;
@@ -579,17 +599,24 @@
       loadMoreBtn.textContent = t("loading");
     }
     try {
-      const res = await fetch(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
+      const res = await fetchListingsPage(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
       if (!res.ok) throw new Error("Server error " + res.status);
       const batch = await res.json();
+      if (!Array.isArray(batch)) throw new Error("Bad listings response");
       listings = reset ? batch : listings.concat(batch);
       serverOffset += batch.length;
       hasMore = batch.length === PAGE_SIZE;
+      feedReady = true;
       applyListingDistances();
       renderFeed();
       if (reset) saveFeedCache();
     } catch (e) {
-      if (reset) renderFeedError();
+      if (reset && listings.length) {
+        serverOffset = prevOffset;
+        hasMore = prevHasMore;
+      } else if (reset) {
+        renderFeedError();
+      }
       console.error(e);
     } finally {
       loadingMore = false;
@@ -601,7 +628,7 @@
   }
 
   function updateLoadMoreButton() {
-    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("loading")) {
+    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("offline") || feed.classList.contains("loading")) {
       loadMoreWrap.style.display = "none";
       return;
     }
@@ -637,6 +664,11 @@
     }
 
     if (!items.length) {
+      if (!feedReady) return;
+      if (!listings.length && isOffline()) {
+        renderFeedError();
+        return;
+      }
       feed.className = "empty";
       feed.innerHTML = `
         <div>${t("feed_empty")}</div>
@@ -870,7 +902,9 @@
     setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
     applyListingDistances();
-    loadFavoriteIds().then(() => renderFeed());
+    loadFavoriteIds().then(() => {
+      if (feedReady) renderFeed();
+    });
   });
   window.addEventListener("langchange", () => {
     const mapLocMsg = document.getElementById("mapLocNeededMsg");
@@ -887,11 +921,21 @@
         window.location.href = "/post-listing.html";
       });
     }
-    if (feed.classList.contains("error")) renderFeedError();
+    if (feed.classList.contains("error") || feed.classList.contains("offline")) renderFeedError();
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
     if (feed.classList.contains("grid")) renderFeed();
   });
-  window.addEventListener("lowdatachange", () => renderFeed());
+  window.addEventListener("lowdatachange", () => {
+    if (feedReady) renderFeed();
+  });
+  window.addEventListener("online", () => {
+    if (!listings.length || feed.classList.contains("offline") || feed.classList.contains("error")) {
+      loadListings(true);
+    }
+  });
+  window.addEventListener("offline", () => {
+    if (!listings.length) renderFeedError();
+  });
 
 </script>
 </body>
