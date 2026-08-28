@@ -79,6 +79,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private GeolocationPermissions.Callback mPendingGeoCallback;
     private final List<String> mExtraGeoOrigins = new ArrayList<>();
     private final List<GeolocationPermissions.Callback> mExtraGeoCallbacks = new ArrayList<>();
+    private boolean mAwaitingAppLocJs;
     private boolean mRetryLocationAfterSettings;
     private ValueCallback<Uri[]> mFilePathCallback;
     private PermissionRequest mPendingPermissionRequest;
@@ -308,13 +309,25 @@ public class ZedMarketWebViewActivity extends Activity {
         }
 
         if (granted) {
-            // App permission granted — now ask to Turn on system location / Location Accuracy.
+            if (mAwaitingAppLocJs) {
+                mAwaitingAppLocJs = false;
+                notifyAppLocationPermission(true);
+            }
             ensureSystemLocationOnThenGrant();
             return;
         }
 
-        finishGeoGrant(false);
-        notifyWebLocationCancelled();
+        mAwaitingAppLocJs = false;
+        if (mWebView != null) {
+            mWebView.post(() -> {
+                finishGeoGrant(false);
+                notifyWebLocationCancelled();
+                mWebView.requestFocus();
+            });
+        } else {
+            finishGeoGrant(false);
+        }
+        notifyAppLocationPermission(false);
     }
 
     private boolean isTrustedWebOrigin(Uri origin) {
@@ -410,6 +423,18 @@ public class ZedMarketWebViewActivity extends Activity {
         request.grant(granted.toArray(new String[0]));
     }
 
+    private void invokeGeoCallback(
+            GeolocationPermissions.Callback cb, String origin, boolean allow) {
+        if (cb == null || origin == null) {
+            return;
+        }
+        try {
+            cb.invoke(origin, allow, false);
+        } catch (Exception e) {
+            Log.e(TAG, "Geolocation callback failed", e);
+        }
+    }
+
     private void finishGeoGrant(boolean allow) {
         GeolocationPermissions.Callback cb = mPendingGeoCallback;
         String origin = mPendingGeoOrigin;
@@ -419,12 +444,22 @@ public class ZedMarketWebViewActivity extends Activity {
         List<String> extraOrigins = new ArrayList<>(mExtraGeoOrigins);
         mExtraGeoCallbacks.clear();
         mExtraGeoOrigins.clear();
-        if (cb != null && origin != null) {
-            cb.invoke(origin, allow, false);
-        }
+        invokeGeoCallback(cb, origin, allow);
         for (int i = 0; i < extras.size() && i < extraOrigins.size(); i++) {
-            extras.get(i).invoke(extraOrigins.get(i), allow, false);
+            invokeGeoCallback(extras.get(i), extraOrigins.get(i), allow);
         }
+    }
+
+    private void notifyAppLocationPermission(boolean granted) {
+        if (mWebView == null) {
+            return;
+        }
+        String flag = granted ? "true" : "false";
+        mWebView.post(() -> mWebView.evaluateJavascript(
+                "(function(){try{var f=window.__zmAppLocCb;window.__zmAppLocCb=null;if(f)f("
+                        + flag
+                        + ");}catch(e){}})();",
+                null));
     }
 
     /** Kill in-flight GPS immediately so "Getting location…" does not sit for ~20s. */
@@ -654,6 +689,11 @@ public class ZedMarketWebViewActivity extends Activity {
             }
 
             @Override
+            public void onGeolocationPermissionsHidePrompt() {
+                // Clears Chromium's blocking overlay after Don't allow.
+            }
+
+            @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                     return;
@@ -781,6 +821,27 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private final class LocationBridge {
+        @JavascriptInterface
+        public void requestAppLocationPermission() {
+            runOnUiThread(() -> {
+                if (hasLocationPermission()) {
+                    notifyAppLocationPermission(true);
+                    return;
+                }
+                if (mAwaitingAppLocJs) {
+                    return;
+                }
+                mAwaitingAppLocJs = true;
+                ActivityCompat.requestPermissions(
+                        ZedMarketWebViewActivity.this,
+                        new String[]{
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                        },
+                        REQ_LOCATION);
+            });
+        }
+
         @JavascriptInterface
         public void onGeolocationError(int code) {
             // Don't allow stays on the current page. The site shows the

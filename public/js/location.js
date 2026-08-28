@@ -57,9 +57,32 @@
 
   window.addEventListener("zm-location-cancelled", abortLocationRequest);
 
+  async function requestPlayStoreLocationPermission() {
+    return new Promise((resolve) => {
+      const bridge = window.ZedMarketLocation;
+      if (!bridge || typeof bridge.requestAppLocationPermission !== "function") {
+        resolve(true);
+        return;
+      }
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        window.__zmAppLocCb = null;
+        resolve(!!ok);
+      };
+      window.__zmAppLocCb = finish;
+      try {
+        bridge.requestAppLocationPermission();
+      } catch {
+        finish(true);
+        return;
+      }
+      setTimeout(() => finish(false), 60000);
+    });
+  }
+
   async function requestUserLocationCoords() {
-    // Always call getCurrentPosition so the Play Store WebView can show
-    // Allow / Don't allow again. Do not send the user to Settings.
     return getDeviceCoords({
       enableHighAccuracy: false,
       maximumAge: 0,
@@ -147,6 +170,7 @@
   window.isValidCoords = isValidCoords;
   window.getDeviceCoords = getDeviceCoords;
   window.requestUserLocationCoords = requestUserLocationCoords;
+  window.requestPlayStoreLocationPermission = requestPlayStoreLocationPermission;
   window.requestDeviceCoords = requestDeviceCoords;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
   window.getLocationPermissionState = getLocationPermissionState;
