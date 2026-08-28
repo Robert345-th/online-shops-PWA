@@ -254,6 +254,25 @@
     text-align: center; padding: 60px 20px; color: var(--subtext);
   }
   .empty-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .status-chip {
+    position: absolute; left: 8px; top: 8px; z-index: 2;
+    background: var(--black); color: var(--gold); font-size: 9px; font-weight: 800;
+    padding: 3px 7px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px;
+  }
+  .recent-wrap { padding: 4px 0 12px; }
+  .recent-head { font-size: 12px; font-weight: 800; padding: 0 16px 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .recent-scroller { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+  .recent-card { width: 110px; flex-shrink: 0; cursor: pointer; }
+  .recent-card img, .recent-card .ph { width: 110px; height: 90px; object-fit: cover; background: var(--border); border-radius: 10px; display: block; }
+  .recent-card .ph { color: var(--subtext); }
+  .recent-title { font-size: 11px; margin-top: 6px; font-weight: 700; }
+  .recent-price { font-size: 11px; color: var(--price-red); font-weight: 800; }
+  .save-search-bar { padding: 0 16px 12px; }
+  .save-search-btn {
+    width: 100%; background: var(--card); border: 2px solid var(--text); color: var(--text);
+    padding: 12px; font-size: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer;
+  }
+  .save-search-btn.on { background: var(--black); color: var(--gold); border-color: var(--black); }
   .error { color: var(--price-red); }
 </style>
 </head>
@@ -318,6 +337,10 @@
 
 <div id="topSellersWrap" style="display:none;"></div>
 
+<div id="recentWrap" class="recent-wrap" style="display:none;"></div>
+<div id="saveSearchWrap" class="save-search-bar" style="display:none;">
+  <button type="button" class="save-search-btn" id="saveSearchBtn" data-i18n="save_search">Notify me of new matches</button>
+</div>
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
 <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
   <button type="button" class="load-more-btn" id="loadMoreBtn" data-i18n="load_more">Load more</button>
@@ -730,7 +753,69 @@
     });
     observeLazyImages(feed);
     updateLoadMoreButton();
+    updateSaveSearchBar();
   }
+
+  const RECENT_KEY = "zm_recent_listings";
+  function readRecent() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
+  }
+  function paintRecent() {
+    const wrap = document.getElementById("recentWrap");
+    if (!wrap) return;
+    const items = readRecent().slice(0, 10);
+    if (!items.length) { wrap.style.display = "none"; return; }
+    wrap.style.display = "block";
+    wrap.innerHTML = `<div class="recent-head">${t("recently_viewed")}</div>
+      <div class="recent-scroller">${items.map((item) => `
+        <div class="recent-card" data-id="${item.id}">
+          ${item.photo ? `<img src="${escHtml(item.photo)}" alt="">` : `<div class="ph"></div>`}
+          <div class="recent-price">K${escHtml(item.price)}</div>
+          <div class="recent-title">${escHtml(item.title || "")}</div>
+        </div>`).join("")}</div>`;
+    wrap.querySelectorAll(".recent-card").forEach((el) => {
+      el.addEventListener("click", () => { window.location.href = `/listing.html?id=${el.dataset.id}`; });
+    });
+  }
+
+  function currentSearchPayload() {
+    const query = searchInput.value.trim();
+    const category = activeCategory || "All";
+    return { query, category, city: "", max_price: null };
+  }
+
+  function updateSaveSearchBar() {
+    const wrap = document.getElementById("saveSearchWrap");
+    const btn = document.getElementById("saveSearchBtn");
+    if (!wrap || !btn) return;
+    const payload = currentSearchPayload();
+    const show = !!(payload.query || (payload.category && payload.category !== "All"));
+    wrap.style.display = show ? "block" : "none";
+    btn.classList.remove("on");
+    btn.textContent = t("save_search");
+  }
+
+  document.getElementById("saveSearchBtn")?.addEventListener("click", async () => {
+    if (!zmRequireLogin("/saved-searches.html")) return;
+    const btn = document.getElementById("saveSearchBtn");
+    const payload = currentSearchPayload();
+    try {
+      const res = await fetch(`${API_URL}/saved-searches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("zm_token")}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || t("feed_error")); return; }
+      btn.classList.add("on");
+      btn.textContent = t("save_search_saved");
+    } catch (e) {
+      alert(t("feed_error"));
+    }
+  });
 
   function photoPlaceholder(size) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
@@ -789,6 +874,7 @@
       <div class="card" id="card-${item.id}">
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
+          ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>` : ""}
           <button type="button" class="fav-btn" data-id="${item.id}" aria-label="${isFav ? t("saved_listing") : t("save_listing")}" aria-pressed="${isFav ? "true" : "false"}">${heartIcon(isFav)}</button>
         </div>
         <div class="card-info">
@@ -917,6 +1003,7 @@
   renderChips();
   loadTopSellers();
   showCachedFeedIfFresh();
+  paintRecent();
   loadFavoriteIds().then(() => {
     if (feed.classList.contains("grid")) renderFeed();
   });
@@ -964,7 +1051,7 @@
     }
   });
   window.addEventListener("offline", () => {
-    if (!listings.length) renderFeedError();
+    if (!listings.length && !showCachedFeedAny()) renderFeedError(true);
   });
 
 </script>

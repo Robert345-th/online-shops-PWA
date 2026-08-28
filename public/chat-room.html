@@ -1146,6 +1146,12 @@
     window.location.href = "/login.html";
   } else {
     buildComposerOnce();
+    if (params.get("preset") === "still_available") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("preset");
+      history.replaceState({}, "", url);
+      sendMessagePayload({ content: t("still_available_msg") });
+    }
     updateComposerVisibility();
     setTimeout(updateComposerVisibility, 300);
     startPresenceHeartbeat();
