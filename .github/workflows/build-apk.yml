@@ -64,9 +64,15 @@ jobs:
         working-directory: android
         run: npx bubblewrap update --manifest twa-manifest.json --skipPwaValidation --skipVersionUpgrade
 
-      - name: Patch WebView location handling
+      - name: Patch WebView-only launcher
         working-directory: android
-        run: node patch-offline-shell.js && node patch-webview-location.js && node patch-version.js
+        run: |
+          node patch-webview-only.js
+          node patch-offline-shell.js
+          node patch-webview-location.js
+          node patch-version.js
+          grep -q "ZedMarketWebViewActivity.createLaunchIntent" app/src/main/java/app/zedmarket/twa/LauncherActivity.java
+          echo "Launcher is WebView-only with location handling."
 
       - name: Build signed APK
         working-directory: android
@@ -86,8 +92,10 @@ jobs:
           import zipfile
           with zipfile.ZipFile("public/zedmarket.apk") as z:
             blob = b"".join(z.read(n) for n in z.namelist() if n.endswith(".dex"))
-          for needle in (b"webview", b"customtabs", b"bubblewrap"):
+          for needle in (b"webview", b"zedmarketwebview", b"customtabs", b"bubblewrap"):
             print(needle.decode(), "FOUND" if needle in blob.lower() else "missing")
+          if b"zedmarketwebview" not in blob.lower():
+            raise SystemExit("APK is missing ZedMarketWebView — Chrome URL bar would show.")
           PY
 
       - name: Update app link fingerprint for this APK
@@ -117,5 +125,5 @@ jobs:
             echo "ERROR: APK on disk matches the old committed file. Build did not produce a new APK."
             exit 1
           fi
-          git commit -m "Update ZedMarket download APK v1.0.2."
+          git commit -m "Update ZedMarket download APK v1.0.21."
           git push

@@ -21,8 +21,8 @@
     "path": "./android.keystore",
     "alias": "upload"
   },
-  "appVersionName": "1.0.20",
-  "appVersionCode": 20,
+  "appVersionName": "1.0.21",
+  "appVersionCode": 21,
   "shortcuts": [
     {
       "name": "Sell",
