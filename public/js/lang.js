@@ -540,7 +540,7 @@
       nav_wanted: "Wanted",
       top_sellers_title: "Top Sellers",
       top_sellers_sub: "Highly rated on ZedMarket",
-      my_wanted_posts: "My Wanted Posts",
+      my_wanted_posts: "My Posts",
       my_wanted_title: "My Wanted Posts",
       wanted_status_open: "Open",
       wanted_status_closed: "Closed",
