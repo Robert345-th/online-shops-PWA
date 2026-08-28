@@ -427,7 +427,7 @@
       chat_about_wanted: "About this wanted post",
       seller_listings_section: "Listings",
       no_seller_listings: "No active listings.",
-      view_shop_btn: "View",
+      view_shop_btn: "View Shop",
       rate_seller: "Rate Seller",
       rate_seller_title: "Rate {name}",
       report_listing: "Report this listing",

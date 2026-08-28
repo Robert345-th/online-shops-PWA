@@ -102,9 +102,16 @@
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
   .verified-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: #1B7A4A; color: #fff; padding: 3px 8px; border-radius: 20px;
-    font-size: 10px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 3px;
+    background: #1B7A4A; color: #fff; padding: 2px 7px; border-radius: 20px;
+    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+  .verified-shop-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--orange); color: #fff; padding: 2px 7px; border-radius: 20px;
+    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+    flex-shrink: 0;
   }
   .specs-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .specs-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
@@ -113,33 +120,34 @@
   .spec-value { font-size: 11px; font-weight: 600; }
   .description { font-size: 13px; color: var(--subtext); line-height: 1.5; margin-bottom: 12px; }
   .seller-row {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--card); border: 2px solid var(--text);
-    padding: 10px 12px; margin-top: 4px;
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--card); border: 1.5px solid var(--text);
+    border-radius: 12px; padding: 12px; margin-top: 4px;
     -webkit-tap-highlight-color: transparent;
   }
   .seller-go {
-    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;
     background: none; border: none; padding: 0; margin: 0;
     text-align: left; cursor: pointer; color: inherit; font: inherit;
     -webkit-tap-highlight-color: transparent;
   }
-  .seller-avatar { width: 36px; height: 36px; border-radius: 18px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; flex-shrink: 0; }
+  .seller-avatar { width: 44px; height: 44px; border-radius: 22px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
   .seller-info { flex: 1; min-width: 0; }
-  .seller-name { font-size: 13px; font-weight: 600; }
-  .seller-sub { font-size: 11px; color: var(--subtext); }
+  .seller-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .seller-name { font-size: 14px; font-weight: 800; }
+  .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
   .seller-actions {
-    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    display: flex; align-items: stretch; gap: 8px; width: 100%;
     -webkit-tap-highlight-color: transparent;
   }
   .view-shop-btn, .review-btn {
-    background: var(--black); color: var(--gold); padding: 8px 10px; border-radius: 10px;
-    font-size: 11px; font-weight: 700; border: none; cursor: pointer; flex-shrink: 0;
+    flex: 1; background: var(--black); color: var(--gold); padding: 11px 12px; border-radius: 12px;
+    font-size: 12px; font-weight: 800; border: none; cursor: pointer;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
   .view-shop-btn:active, .review-btn:active { opacity: 0.75; }
-  .review-btn { background: var(--card); color: var(--text); border: 2px solid var(--text); }
+  .review-btn { background: var(--card); color: var(--text); border: 1.5px solid var(--text); }
   .safety-row { display: flex; gap: 8px; margin-top: 12px; }
   .safety-btn { flex: 1; background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 10px; text-align: center; color: var(--warn-text); font-size: 11px; font-weight: 700; cursor: pointer; }
 
@@ -675,16 +683,30 @@
     document.getElementById("moreMenu").classList.remove("open");
   }
 
+  function sellerTrustBadge() {
+    if (listing.seller_account_type === "shop") {
+      return `<span class="verified-shop-badge">✓ ${t("verified_shop")}</span>`;
+    }
+    if (listing.seller_nrc_verified) {
+      return `<span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>`;
+    }
+    return "";
+  }
+
   function renderSellerRow() {
     const wrap = document.getElementById("sellerRowWrap");
     if (!wrap) return;
     const displayName = listing.shop_name || listing.seller_name || t("unknown_seller");
+    const badge = sellerTrustBadge();
     wrap.innerHTML = `
       <div class="seller-row" id="sellerRow">
         <div class="seller-go" id="sellerGo" role="button" tabindex="0">
           <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
           <div class="seller-info">
-            <div class="seller-name">${displayName}${listing.seller_nrc_verified ? ` <span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>` : ""}</div>
+            <div class="seller-name-line">
+              <span class="seller-name">${displayName}</span>
+              ${badge}
+            </div>
             <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
             ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
           </div>
