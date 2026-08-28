@@ -10,6 +10,7 @@ package app.zedmarket.twa;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
@@ -68,6 +69,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final int REQ_FILE_CHOOSER = 9002;
     private static final int REQ_TURN_ON_LOCATION = 9003;
     private static final int REQ_MEDIA = 9004;
+    private static final String PREFS_LOC = "zm_loc_perm";
+    private static final String KEY_LOC_ASKED = "asked";
     private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
     private static final String KEY_PREFIX =
@@ -99,6 +102,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private volatile boolean mAskedRuntimePermissionThisFlow;
     private volatile boolean mStartedTurnOnThisFlow;
     private volatile long mIgnoreGeoRetryUntilMs;
+    private boolean mInAppLocDialogShowing;
+    private boolean mLocRationaleBeforeRequest;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -336,6 +341,17 @@ public class ZedMarketWebViewActivity extends Activity {
         }
 
         mAwaitingAppLocJs = false;
+        markLocationAsked();
+        // After two Don't allows the OS returns denied with no dialog. Show ours
+        // on this tap instead of going silent.
+        if (!mLocRationaleBeforeRequest && !locationShowsRationale()) {
+            if (mWebView != null) {
+                mWebView.post(this::showInAppAllowDialog);
+            } else {
+                showInAppAllowDialog();
+            }
+            return;
+        }
         if (mWebView != null) {
             mWebView.post(() -> {
                 finishGeoGrant(false);
@@ -500,6 +516,65 @@ public class ZedMarketWebViewActivity extends Activity {
                 == PackageManager.PERMISSION_GRANTED;
     }
 
+    private void markLocationAsked() {
+        getSharedPreferences(PREFS_LOC, MODE_PRIVATE).edit()
+                .putBoolean(KEY_LOC_ASKED, true)
+                .apply();
+    }
+
+    private boolean locationShowsRationale() {
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                || ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
+    private boolean systemWillNotShowLocationDialog() {
+        if (hasLocationPermission()) {
+            return false;
+        }
+        boolean asked = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
+                .getBoolean(KEY_LOC_ASKED, false);
+        return asked && !locationShowsRationale();
+    }
+
+    private void denyInAppLocation() {
+        mInAppLocDialogShowing = false;
+        mAwaitingAppLocJs = false;
+        finishGeoGrant(false);
+        notifyWebLocationCancelled();
+        notifyAppLocationPermission(false);
+        if (mWebView != null) {
+            mWebView.requestFocus();
+        }
+    }
+
+    private void showInAppAllowDialog() {
+        if (isFinishing()) {
+            denyInAppLocation();
+            return;
+        }
+        if (mInAppLocDialogShowing) {
+            return;
+        }
+        mInAppLocDialogShowing = true;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.loc_allow_title)
+                .setMessage(R.string.loc_declined_notice)
+                .setPositiveButton(R.string.loc_allow, (dialog, which) -> {
+                    mInAppLocDialogShowing = false;
+                    mAwaitingAppLocJs = false;
+                    openAppLocationSettings(true);
+                    finishGeoGrant(false);
+                    notifyWebLocationCancelled();
+                    notifyAppLocationPermission(false);
+                })
+                .setNegativeButton(R.string.loc_dont_allow, (dialog, which) -> denyInAppLocation())
+                .setCancelable(true)
+                .setOnCancelListener(dialog -> denyInAppLocation())
+                .show();
+    }
+
     private boolean isSystemLocationEnabled() {
         try {
             LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -642,12 +717,15 @@ public class ZedMarketWebViewActivity extends Activity {
                 return;
             }
             mAskedRuntimePermissionThisFlow = true;
+            if (systemWillNotShowLocationDialog()) {
+                showInAppAllowDialog();
+                return;
+            }
+            markLocationAsked();
+            mLocRationaleBeforeRequest = locationShowsRationale();
             ActivityCompat.requestPermissions(
                     this,
-                    new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    },
+                    new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
                     REQ_LOCATION);
             return;
         }
@@ -934,12 +1012,15 @@ public class ZedMarketWebViewActivity extends Activity {
                     return;
                 }
                 mAwaitingAppLocJs = true;
+                if (systemWillNotShowLocationDialog()) {
+                    showInAppAllowDialog();
+                    return;
+                }
+                markLocationAsked();
+                mLocRationaleBeforeRequest = locationShowsRationale();
                 ActivityCompat.requestPermissions(
                         ZedMarketWebViewActivity.this,
-                        new String[]{
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                        },
+                        new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
                         REQ_LOCATION);
             });
         }
