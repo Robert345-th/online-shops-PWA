@@ -133,6 +133,17 @@
     display: flex; align-items: center; justify-content: center;
     border: none; cursor: pointer; position: relative; font-size: 18px;
   }
+  .map-loc-needed {
+    display: none;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text);
+    background: var(--card);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .map-loc-needed.is-visible { display: block; }
   .badge {
     position: absolute; top: -4px; right: -4px;
     background: #E01B27; border-radius: 8px; min-width: 16px; height: 16px;
@@ -256,7 +267,7 @@
         <span id="authBtnText">Login / Sign Up</span>
       </button>
       <div class="icon-row">
-      <button class="icon-btn" onclick="window.location.href='/map-view.html'"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
+      <button class="icon-btn" id="mapNavBtn" type="button" aria-label="Map View"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg></button>
       <button class="icon-btn" id="chatNavBtn" type="button" onclick="if (zmRequireLogin('/chat-list.html')) location.href='/chat-list.html'" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge" id="chatUnreadBadge" style="display:none"></span></button>
       <button class="icon-btn" type="button" onclick="if (zmRequireLogin('/favorites.html')) location.href='/favorites.html'" aria-label="Favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
       </div>
@@ -276,6 +287,8 @@
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
   </div>
 </div>
+
+<div class="map-loc-needed" id="mapLocNeeded" data-i18n="map_needs_location">ZedMarket needs your location to show listings near you.</div>
 
 <div id="topSellersWrap" style="display:none;"></div>
 
@@ -367,6 +380,34 @@
   const authBtnText = document.getElementById("authBtnText");
   const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
   if (urlSearchQuery) searchInput.value = urlSearchQuery;
+
+  function showMapLocationNeeded() {
+    const el = document.getElementById("mapLocNeeded");
+    if (!el) return;
+    el.textContent = t("map_needs_location");
+    el.classList.add("is-visible");
+  }
+
+  if (new URLSearchParams(window.location.search).get("needslocation") === "1") {
+    showMapLocationNeeded();
+    const clean = new URL(window.location.href);
+    clean.searchParams.delete("needslocation");
+    history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
+  }
+
+  let mapOpenInFlight = false;
+  document.getElementById("mapNavBtn")?.addEventListener("click", async () => {
+    if (mapOpenInFlight) return;
+    mapOpenInFlight = true;
+    try {
+      await requestUserLocationCoords();
+      window.location.href = "/map-view.html";
+    } catch {
+      showMapLocationNeeded();
+    } finally {
+      mapOpenInFlight = false;
+    }
+  });
 
   function loadMyCoords() {
     myCoords = readSavedCoords("zm_home_location");
@@ -733,6 +774,8 @@
     loadFavoriteIds().then(() => renderFeed());
   });
   window.addEventListener("langchange", () => {
+    const mapLocEl = document.getElementById("mapLocNeeded");
+    if (mapLocEl) mapLocEl.textContent = t("map_needs_location");
     refreshAuthState();
     renderChips();
     loadTopSellers();

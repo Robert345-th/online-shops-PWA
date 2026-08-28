@@ -241,7 +241,6 @@ public class ZedMarketWebViewActivity extends Activity {
                 mDeclinedTurnOnAtMs = SystemClock.elapsedRealtime();
                 finishGeoGrant(false);
                 notifyWebLocationCancelled();
-                showLocationNotice(getString(R.string.loc_declined_notice));
             }
             return;
         }
@@ -321,7 +320,6 @@ public class ZedMarketWebViewActivity extends Activity {
 
         finishGeoGrant(false);
         notifyWebLocationCancelled();
-        showLocationNotice(getString(R.string.loc_declined_notice));
     }
 
     private boolean isTrustedWebOrigin(Uri origin) {
@@ -526,12 +524,10 @@ public class ZedMarketWebViewActivity extends Activity {
                                 mTurnOnDialogShowing = false;
                                 finishGeoGrant(false);
                                 notifyWebLocationCancelled();
-                                showLocationNotice(getString(R.string.loc_declined_notice));
                             }
                         } else if (!isSystemLocationEnabled()) {
                             finishGeoGrant(false);
                             notifyWebLocationCancelled();
-                            showLocationNotice(getString(R.string.loc_declined_notice));
                         } else {
                             finishGeoGrant(true);
                         }
@@ -542,7 +538,6 @@ public class ZedMarketWebViewActivity extends Activity {
             if (!isSystemLocationEnabled()) {
                 finishGeoGrant(false);
                 notifyWebLocationCancelled();
-                showLocationNotice(getString(R.string.loc_declined_notice));
             } else {
                 finishGeoGrant(true);
             }
@@ -854,17 +849,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private final class LocationBridge {
         @JavascriptInterface
         public void onGeolocationError(int code) {
-            // Never auto-reopen Turn on location here. That caused an instant loop after
-            // "No thanks": deny → GPS error → dialog again → deny → …
-            // Dialog only shows from an explicit user tap (handleGeolocationPrompt).
-            runOnUiThread(() -> {
-                if (recentlyDeclinedTurnOn()) {
-                    return;
-                }
-                if (code == 1 && !hasLocationPermission()) {
-                    showLocationNotice(getString(R.string.loc_declined_notice));
-                }
-            });
+            // Don't allow stays on the current page. The site shows the
+            // "ZedMarket needs your location" message. No Settings, no toast.
         }
     }
 }
