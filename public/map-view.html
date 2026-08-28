@@ -51,7 +51,7 @@
   .radius-input { width: 36px; font-size: 13px; text-align: center; border: none; background: none; }
   .radius-label { font-size: 11px; color: var(--subtext); font-weight: 600; }
 
-  .no-location-text { font-size: 11px; color: var(--price-red); text-align: center; padding-bottom: 6px; padding: 0 12px 6px; flex-shrink: 0; }
+  .no-location-text { font-size: 12px; color: var(--subtext); text-align: center; padding: 0 12px 8px; flex-shrink: 0; line-height: 1.4; }
 
   .results-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 8px; flex-shrink: 0; }
   .no-results-text { font-size: 12px; color: var(--subtext); padding: 8px; }
@@ -100,7 +100,7 @@
   </div>
 </div>
 
-<div class="no-location-text" id="noLocationText" style="display:none;">Enable location to filter by distance — showing all listings for now.</div>
+<div class="no-location-text" id="noLocationText" data-i18n="map_needs_location" style="display:none;">ZedMarket needs your location to show listings near you.</div>
 
 <div class="results-row" id="resultsRow" style="display:none;"></div>
 
@@ -172,7 +172,10 @@
         renderAll();
       })
       .catch(() => {
-        document.getElementById("noLocationText").style.display = "block";
+        const el = document.getElementById("noLocationText");
+        if (!el) return;
+        el.textContent = t("map_needs_location");
+        el.style.display = "block";
       });
   }
 

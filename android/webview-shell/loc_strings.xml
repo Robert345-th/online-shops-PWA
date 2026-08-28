@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="loc_declined_notice">Location is off. Tap again to turn it on and see nearby listings.</string>
+    <string name="loc_declined_notice">ZedMarket needs your location to show listings near you.</string>
     <string name="loc_open_settings">Turn on Location for ZedMarket in Settings, then come back and try again.</string>
     <string name="loc_settings_enabled_retry">Location is allowed now — tap Use current location again.</string>
     <string name="loc_turn_on_settings">Turn on Location, then come back and try again.</string>
