@@ -115,6 +115,26 @@
     return getDeviceCoords(freshOpts);
   }
 
+  async function geocodeAreaLabel(query) {
+    const q = String(query || "").trim();
+    if (!q) return null;
+    const search = /zambia/i.test(q) ? q : `${q}, Zambia`;
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=zm&q=${encodeURIComponent(search)}`
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data || !data[0]) return null;
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+      return { lat, lng };
+    } catch {
+      return null;
+    }
+  }
+
   async function reverseGeocodeLabel(lat, lng) {
     try {
       const res = await fetch(
@@ -191,6 +211,7 @@
   window.requestMapLocationCoords = requestMapLocationCoords;
   window.requestPlayStoreLocationPermission = requestPlayStoreLocationPermission;
   window.requestDeviceCoords = requestDeviceCoords;
+  window.geocodeAreaLabel = geocodeAreaLabel;
   window.reverseGeocodeLabel = reverseGeocodeLabel;
   window.getLocationPermissionState = getLocationPermissionState;
   window.watchLocationPermission = watchLocationPermission;

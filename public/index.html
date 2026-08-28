@@ -140,10 +140,23 @@
     line-height: 1.4;
     color: var(--text);
     background: var(--card);
-    padding: 10px 16px;
+    padding: 10px 16px 12px;
     border-bottom: 1px solid var(--border);
   }
   .map-loc-needed.is-visible { display: block; }
+  .map-loc-stay { display: none; margin-top: 10px; text-align: left; }
+  .map-loc-stay.is-visible { display: block; }
+  .map-loc-stay-row { display: flex; gap: 8px; }
+  .map-loc-stay-row input {
+    flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px; font-size: 14px; color: var(--text);
+  }
+  .map-loc-stay-row button {
+    flex-shrink: 0; border: none; border-radius: 12px; padding: 10px 14px;
+    background: #F5C518; color: #111; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .map-stay-err { display: none; margin: 8px 0 0; font-size: 12px; color: #E01B27; }
+  .map-stay-err.is-visible { display: block; }
   .badge {
     position: absolute; top: -4px; right: -4px;
     background: #E01B27; border-radius: 8px; min-width: 16px; height: 16px;
@@ -288,7 +301,16 @@
   </div>
 </div>
 
-<div class="map-loc-needed" id="mapLocNeeded" data-i18n="map_needs_location">ZedMarket needs your location to show listings near you.</div>
+<div class="map-loc-needed" id="mapLocNeeded">
+  <div id="mapLocNeededMsg" data-i18n="map_needs_location">ZedMarket needs your location to show listings near you.</div>
+  <div class="map-loc-stay" id="mapLocStayWrap">
+    <div class="map-loc-stay-row">
+      <input id="mapStayInput" type="text" autocomplete="address-level2" data-i18n-placeholder="map_stay_placeholder" placeholder="e.g. Lusaka, Kabulonga" />
+      <button type="button" id="mapStayBtn" data-i18n="map_stay_submit">Show map</button>
+    </div>
+    <div class="map-stay-err" id="mapStayErr"></div>
+  </div>
+</div>
 
 <div id="topSellersWrap" style="display:none;"></div>
 
@@ -381,30 +403,101 @@
   const urlSearchQuery = new URLSearchParams(window.location.search).get("q");
   if (urlSearchQuery) searchInput.value = urlSearchQuery;
 
-  function showMapLocationNeeded() {
+  function showMapLocationNeeded(showStayForm) {
     const el = document.getElementById("mapLocNeeded");
+    const msg = document.getElementById("mapLocNeededMsg");
+    const stayWrap = document.getElementById("mapLocStayWrap");
     if (!el) return;
-    el.textContent = t("map_needs_location");
+    if (msg) msg.textContent = t("map_needs_location");
     el.classList.add("is-visible");
+    if (stayWrap) stayWrap.classList.toggle("is-visible", !!showStayForm);
+    const err = document.getElementById("mapStayErr");
+    if (err) err.classList.remove("is-visible");
+    if (showStayForm) {
+      const input = document.getElementById("mapStayInput");
+      if (input) setTimeout(() => input.focus(), 50);
+    }
   }
 
+  function hideMapStayForm() {
+    document.getElementById("mapLocStayWrap")?.classList.remove("is-visible");
+  }
+
+  async function openMapFromStayArea() {
+    const input = document.getElementById("mapStayInput");
+    const err = document.getElementById("mapStayErr");
+    const btn = document.getElementById("mapStayBtn");
+    const query = (input && input.value.trim()) || "";
+    if (err) {
+      err.classList.remove("is-visible");
+      err.textContent = "";
+    }
+    if (!query) {
+      if (err) {
+        err.textContent = t("map_stay_error");
+        err.classList.add("is-visible");
+      }
+      input?.focus();
+      return;
+    }
+    if (btn) btn.disabled = true;
+    try {
+      const coords = await geocodeAreaLabel(query);
+      if (!coords) {
+        if (err) {
+          err.textContent = t("map_stay_error");
+          err.classList.add("is-visible");
+        }
+        return;
+      }
+      sessionStorage.setItem("zm_map_coords", JSON.stringify(coords));
+      window.location.href = "/map-view.html";
+    } catch {
+      if (err) {
+        err.textContent = t("map_stay_error");
+        err.classList.add("is-visible");
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  let mapOpenInFlight = false;
+  let mapStayBlocked = false;
+
   if (new URLSearchParams(window.location.search).get("needslocation") === "1") {
-    showMapLocationNeeded();
+    showMapLocationNeeded(true);
     const clean = new URL(window.location.href);
     clean.searchParams.delete("needslocation");
     history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
   }
 
-  let mapOpenInFlight = false;
+  window.addEventListener("zm-location-blocked", () => {
+    mapStayBlocked = true;
+    showMapLocationNeeded(true);
+  });
+
+  document.getElementById("mapStayBtn")?.addEventListener("click", () => {
+    openMapFromStayArea();
+  });
+  document.getElementById("mapStayInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      openMapFromStayArea();
+    }
+  });
+
   document.getElementById("mapNavBtn")?.addEventListener("click", async () => {
     if (mapOpenInFlight) return;
+    mapStayBlocked = false;
+    hideMapStayForm();
     mapOpenInFlight = true;
     try {
       const coords = await requestMapLocationCoords();
       sessionStorage.setItem("zm_map_coords", JSON.stringify(coords));
       window.location.href = "/map-view.html";
     } catch {
-      showMapLocationNeeded();
+      showMapLocationNeeded(mapStayBlocked);
     } finally {
       mapOpenInFlight = false;
     }
@@ -775,8 +868,8 @@
     loadFavoriteIds().then(() => renderFeed());
   });
   window.addEventListener("langchange", () => {
-    const mapLocEl = document.getElementById("mapLocNeeded");
-    if (mapLocEl) mapLocEl.textContent = t("map_needs_location");
+    const mapLocMsg = document.getElementById("mapLocNeededMsg");
+    if (mapLocMsg) mapLocMsg.textContent = t("map_needs_location");
     refreshAuthState();
     renderChips();
     loadTopSellers();

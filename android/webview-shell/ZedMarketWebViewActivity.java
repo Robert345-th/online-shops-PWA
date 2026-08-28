@@ -102,7 +102,6 @@ public class ZedMarketWebViewActivity extends Activity {
     private volatile boolean mAskedRuntimePermissionThisFlow;
     private volatile boolean mStartedTurnOnThisFlow;
     private volatile long mIgnoreGeoRetryUntilMs;
-    private boolean mInAppLocDialogShowing;
     private boolean mLocRationaleBeforeRequest;
     private boolean mRetryingFromInAppAllow;
     private long mOpenedAppSettingsAt;
@@ -371,11 +370,8 @@ public class ZedMarketWebViewActivity extends Activity {
         // After two Don't allows the OS returns denied with no dialog. Show ours
         // on this tap instead of going silent.
         if (!mLocRationaleBeforeRequest && !locationShowsRationale()) {
-            if (mWebView != null) {
-                mWebView.post(this::showInAppAllowDialog);
-            } else {
-                showInAppAllowDialog();
-            }
+            notifyWebLocationBlocked();
+            denyInAppLocation();
             return;
         }
         if (mWebView != null) {
@@ -535,6 +531,15 @@ public class ZedMarketWebViewActivity extends Activity {
                 null);
     }
 
+    private void notifyWebLocationBlocked() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{window.dispatchEvent(new CustomEvent('zm-location-blocked'));}catch(e){}})();",
+                null);
+    }
+
     private boolean hasLocationPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
@@ -565,7 +570,6 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void denyInAppLocation() {
-        mInAppLocDialogShowing = false;
         mAwaitingAppLocJs = false;
         finishGeoGrant(false);
         notifyWebLocationCancelled();
@@ -573,28 +577,6 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mWebView != null) {
             mWebView.requestFocus();
         }
-    }
-
-    private void showInAppAllowDialog() {
-        if (isFinishing()) {
-            denyInAppLocation();
-            return;
-        }
-        if (mInAppLocDialogShowing) {
-            return;
-        }
-        mInAppLocDialogShowing = true;
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.loc_allow_title)
-                .setMessage(R.string.loc_declined_notice)
-                .setPositiveButton(R.string.loc_allow, (dialog, which) -> {
-                    mInAppLocDialogShowing = false;
-                    openAppLocationSettings(true);
-                })
-                .setNegativeButton(R.string.loc_dont_allow, (dialog, which) -> denyInAppLocation())
-                .setCancelable(true)
-                .setOnCancelListener(dialog -> denyInAppLocation())
-                .show();
     }
 
     private boolean isSystemLocationEnabled() {
@@ -743,7 +725,8 @@ public class ZedMarketWebViewActivity extends Activity {
             }
             mAskedRuntimePermissionThisFlow = true;
             if (systemWillNotShowLocationDialog()) {
-                showInAppAllowDialog();
+                notifyWebLocationBlocked();
+                denyInAppLocation();
                 return;
             }
             markLocationAsked();
@@ -1039,7 +1022,8 @@ public class ZedMarketWebViewActivity extends Activity {
                 }
                 mAwaitingAppLocJs = true;
                 if (systemWillNotShowLocationDialog()) {
-                    showInAppAllowDialog();
+                    notifyWebLocationBlocked();
+                    denyInAppLocation();
                     return;
                 }
                 markLocationAsked();
