@@ -9,8 +9,7 @@ package app.zedmarket.twa;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
@@ -111,6 +110,8 @@ public class ZedMarketWebViewActivity extends Activity {
     private long mLocPermRequestedAt;
     private boolean mNotifyDialogShowing;
     private long mLastNotifyAskAt;
+    private long mStoppedAt;
+    private boolean mAskedNotifyThisOpen;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -220,6 +221,23 @@ public class ZedMarketWebViewActivity extends Activity {
                 denyInAppLocation();
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mStoppedAt > 0
+                && SystemClock.elapsedRealtime() - mStoppedAt > 1500L
+                && SystemClock.elapsedRealtime() - mLastNotifyAskAt > 4000L) {
+            mAskedNotifyThisOpen = false;
+            maybeAskNotificationPermission();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        mStoppedAt = SystemClock.elapsedRealtime();
+        super.onStop();
     }
 
     @Override
@@ -779,6 +797,12 @@ public class ZedMarketWebViewActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 injectLocationHelper(view);
+                if (!mAskedNotifyThisOpen) {
+                    mAskedNotifyThisOpen = true;
+                    view.postDelayed(
+                            () -> maybeAskNotificationPermission(),
+                            800L);
+                }
             }
 
             @Override
@@ -988,11 +1012,13 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private boolean hasNotificationPermission() {
-        if (Build.VERSION.SDK_INT < 33) {
-            return true;
+        if (Build.VERSION.SDK_INT >= 33) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED;
         }
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED;
+        NotificationManager manager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        return manager == null || manager.areNotificationsEnabled();
     }
 
     private void markNotifyAsked() {
@@ -1049,10 +1075,7 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void maybeAskNotificationPermission() {
-        if (Build.VERSION.SDK_INT < 33) {
-            return;
-        }
-        if (hasNotificationPermission()) {
+        if (isFinishing() || hasNotificationPermission()) {
             return;
         }
         if (mPendingGeoCallback != null || mTurnOnDialogShowing || mNotifyDialogShowing) {
@@ -1063,6 +1086,15 @@ public class ZedMarketWebViewActivity extends Activity {
             return;
         }
         mLastNotifyAskAt = SystemClock.elapsedRealtime();
+        if (Build.VERSION.SDK_INT < 33) {
+            if (mWebView != null) {
+                mWebView.evaluateJavascript(
+                        "(function(){try{if(window.Notification&&Notification.permission==='default')"
+                                + "Notification.requestPermission();}catch(e){}})();",
+                        null);
+            }
+            return;
+        }
         if (systemWillNotShowNotifyDialog()) {
             showInAppNotifyDialog();
             return;

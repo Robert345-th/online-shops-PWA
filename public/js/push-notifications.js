@@ -145,19 +145,22 @@
   }
 
   async function autoEnablePushNotifications() {
-    if (!getToken() || isPushOptOut() || !isPushSupported()) return false;
+    if (isPushOptOut()) return false;
+
+    const bridge = window.ZedMarketLocation;
+    if (bridge && typeof bridge.requestNotificationPermission === "function") {
+      try {
+        bridge.requestNotificationPermission();
+      } catch (e) { /* native ask is best-effort */ }
+    }
+
+    if (!getToken() || !isPushSupported()) return false;
 
     try {
       if (Notification.permission === "granted") {
         setPushEnabled(true);
         await syncPushSubscription();
         return true;
-      }
-
-      const bridge = window.ZedMarketLocation;
-      if (bridge && typeof bridge.requestNotificationPermission === "function") {
-        bridge.requestNotificationPermission();
-        return false;
       }
 
       if (Notification.permission === "denied") return false;
