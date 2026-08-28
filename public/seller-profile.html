@@ -54,6 +54,16 @@
   .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; text-align: center; }
   .avatar { width: 72px; height: 72px; border-radius: 0; background: var(--black); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--gold); font-size: 30px; font-weight: 900; }
   .name { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; }
+  .follow-counts {
+    margin-top: 8px; font-size: 13px; color: var(--subtext);
+    display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  }
+  .follow-count-link {
+    color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none;
+    font: inherit; padding: 0;
+  }
+  .follow-count-num { font-weight: 800; }
+  .follow-dot { color: var(--subtext); }
   .verified-badge { background: var(--approved-bg); color: #fff; padding: 4px 10px; border-radius: 0; margin-top: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .verified-badge.subscribed { background: var(--orange); }
   .trust-badge { background: var(--orange); color: #fff; padding: 5px 12px; border-radius: 0; margin-top: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -128,6 +138,38 @@
   const me = JSON.parse(localStorage.getItem("zm_user") || "null");
   const isOwnShop = me && String(me.id) === String(sellerId);
   let followingShop = false;
+  let followerCount = 0;
+  let followingCount = 0;
+
+  function compactCount(n) {
+    n = Number(n) || 0;
+    if (n >= 1000000) {
+      const v = n / 1000000;
+      return (n % 1000000 === 0 || v >= 10 ? Math.round(v) : v.toFixed(1).replace(/\.0$/, "")) + "M";
+    }
+    if (n >= 1000) {
+      const v = n / 1000;
+      return (n % 1000 === 0 || v >= 10 ? Math.round(v) : v.toFixed(1).replace(/\.0$/, "")) + "K";
+    }
+    return String(n);
+  }
+
+  function followersHtml(n) {
+    n = Number(n) || 0;
+    const word = n === 1 ? t("follower_one") : t("followers_word");
+    return `<span class="follow-count-num">${compactCount(n)}</span> ${word}`;
+  }
+
+  function followingHtml(n) {
+    return `<span class="follow-count-num">${compactCount(n)}</span> ${t("following_word")}`;
+  }
+
+  function paintFollowCounts() {
+    const followersEl = document.getElementById("followersLink");
+    const followingEl = document.getElementById("followingLink");
+    if (followersEl) followersEl.innerHTML = followersHtml(followerCount);
+    if (followingEl) followingEl.innerHTML = followingHtml(followingCount);
+  }
 
   function photoPlaceholder(size) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
@@ -213,7 +255,15 @@
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("fail");
+        const data = await res.json().catch(() => ({}));
         followingShop = !followingShop;
+        if (typeof data.followers === "number") {
+          followerCount = data.followers;
+        } else {
+          followerCount = Math.max(0, followerCount + (followingShop ? 1 : -1));
+        }
+        if (typeof data.following === "number") followingCount = data.following;
+        paintFollowCounts();
         btn.classList.toggle("on", followingShop);
         btn.textContent = followingShop ? t("following_btn") : t("follow_shop");
         if (note) note.textContent = followNoteText(shopName);
@@ -276,11 +326,19 @@
       ? `<div class="trust-badge">${profile.badge.label}</div>`
       : "";
 
+    followerCount = Number(profile.followers) || 0;
+    followingCount = Number(profile.following) || 0;
+
     app.innerHTML = `
       <div class="content">
         <div class="profile-header">
           <div class="avatar">${profile.display_name ? profile.display_name.charAt(0).toUpperCase() : "?"}</div>
           <div class="name">${profile.display_name}</div>
+          <div class="follow-counts">
+            <a class="follow-count-link" id="followersLink" href="/following.html?id=${sellerId}&tab=followers">${followersHtml(followerCount)}</a>
+            <span class="follow-dot">·</span>
+            <a class="follow-count-link" id="followingLink" href="/following.html?id=${sellerId}&tab=following">${followingHtml(followingCount)}</a>
+          </div>
           ${shopBadgeHtml(profile)}
           ${trustBadge}
           ${memberSince ? `<div class="member-since">${t("member_since", { date: memberSince })}</div>` : ""}

@@ -56,6 +56,14 @@
     text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; flex-shrink: 0;
   }
   .mini-follow.off { background: var(--black); color: var(--gold); border-color: var(--black); }
+  .tabs { display: flex; border: 2px solid var(--text); margin-bottom: 14px; }
+  .tab {
+    flex: 1; text-align: center; padding: 12px 8px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--subtext); text-decoration: none;
+    background: var(--card);
+  }
+  .tab.on { background: var(--black); color: var(--gold); }
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
   .empty-text { color: var(--subtext); font-size: 13px; margin-bottom: 8px; }
   .error-text { color: var(--price-red); }
@@ -86,9 +94,20 @@
   const app = document.getElementById("app");
   const token = localStorage.getItem("zm_token");
   const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const params = new URLSearchParams(window.location.search);
+  const viewId = params.get("id");
+  const tab = params.get("tab") === "followers" ? "followers" : "following";
+  const isPublic = Boolean(viewId);
 
   function authHeaders() {
     return { Authorization: `Bearer ${token}` };
+  }
+
+  function setPageTitle(key) {
+    const el = document.querySelector(".header-title");
+    if (!el) return;
+    el.setAttribute("data-i18n", key);
+    el.textContent = t(key);
   }
 
   function newListingsLabel(count) {
@@ -104,29 +123,43 @@
     if (!res.ok) throw new Error("fail");
   }
 
-  function renderShops(shops) {
-    if (!shops.length) {
+  function renderPeople(people, options) {
+    const { showUnfollow, showNewListings, emptyKey, hint } = options;
+    const tabsHtml = isPublic ? `
+      <div class="tabs">
+        <a class="tab${tab === "followers" ? " on" : ""}" href="/following.html?id=${viewId}&tab=followers">${t("followers_title")}</a>
+        <a class="tab${tab === "following" ? " on" : ""}" href="/following.html?id=${viewId}&tab=following">${t("following_title")}</a>
+      </div>` : "";
+
+    if (!people.length) {
       app.innerHTML = `
         <div class="content">
-          <p class="hint">${t("following_hint")}</p>
-          <div class="empty-text">${t("following_empty")}</div>
+          ${tabsHtml}
+          ${hint ? `<p class="hint">${hint}</p>` : ""}
+          <div class="empty-text">${t(emptyKey)}</div>
         </div>`;
       return;
     }
+
     app.innerHTML = `
       <div class="content">
-        <p class="hint">${t("following_hint")}</p>
-        ${shops.map((shop) => {
+        ${tabsHtml}
+        ${hint ? `<p class="hint">${hint}</p>` : ""}
+        ${people.map((shop) => {
           const name = shop.display_name || shop.shop_name || shop.name || "";
           const initial = name.charAt(0).toUpperCase() || "?";
+          const sub = showNewListings ? `<div class="shop-sub">${newListingsLabel(shop.new_listings)}</div>` : "";
+          const unfollow = showUnfollow
+            ? `<button class="mini-follow" data-id="${shop.id}" type="button">${t("following_btn")}</button>`
+            : "";
           return `
             <div class="shop-row" data-id="${shop.id}">
               <div class="avatar">${initial}</div>
               <div class="shop-meta">
                 <div class="shop-name">${name}</div>
-                <div class="shop-sub">${newListingsLabel(shop.new_listings)}</div>
+                ${sub}
               </div>
-              <button class="mini-follow" data-id="${shop.id}" type="button">${t("following_btn")}</button>
+              ${unfollow}
             </div>`;
         }).join("")}
       </div>`;
@@ -156,7 +189,29 @@
     });
   }
 
-  async function loadFollowing() {
+  async function loadPublicList() {
+    setPageTitle(tab === "followers" ? "followers_title" : "following_title");
+    const url = tab === "followers"
+      ? `${API_URL}/follows/followers/${viewId}`
+      : `${API_URL}/follows/following-of/${viewId}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("fail");
+      const people = await res.json();
+      renderPeople(Array.isArray(people) ? people : [], {
+        showUnfollow: false,
+        showNewListings: tab === "following",
+        emptyKey: tab === "followers" ? "followers_empty" : "following_empty_public",
+        hint: "",
+      });
+    } catch (e) {
+      const failKey = tab === "followers" ? "followers_load_fail" : "following_load_fail";
+      app.innerHTML = `<div class="center-box"><div class="error-text">${t(failKey)}</div></div>`;
+    }
+  }
+
+  async function loadMyFollowing() {
+    setPageTitle("following_title");
     if (!user || !token) {
       app.innerHTML = `
         <div class="center-box">
@@ -173,13 +228,19 @@
       }
       if (!res.ok) throw new Error("fail");
       const shops = await res.json();
-      renderShops(Array.isArray(shops) ? shops : []);
+      renderPeople(Array.isArray(shops) ? shops : [], {
+        showUnfollow: true,
+        showNewListings: true,
+        emptyKey: "following_empty",
+        hint: t("following_hint"),
+      });
     } catch (e) {
       app.innerHTML = `<div class="center-box"><div class="error-text">${t("following_load_fail")}</div></div>`;
     }
   }
 
-  loadFollowing();
+  if (isPublic) loadPublicList();
+  else loadMyFollowing();
 </script>
 </body>
 </html>
