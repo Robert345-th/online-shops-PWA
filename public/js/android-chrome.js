@@ -82,6 +82,12 @@
       html.play-store-webview .preview-overlay .preview-close-btn {
         top: calc(50px + var(--ps-top-inset));
       }
+      html.play-store-webview .bottom-nav {
+        padding-bottom: max(6px, var(--ps-bottom-inset));
+      }
+      html.play-store-webview .fab {
+        bottom: calc(72px + var(--ps-bottom-inset));
+      }
     `;
     document.head.appendChild(style);
   }
