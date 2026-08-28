@@ -310,6 +310,7 @@
 
       <div class="action-row">
         <button class="edit-profile-btn" onclick="window.location.href='/edit-shop-profile.html'">${t("edit_shop_profile")}</button>
+        <button class="edit-profile-btn" onclick="window.location.href='/seller-insights.html'">${t("shop_insights")}</button>
         <button class="edit-profile-btn" onclick="window.location.href='/seller-profile.html?id=${user.id}'">${t("view_my_shop")}</button>
         <button class="share-shop-btn" id="shareShopBtn">${t("share_shop")}</button>
         ${paymentEnforced && !isVerifiedShop ? `<button class="upgrade-btn" onclick="window.location.href='/upgrade-shop.html'">${isPending ? t("upgrade_pending") : t("upgrade_to_shop")}</button>` : ""}

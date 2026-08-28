@@ -162,6 +162,12 @@
   <div class="row" id="referralsRow">
     <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg><span data-i18n="invite_friends">Invite Friends</span></div>
   </div>
+  <div class="row" id="followingRow">
+    <div>
+      <div class="row-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span data-i18n="following_title">Following</span></div>
+      <div class="row-sub" data-i18n="following_sub">Shops you follow — get notified when they post</div>
+    </div>
+  </div>
 
   <div class="section-label" data-i18n="section_notifications">Notifications</div>
   <div class="row" id="pushNotificationsRow">
@@ -479,6 +485,11 @@
   document.getElementById("referralsRow").addEventListener("click", () => {
     if (!user) { window.location.href = "/login.html"; return; }
     window.location.href = "/referrals.html";
+  });
+
+  document.getElementById("followingRow").addEventListener("click", () => {
+    if (!user) { window.location.href = zmLoginUrl("/following.html"); return; }
+    window.location.href = "/following.html";
   });
 
   document.getElementById("saleConfirmationsRow").addEventListener("click", () => {

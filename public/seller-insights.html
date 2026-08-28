@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="/js/android-chrome.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/app-touch.js"></script>
+<title>ZedMarket - Shop Insights</title>
+<meta name="theme-color" content="#111111" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="https://zedmarket.app/icon-192.png" />
+<link rel="apple-touch-icon" href="https://zedmarket.app/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ZedMarket" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A;
+    --thumb-bg: #E9E2D3;
+  }
+  body.dark {
+    --bg: #121212; --card: #252525; --border: #505050;
+    --text: #F5F2ED; --subtext: #C9C0B6; --black: #111111;
+    --thumb-bg: #333333;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+
+  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 12px; }
+  .back-button {
+    width: 40px; height: 40px; padding: 0; background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .back-button svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .header-title { color: var(--gold); font-size: 18px; font-weight: 700; }
+
+  .content { padding: 16px; max-width: 560px; margin: 0 auto; }
+  .hint { font-size: 11px; color: var(--subtext); margin: 0 0 14px; line-height: 1.45; }
+  .stats-row { display: flex; background: var(--card); border: 2px solid var(--text); margin-bottom: 10px; }
+  .stat-box { flex: 1; text-align: center; padding: 14px 6px; border-right: 2px solid var(--text); }
+  .stat-box:last-child { border-right: none; }
+  .stat-number { font-size: 18px; font-weight: 900; color: var(--price-red); }
+  .stat-label { font-size: 9px; color: var(--subtext); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .section-title {
+    font-size: 13px; font-weight: 800; margin: 18px 0 10px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+    border-bottom: 2px solid var(--text); padding-bottom: 8px;
+  }
+  .listing-row {
+    display: flex; align-items: center; background: var(--card);
+    border: 2px solid var(--border); padding: 10px; margin-bottom: 8px; cursor: pointer;
+  }
+  .thumb {
+    width: 60px; height: 60px; background: var(--thumb-bg); margin-right: 12px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .photo-ph circle { fill: currentColor; stroke: none; }
+  .row-info { flex: 1; min-width: 0; }
+  .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .row-metrics { font-size: 10px; color: var(--subtext); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .boosted { display: inline-block; background: var(--orange); color: #fff; padding: 2px 8px; font-size: 9px; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
+  .error-text { color: var(--price-red); }
+  .empty-text { color: var(--subtext); font-size: 13px; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--price-red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+</style>
+</head>
+<body>
+<script>
+  function applyDarkMode() {
+    document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");
+  }
+  applyDarkMode();
+  window.addEventListener("pageshow", applyDarkMode);
+</script>
+<div class="topbar">
+  <button class="back-button" onclick="history.back()" data-i18n-aria="back" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <div class="header-title" data-i18n="shop_insights">Shop Insights</div>
+</div>
+<div id="app"><div class="center-box"><div class="spinner"></div></div></div>
+<script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
+<script>
+  const API_URL = "https://online-shops-production.up.railway.app";
+  const app = document.getElementById("app");
+  const token = localStorage.getItem("zm_token");
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+
+  function photoPlaceholder(size) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
+  }
+
+  function metricsLine(item) {
+    return t("insight_listing_metrics", {
+      views: item.view_count || 0,
+      chats: item.chats || 0,
+      saves: item.saves || 0,
+    });
+  }
+
+  function renderListingRow(item) {
+    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    return `
+      <div class="listing-row" data-id="${item.id}">
+        <div class="thumb">
+          ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
+        </div>
+        <div class="row-info">
+          <div class="row-title">${item.title || ""}</div>
+          <div class="row-price">K${item.price}</div>
+          <div class="row-metrics">${metricsLine(item)}</div>
+          ${item.is_boosted ? `<div class="boosted">${t("boosted_label")}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  async function loadInsights() {
+    if (!user || !token) {
+      app.innerHTML = `
+        <div class="center-box">
+          <div class="empty-text" style="margin-bottom:16px;">${t("log_in_to_shop")}</div>
+          <button class="login-btn" onclick="location.href=zmLoginUrl('/seller-insights.html')">${t("login")}</button>
+        </div>`;
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/insights`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) {
+        location.href = zmLoginUrl("/seller-insights.html");
+        return;
+      }
+      if (!res.ok) throw new Error("fail");
+      const data = await res.json();
+      const listings = Array.isArray(data.listings) ? data.listings : [];
+      app.innerHTML = `
+        <div class="content">
+          <p class="hint">${t("shop_insights_hint")}</p>
+          <div class="stats-row">
+            <div class="stat-box"><div class="stat-number">${data.views || 0}</div><div class="stat-label">${t("insight_views")}</div></div>
+            <div class="stat-box"><div class="stat-number">${data.chats || 0}</div><div class="stat-label">${t("insight_chats")}</div></div>
+            <div class="stat-box"><div class="stat-number">${data.saves || 0}</div><div class="stat-label">${t("insight_saves")}</div></div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box"><div class="stat-number">${data.followers || 0}</div><div class="stat-label">${t("insight_followers")}</div></div>
+            <div class="stat-box"><div class="stat-number">${data.active || 0}</div><div class="stat-label">${t("insight_active")}</div></div>
+            <div class="stat-box"><div class="stat-number">${data.sold || 0}</div><div class="stat-label">${t("insight_sold")}</div></div>
+          </div>
+          <div class="section-title">${t("insight_your_listings")}</div>
+          ${listings.length === 0
+            ? `<div class="empty-text">${t("no_listings_yet")}</div>`
+            : listings.map(renderListingRow).join("")}
+        </div>`;
+      app.querySelectorAll(".listing-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          window.location.href = `/listing.html?id=${row.dataset.id}`;
+        });
+      });
+      if (typeof observeLazyImages === "function") observeLazyImages(app);
+    } catch (e) {
+      app.innerHTML = `<div class="center-box"><div class="error-text">${t("insights_load_fail")}</div></div>`;
+    }
+  }
+
+  loadInsights();
+</script>
+</body>
+</html>
