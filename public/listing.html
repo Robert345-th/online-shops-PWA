@@ -919,13 +919,20 @@
     });
   }
   async function handleShareMeetup() {
-    const message = `I'm meeting ${listing.seller_name || "a seller"} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
-    if (navigator.share) {
-      try { await navigator.share({ text: message }); } catch (e) {}
-    } else {
-      navigator.clipboard.writeText(message);
-      alert(t("meetup_copied"));
+    const seller = listing.shop_name || listing.seller_name || "a seller";
+    const message = `I'm meeting ${seller} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone || "not shown"}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const inPlayStore = typeof isPlayStoreApp === "function" && isPlayStoreApp();
+    if (!inPlayStore && navigator.share) {
+      try {
+        await navigator.share({ text: message });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
     }
+    const opened = window.open(whatsappUrl, "_blank");
+    if (!opened) window.location.href = whatsappUrl;
   }
 
   function openReviewModal() {
