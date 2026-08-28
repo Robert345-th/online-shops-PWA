@@ -338,33 +338,50 @@
   const FEED_CACHE_KEY = "zm_feed_cache_v1";
   const FEED_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
-  function showCachedFeedIfFresh() {
+  function readFeedCache() {
     try {
-      const raw = sessionStorage.getItem(FEED_CACHE_KEY);
-      if (!raw) return false;
+      const raw = localStorage.getItem(FEED_CACHE_KEY) || sessionStorage.getItem(FEED_CACHE_KEY);
+      if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return false;
-      if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
-      listings = parsed.items;
-      serverOffset = parsed.items.length;
-      hasMore = parsed.hasMore !== false;
-      feedReady = true;
-      applyListingDistances();
-      renderFeed();
-      return true;
+      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
+      return parsed;
     } catch {
-      return false;
+      return null;
     }
   }
 
+  function applyCachedListings(parsed) {
+    listings = parsed.items;
+    serverOffset = parsed.items.length;
+    hasMore = parsed.hasMore !== false;
+    feedReady = true;
+    applyListingDistances();
+    renderFeed();
+  }
+
+  function showCachedFeedIfFresh() {
+    const parsed = readFeedCache();
+    if (!parsed) return false;
+    if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
+    applyCachedListings(parsed);
+    return true;
+  }
+
+  function showCachedFeedAny() {
+    const parsed = readFeedCache();
+    if (!parsed) return false;
+    applyCachedListings(parsed);
+    return true;
+  }
+
   function saveFeedCache() {
-    try {
-      sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({
-        ts: Date.now(),
-        items: listings.slice(0, PAGE_SIZE),
-        hasMore,
-      }));
-    } catch { /* ignore */ }
+    const payload = JSON.stringify({
+      ts: Date.now(),
+      items: listings.slice(0, PAGE_SIZE),
+      hasMore,
+    });
+    try { sessionStorage.setItem(FEED_CACHE_KEY, payload); } catch { /* ignore */ }
+    try { localStorage.setItem(FEED_CACHE_KEY, payload); } catch { /* ignore */ }
   }
 
   let activeCategory = "All";
@@ -560,11 +577,19 @@
     return typeof navigator !== "undefined" && navigator.onLine === false;
   }
 
-  function renderFeedError() {
-    const offline = isOffline();
-    feed.className = offline ? "offline" : "error";
+  function isNetworkFailure(err) {
+    if (isOffline()) return true;
+    if (!err) return false;
+    const name = err.name || "";
+    const msg = String(err.message || err);
+    return name === "AbortError" || name === "TypeError" || /failed to fetch|networkerror|load failed|aborted/i.test(msg);
+  }
+
+  function renderFeedError(offline) {
+    const noData = offline || isOffline();
+    feed.className = noData ? "offline" : "error";
     feed.innerHTML = `
-      <div>${offline ? t("feed_offline") : t("feed_error")}</div>
+      <div>${noData ? t("feed_offline") : t("feed_error")}</div>
       <button type="button" class="empty-btn" id="feedRetryBtn">${t("gate_try_again")}</button>`;
     document.getElementById("feedRetryBtn")?.addEventListener("click", () => loadListings(true));
     updateLoadMoreButton();
@@ -580,7 +605,8 @@
   async function loadListings(reset = true) {
     if (loadingMore) return;
     if (reset && isOffline() && !listings.length) {
-      renderFeedError();
+      if (showCachedFeedAny()) return;
+      renderFeedError(true);
       return;
     }
     const prevOffset = serverOffset;
@@ -611,11 +637,14 @@
       renderFeed();
       if (reset) saveFeedCache();
     } catch (e) {
+      const network = isNetworkFailure(e);
       if (reset && listings.length) {
         serverOffset = prevOffset;
         hasMore = prevHasMore;
+      } else if (reset && network && showCachedFeedAny()) {
+        /* keep last listings while data is off */
       } else if (reset) {
-        renderFeedError();
+        renderFeedError(network);
       }
       console.error(e);
     } finally {
@@ -666,7 +695,7 @@
     if (!items.length) {
       if (!feedReady) return;
       if (!listings.length && isOffline()) {
-        renderFeedError();
+        renderFeedError(true);
         return;
       }
       feed.className = "empty";
@@ -921,7 +950,8 @@
         window.location.href = "/post-listing.html";
       });
     }
-    if (feed.classList.contains("error") || feed.classList.contains("offline")) renderFeedError();
+    if (feed.classList.contains("offline")) renderFeedError(true);
+    else if (feed.classList.contains("error")) renderFeedError(false);
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
     if (feed.classList.contains("grid")) renderFeed();
   });
