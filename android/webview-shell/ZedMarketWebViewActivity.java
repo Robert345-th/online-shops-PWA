@@ -1,6 +1,7 @@
 /*
  * Full-screen WebView for Play Store testing app with:
  * - App location permission (one Allow / Don't allow)
+ * - System "Turn on location" dialog when GPS is off
  * - Microphone / camera permission for voice notes & selfie
  * - Photo file picker
  */
@@ -13,6 +14,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -48,6 +50,11 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.Priority;
 import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata;
 
 import java.util.ArrayList;
@@ -233,10 +240,17 @@ public class ZedMarketWebViewActivity extends Activity {
                     showLocationNotice(getString(R.string.loc_settings_enabled_retry));
                 }
             } else {
-                // One No thanks ends the whole flow — block re-prompts briefly.
                 mDeclinedTurnOnAtMs = SystemClock.elapsedRealtime();
-                finishGeoGrant(false);
-                notifyWebLocationCancelled();
+                if (mWebView != null) {
+                    mWebView.post(() -> {
+                        finishGeoGrant(false);
+                        notifyWebLocationCancelled();
+                        mWebView.requestFocus();
+                    });
+                } else {
+                    finishGeoGrant(false);
+                    notifyWebLocationCancelled();
+                }
             }
             return;
         }
@@ -499,8 +513,7 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     /**
-     * After Allow, grant WebView geolocation. Do not show a second
-     * "Turn on location" dialog — that was the double prompt.
+     * After Allow, show "Turn on location" if GPS is off. Do not show Allow again.
      */
     private void ensureSystemLocationOnThenGrant() {
         if (mPendingGeoCallback == null || mPendingGeoOrigin == null) {
@@ -510,8 +523,64 @@ public class ZedMarketWebViewActivity extends Activity {
             finishGeoGrant(true);
             return;
         }
-        finishGeoGrant(false);
-        notifyWebLocationCancelled();
+        if (mTurnOnDialogShowing || mSettingsCheckInFlight) {
+            return;
+        }
+
+        mSettingsCheckInFlight = true;
+        try {
+            LocationRequest request = new LocationRequest.Builder(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY, 10000L)
+                    .setMinUpdateIntervalMillis(5000L)
+                    .build();
+
+            LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(request)
+                    .setAlwaysShow(true)
+                    .build();
+
+            LocationServices.getSettingsClient(this)
+                    .checkLocationSettings(settingsRequest)
+                    .addOnSuccessListener(this, response -> {
+                        mSettingsCheckInFlight = false;
+                        finishGeoGrant(true);
+                    })
+                    .addOnFailureListener(this, e -> {
+                        mSettingsCheckInFlight = false;
+                        if (mPendingGeoCallback == null) {
+                            finishGeoGrant(false);
+                            return;
+                        }
+                        if (mTurnOnDialogShowing) {
+                            return;
+                        }
+                        if (e instanceof ResolvableApiException) {
+                            try {
+                                mTurnOnDialogShowing = true;
+                                ((ResolvableApiException) e)
+                                        .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
+                            } catch (IntentSender.SendIntentException ex) {
+                                mTurnOnDialogShowing = false;
+                                finishGeoGrant(false);
+                                notifyWebLocationCancelled();
+                            }
+                        } else if (!isSystemLocationEnabled()) {
+                            finishGeoGrant(false);
+                            notifyWebLocationCancelled();
+                        } else {
+                            finishGeoGrant(true);
+                        }
+                    });
+        } catch (Exception e) {
+            mSettingsCheckInFlight = false;
+            Log.e(TAG, "Location settings check failed", e);
+            if (!isSystemLocationEnabled()) {
+                finishGeoGrant(false);
+                notifyWebLocationCancelled();
+            } else {
+                finishGeoGrant(true);
+            }
+        }
     }
 
     private void openLocationSourceSettings() {
