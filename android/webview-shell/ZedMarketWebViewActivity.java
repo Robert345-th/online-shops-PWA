@@ -105,6 +105,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private boolean mInAppLocDialogShowing;
     private boolean mLocRationaleBeforeRequest;
     private boolean mRetryingFromInAppAllow;
+    private long mOpenedAppSettingsAt;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -201,9 +202,18 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mWebView != null) {
             mWebView.onResume();
         }
-        if (mRetryLocationAfterSettings && hasLocationPermission()) {
+        if (mRetryLocationAfterSettings) {
+            if (mOpenedAppSettingsAt > 0
+                    && SystemClock.elapsedRealtime() - mOpenedAppSettingsAt < 800L) {
+                return;
+            }
             mRetryLocationAfterSettings = false;
-            showLocationNotice(getString(R.string.loc_settings_enabled_retry));
+            mOpenedAppSettingsAt = 0;
+            if (hasLocationPermission()) {
+                ensureSystemLocationOnThenGrant();
+            } else {
+                denyInAppLocation();
+            }
         }
     }
 
@@ -579,13 +589,7 @@ public class ZedMarketWebViewActivity extends Activity {
                 .setMessage(R.string.loc_declined_notice)
                 .setPositiveButton(R.string.loc_allow, (dialog, which) -> {
                     mInAppLocDialogShowing = false;
-                    mRetryingFromInAppAllow = true;
-                    mLocRationaleBeforeRequest = locationShowsRationale();
-                    markLocationAsked();
-                    ActivityCompat.requestPermissions(
-                            this,
-                            new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
-                            REQ_LOCATION);
+                    openAppLocationSettings(true);
                 })
                 .setNegativeButton(R.string.loc_dont_allow, (dialog, which) -> denyInAppLocation())
                 .setCancelable(true)
@@ -698,6 +702,7 @@ public class ZedMarketWebViewActivity extends Activity {
 
     private void openAppLocationSettings(boolean retryAfter) {
         mRetryLocationAfterSettings = retryAfter;
+        mOpenedAppSettingsAt = SystemClock.elapsedRealtime();
         try {
             Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             intent.setData(Uri.parse("package:" + getPackageName()));
@@ -705,6 +710,8 @@ public class ZedMarketWebViewActivity extends Activity {
             showLocationNotice(getString(R.string.loc_open_settings));
         } catch (ActivityNotFoundException ex) {
             Log.e(TAG, "Could not open app settings", ex);
+            mRetryLocationAfterSettings = false;
+            mOpenedAppSettingsAt = 0;
         }
     }
 
