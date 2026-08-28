@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -160,6 +161,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mWebView.setWebViewClient(createWebViewClient());
             mWebView.setWebChromeClient(createWebChromeClient());
             setupWebSettings(mWebView.getSettings());
+            markAsPlayStoreWebView(mWebView);
 
             setContentView(mWebView, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -653,6 +655,7 @@ public class ZedMarketWebViewActivity extends Activity {
                     mWebView.setWebViewClient(this);
                     mWebView.setWebChromeClient(createWebChromeClient());
                     setupWebSettings(mWebView.getSettings());
+                    markAsPlayStoreWebView(mWebView);
                     if (parent != null) {
                         parent.addView(mWebView);
                     } else {
@@ -666,6 +669,11 @@ public class ZedMarketWebViewActivity extends Activity {
                 return true;
             }
 
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                view.evaluateJavascript("window.__zmPlayStoreApp=true;", null);
+            }
+
             private boolean shouldOverrideUrlLoading(Uri navigationUrl) {
                 if (navigationUrl == null) {
                     return false;
@@ -673,7 +681,10 @@ public class ZedMarketWebViewActivity extends Activity {
                 if ("data".equals(navigationUrl.getScheme())) {
                     return false;
                 }
-                if (uriOriginsMatch(navigationUrl, mLaunchUrl) || matchExtraOrigins(navigationUrl)) {
+                // Keep zedmarket.app inside the WebView. Custom Tabs is the Chrome URL bar.
+                if (isZedMarketHost(navigationUrl)
+                        || uriOriginsMatch(navigationUrl, mLaunchUrl)
+                        || matchExtraOrigins(navigationUrl)) {
                     return false;
                 }
                 try {
@@ -787,6 +798,19 @@ public class ZedMarketWebViewActivity extends Activity {
         return false;
     }
 
+    private static boolean isZedMarketHost(Uri uri) {
+        if (uri == null || uri.getHost() == null) return false;
+        String host = normalizedHost(uri);
+        return host.equals("zedmarket.app") || host.endsWith(".zedmarket.app");
+    }
+
+    private static String normalizedHost(Uri uri) {
+        String host = uri.getHost();
+        if (host == null) return "";
+        host = host.toLowerCase();
+        return host.startsWith("www.") ? host.substring(4) : host;
+    }
+
     private static boolean uriOriginsMatch(Uri uriA, Uri uriB) {
         if (uriA == null || uriB == null
                 || uriA.getScheme() == null || uriB.getScheme() == null
@@ -794,8 +818,18 @@ public class ZedMarketWebViewActivity extends Activity {
             return false;
         }
         return uriA.getScheme().equalsIgnoreCase(uriB.getScheme())
-                && uriA.getHost().equalsIgnoreCase(uriB.getHost())
+                && normalizedHost(uriA).equals(normalizedHost(uriB))
                 && uriA.getPort() == uriB.getPort();
+    }
+
+    private static void markAsPlayStoreWebView(WebView webView) {
+        WebSettings settings = webView.getSettings();
+        String ua = settings.getUserAgentString();
+        if (ua == null) ua = "";
+        if (!ua.contains("ZedMarketApp")) {
+            settings.setUserAgentString(ua + " wv ZedMarketApp/1.0");
+        }
+        webView.evaluateJavascript("window.__zmPlayStoreApp=true;", null);
     }
 
     @SuppressLint("SetJavaScriptEnabled")

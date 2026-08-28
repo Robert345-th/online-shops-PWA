@@ -24,11 +24,13 @@
   }
 
   function isPlayStoreApp() {
+    if (window.__zmPlayStoreApp === true) return true;
+    if (typeof window.ZedMarketLocation !== "undefined") return true;
     if (isStandalone()) return true;
     const ref = document.referrer || "";
     if (/^android-app:\/\/app\.zedmarket\.twa/i.test(ref)) return true;
     if (/[?&]utm_source=(android|pwa)\b/i.test(location.search)) return true;
-    if (isAndroid() && /;\s*wv\)|\bwv\b/i.test(navigator.userAgent)) return true;
+    if (isAndroid() && /ZedMarketApp|;\s*wv\)|\bwv\b/i.test(navigator.userAgent)) return true;
     return false;
   }
 

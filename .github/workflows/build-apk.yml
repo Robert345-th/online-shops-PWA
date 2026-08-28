@@ -72,6 +72,7 @@ jobs:
           node patch-webview-location.js
           node patch-version.js
           grep -q "ZedMarketWebViewActivity.createLaunchIntent" app/src/main/java/app/zedmarket/twa/LauncherActivity.java
+          grep -A20 'android:name=".ZedMarketWebViewActivity"' app/src/main/AndroidManifest.xml | grep -q 'android.intent.category.LAUNCHER'
           echo "Launcher is WebView-only with location handling."
 
       - name: Build signed APK
@@ -125,5 +126,5 @@ jobs:
             echo "ERROR: APK on disk matches the old committed file. Build did not produce a new APK."
             exit 1
           fi
-          git commit -m "Update ZedMarket download APK v1.0.21."
+          git commit -m "Update ZedMarket download APK v1.0.22."
           git push

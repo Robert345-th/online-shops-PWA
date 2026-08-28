@@ -80,28 +80,50 @@ if (!manifest.includes("RECORD_AUDIO")) {
   }
 }
 
+const webViewLauncherActivity = `<activity android:name=".ZedMarketWebViewActivity"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Black.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>`;
+
 if (!manifest.includes(".ZedMarketWebViewActivity")) {
   manifest = manifest.replace(
     "<activity android:name=\"com.google.androidbrowserhelper.trusted.WebViewFallbackActivity\"\n            android:configChanges=\"orientation|screenSize\" />",
-    `<activity android:name=".ZedMarketWebViewActivity"
-            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
-            android:exported="false"
-            android:theme="@android:style/Theme.Black.NoTitleBar" />
+    `${webViewLauncherActivity}
 
         <activity android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
             android:configChanges="orientation|screenSize" />`
   );
-  console.log("Registered ZedMarketWebViewActivity + location permissions in AndroidManifest.xml");
-} else if (!manifest.includes('android:name=".ZedMarketWebViewActivity"') || !manifest.includes("Theme.Black.NoTitleBar")) {
-  // Ensure solid theme (translucent app theme crashes WebView on many phones).
+  console.log("Registered ZedMarketWebViewActivity as the home-screen launcher.");
+} else {
   manifest = manifest.replace(
-    /<activity android:name="\.ZedMarketWebViewActivity"[\s\S]*?\/>/,
-    `<activity android:name=".ZedMarketWebViewActivity"
-            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
-            android:exported="false"
-            android:theme="@android:style/Theme.Black.NoTitleBar" />`
+    /<activity android:name="\.ZedMarketWebViewActivity"[\s\S]*?(?:\/>|<\/activity>)/,
+    webViewLauncherActivity
   );
-  console.log("Updated ZedMarketWebViewActivity theme to solid black.");
+  console.log("Updated ZedMarketWebViewActivity to be the home-screen launcher.");
+}
+
+// Stop Chrome TWA from owning the app icon (that is what shows the URL bar).
+const withoutTwaIcon = manifest.replace(
+  /<intent-filter>\s*<action android:name="android\.intent\.action\.MAIN"\s*\/>\s*<category android:name="android\.intent\.category\.LAUNCHER"\s*\/>\s*<\/intent-filter>/g,
+  (match, offset, whole) => {
+    const before = whole.lastIndexOf("<activity", offset);
+    const slice = whole.slice(before, offset);
+    if (slice.includes("ZedMarketWebViewActivity")) return match;
+    return "<!-- Chrome TWA launcher icon removed -->";
+  }
+);
+manifest = withoutTwaIcon;
+
+if (!manifest.includes('android:name=".ZedMarketWebViewActivity"')
+    || !manifest.includes("android.intent.category.LAUNCHER")) {
+  console.error("Failed to make ZedMarketWebViewActivity the home-screen launcher.");
+  process.exit(1);
 }
 
 fs.writeFileSync(manifestPath, manifest);
