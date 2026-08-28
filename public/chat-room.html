@@ -126,8 +126,13 @@
     border: 1px solid var(--border); border-bottom-left-radius: 5px;
   }
   .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; box-shadow: none; }
-  .tick { font-size: 11px; color: var(--subtext); margin-bottom: 2px; }
-  .tick.read { color: #1B8A5A; }
+  .tick { display: flex; align-items: flex-end; color: #8A8680; margin-bottom: 2px; line-height: 0; }
+  .tick.read { color: #53BDEB; }
+  .tick.sending { color: #8A8680; }
+  .tick .rc { width: 16px; height: 11px; display: block; }
+  .tick .rc path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tick .clock { width: 12px; height: 12px; display: block; }
+  .tick .clock circle, .tick .clock path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
   .photo-bubble { max-width: 65%; border-radius: 18px; overflow: hidden; padding: 4px; cursor: pointer; }
   .photo-bubble.mine { padding: 4px; }
   .chat-photo { width: 180px; height: 180px; border-radius: 14px; object-fit: cover; background: var(--border); display: block; }
@@ -270,6 +275,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/chat-receipts.js"></script>
 <script src="/js/presence.js"></script>
 <script src="/js/push-notifications.js"></script>
 <script src="/js/data-saver.js"></script>
@@ -505,7 +511,17 @@
       const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
       if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       const data = await res.json();
-      messages = data.messages || [];
+      const pending = messages.filter((m) => m.pending);
+      const server = data.messages || [];
+      messages = server.concat(pending.filter((p) => {
+        return !server.some((m) =>
+          m.sender_id === p.sender_id && (
+            (p.content && m.content === p.content) ||
+            (p.photo_url && m.photo_url === p.photo_url) ||
+            (p.audio_url && m.audio_url === p.audio_url)
+          )
+        );
+      }));
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
       if (data.listing_context) {
@@ -536,7 +552,7 @@
 
   function messagesFingerprint() {
     return messages.map((m) =>
-      `${m.id}:${m.read_at || ""}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
+      `${m.id}:${m.read_at || ""}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
     ).join("|");
   }
 
@@ -553,6 +569,7 @@
     messagesList.scrollTop = messagesList.scrollHeight;
 
     messages.forEach(msg => {
+      if (msg.pending) return;
       const el = document.getElementById(`msg-${msg.id}`);
       if (el) {
         el.addEventListener("contextmenu", (e) => { e.preventDefault(); openMessageActions(msg.id); });
@@ -590,8 +607,9 @@
       inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${escHtml(msg.content)}</div>`;
     }
 
+    const tickStatus = msg.pending ? "sending" : (msg.read_at ? "read" : "sent");
     const tick = isMine
-      ? `<div class="tick ${msg.read_at ? "read" : ""}">${msg.read_at ? "✓✓" : "✓"}</div>`
+      ? `<div class="tick ${tickStatus}">${chatReceiptInner(tickStatus)}</div>`
       : "";
     return `<div class="bubble-row ${rowClass}" id="msg-${msg.id}">${inner}${tick}</div>`;
   }
@@ -707,6 +725,20 @@
   }
 
   async function sendMessagePayload(payload) {
+    const tempId = `pending-${Date.now()}`;
+    if (currentUser) {
+      messages.push({
+        id: tempId,
+        sender_id: currentUser.id,
+        pending: true,
+        content: payload.content || "",
+        photo_url: payload.photo_url || null,
+        audio_url: payload.audio_url || null,
+        audio_duration: payload.audio_duration || 0,
+        read_at: null,
+      });
+      renderMessages(true);
+    }
     try {
       const res = await fetch(`${API_URL}/messages`, {
         method: "POST",
@@ -714,7 +746,8 @@
         body: JSON.stringify({ receiver_id: userId, ...(activeListingId ? { listing_id: activeListingId } : {}), ...payload })
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || t("chat_send_fail")); return; }
+      messages = messages.filter((m) => m.id !== tempId);
+      if (!res.ok) { renderMessages(true); alert(data.error || t("chat_send_fail")); return; }
       if (window.notifyMessagePush && currentUser) {
         const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
         notifyMessagePush(userId, {
@@ -724,7 +757,10 @@
         });
       }
       loadMessages(false);
-    } catch (e) {}
+    } catch (e) {
+      messages = messages.filter((m) => m.id !== tempId);
+      renderMessages(true);
+    }
   }
 
   async function handlePickPhoto(e) {
@@ -824,6 +860,7 @@
 
   function openMessageActions(messageId) {
     const msg = messages.find(m => m.id === messageId);
+    if (!msg || msg.pending) return;
     const isMine = currentUser && msg?.sender_id === currentUser.id;
     const canUnsend = isMine && msg && !msg.read_at;
 
