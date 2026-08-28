@@ -115,18 +115,30 @@
   .seller-row {
     display: flex; align-items: center; gap: 10px;
     background: var(--card); border: 2px solid var(--text);
-    padding: 10px 12px; margin-top: 4px; cursor: pointer;
+    padding: 10px 12px; margin-top: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .seller-go {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    background: none; border: none; padding: 0; margin: 0;
+    text-align: left; cursor: pointer; color: inherit; font: inherit;
+    -webkit-tap-highlight-color: transparent;
   }
   .seller-avatar { width: 36px; height: 36px; border-radius: 18px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; flex-shrink: 0; }
   .seller-info { flex: 1; min-width: 0; }
   .seller-name { font-size: 13px; font-weight: 600; }
   .seller-sub { font-size: 11px; color: var(--subtext); }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
-  .seller-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .seller-actions {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
   .view-shop-btn, .review-btn {
     background: var(--black); color: var(--gold); padding: 8px 10px; border-radius: 10px;
     font-size: 11px; font-weight: 700; border: none; cursor: pointer; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
+  .view-shop-btn:active, .review-btn:active { opacity: 0.75; }
   .review-btn { background: var(--card); color: var(--text); border: 2px solid var(--text); }
   .safety-row { display: flex; gap: 8px; margin-top: 12px; }
   .safety-btn { flex: 1; background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 10px; text-align: center; color: var(--warn-text); font-size: 11px; font-weight: 700; cursor: pointer; }
@@ -578,11 +590,13 @@
     const displayName = listing.shop_name || listing.seller_name || t("unknown_seller");
     wrap.innerHTML = `
       <div class="seller-row" id="sellerRow">
-        <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
-        <div class="seller-info">
-          <div class="seller-name">${displayName}${listing.seller_nrc_verified ? ` <span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>` : ""}</div>
-          <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
-          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
+        <div class="seller-go" id="sellerGo" role="button" tabindex="0">
+          <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
+          <div class="seller-info">
+            <div class="seller-name">${displayName}${listing.seller_nrc_verified ? ` <span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>` : ""}</div>
+            <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
+            ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
+          </div>
         </div>
         <div class="seller-actions">
           <button class="view-shop-btn" id="viewShopBtn" type="button">${t("view_shop_btn")}</button>
@@ -592,15 +606,9 @@
     const goToShop = () => {
       window.location.href = `/seller-profile.html?id=${listing.seller_id}`;
     };
-    document.getElementById("sellerRow").addEventListener("click", goToShop);
-    document.getElementById("viewShopBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      goToShop();
-    });
-    document.getElementById("rateSellerBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      openReviewModal();
-    });
+    document.getElementById("sellerGo").addEventListener("click", goToShop);
+    document.getElementById("viewShopBtn").addEventListener("click", goToShop);
+    document.getElementById("rateSellerBtn").addEventListener("click", openReviewModal);
   }
 
   function wireEvents(photos) {
