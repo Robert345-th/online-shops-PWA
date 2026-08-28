@@ -115,20 +115,22 @@
 
   function formatLastSeenTime(iso) {
     const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
     const diffMs = Date.now() - date.getTime();
     const mins = Math.floor(diffMs / 60000);
     if (mins < 1) return typeof t === "function" ? t("last_seen_just_now") : "just now";
     if (mins < 60) {
       return typeof t === "function" ? t("last_seen_mins", { n: mins }) : `${mins}m ago`;
     }
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) {
-      return typeof t === "function" ? t("last_seen_hours", { n: hours }) : `${hours}h ago`;
+    const clock = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      return typeof t === "function" ? t("last_seen_today", { time: clock }) : `today at ${clock}`;
     }
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     if (date.toDateString() === yesterday.toDateString()) {
-      return typeof t === "function" ? t("last_seen_yesterday") : "yesterday";
+      return typeof t === "function" ? t("last_seen_yesterday_at", { time: clock }) : `yesterday at ${clock}`;
     }
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
@@ -140,12 +142,13 @@
 
   function formatPresenceLabel(data) {
     if (!data || data.hidden) return "";
-    if (data.online) return typeof t === "function" ? t("status_online") : "online";
+    if (data.online && !data.hide_online) return typeof t === "function" ? t("status_online") : "online";
     if (data.last_seen) {
       const time = formatLastSeenTime(data.last_seen);
+      if (!time) return "";
       return typeof t === "function" ? t("status_last_seen", { time }) : `last seen ${time}`;
     }
-    return typeof t === "function" ? t("status_offline") : "offline";
+    return "";
   }
 
   function applyPresenceDot(dotEl, data) {
@@ -170,6 +173,18 @@
 
   async function loadPresenceSettingsFromServer() {
     if (!getToken()) return { show_online: getShowOnline(), show_last_seen: getShowLastSeen() };
+    const apiUrl = window.ZM_API_URL;
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}/auth/presence-settings`, { headers: authHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          setShowOnline(data.show_online !== false);
+          setShowLastSeen(data.show_last_seen !== false);
+          return data;
+        }
+      } catch (e) {}
+    }
     try {
       const res = await fetch("/api/presence/settings", { headers: authHeaders() });
       if (!res.ok) throw new Error("settings fetch failed");
@@ -187,13 +202,23 @@
     setShowLastSeen(showLastSeen);
     sendHeartbeat();
     if (!getToken()) return true;
+    const apiUrl = window.ZM_API_URL;
     try {
-      const res = await fetch("/api/presence/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ show_online: showOnline, show_last_seen: showLastSeen }),
-      });
-      return res.ok;
+      const [edgeOk, apiOk] = await Promise.all([
+        fetch("/api/presence/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ show_online: showOnline, show_last_seen: showLastSeen }),
+        }).then((res) => res.ok).catch(() => false),
+        apiUrl
+          ? fetch(`${apiUrl}/auth/presence-settings`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json", ...authHeaders() },
+              body: JSON.stringify({ show_online: showOnline, show_last_seen: showLastSeen }),
+            }).then((res) => res.ok).catch(() => false)
+          : Promise.resolve(true),
+      ]);
+      return edgeOk || apiOk;
     } catch (e) {
       return false;
     }

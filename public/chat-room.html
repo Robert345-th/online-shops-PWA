@@ -455,9 +455,13 @@
       if (!res.ok) throw new Error("fetch failed");
       const data = await res.json();
       otherUser = data;
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      try {
+        const { last_seen, online, hide_online, presence_hidden, ...rest } = data;
+        localStorage.setItem(cacheKey, JSON.stringify(rest));
+      } catch (e) {}
       renderHeader();
       updateComposerVisibility();
+      applyMergedPresence();
     } catch (e) {
       // One retry after a short delay, in case it was a transient network hiccup
       setTimeout(async () => {
@@ -466,9 +470,13 @@
           if (!res.ok) return;
           const data = await res.json();
           otherUser = data;
-          localStorage.setItem(cacheKey, JSON.stringify(data));
+          try {
+            const { last_seen, online, hide_online, presence_hidden, ...rest } = data;
+            localStorage.setItem(cacheKey, JSON.stringify(rest));
+          } catch (e2) {}
           renderHeader();
           updateComposerVisibility();
+          applyMergedPresence();
         } catch (e2) {}
       }, 1000);
     }
@@ -493,12 +501,48 @@
   }
   if (nameFromLink) renderHeader();
 
+  let lastLivePresence = {};
+
+  function persistedPresence() {
+    if (!otherUser || otherUser.is_admin) return { online: false, last_seen: null, hidden: true };
+    return {
+      online: !!otherUser.online,
+      last_seen: otherUser.last_seen || null,
+      hidden: !!otherUser.presence_hidden,
+      hide_online: !!otherUser.hide_online,
+    };
+  }
+
+  function applyMergedPresence(live) {
+    if (isKnownSupportChat || otherUser?.is_admin) {
+      applyPresenceDot(document.getElementById("headerOnlineDot"), { online: false });
+      applyChatStatus(document.getElementById("headerStatus"), { hidden: true });
+      return;
+    }
+    if (live) {
+      const prevSeen = lastLivePresence.last_seen;
+      lastLivePresence = { ...lastLivePresence, ...live };
+      if (!lastLivePresence.last_seen && prevSeen) lastLivePresence.last_seen = prevSeen;
+      if (live.last_seen && otherUser) otherUser.last_seen = live.last_seen;
+      if (typeof live.online === "boolean" && live.online && otherUser) otherUser.online = true;
+    }
+    const persisted = persistedPresence();
+    const merged = {
+      typing: !!lastLivePresence.typing,
+      online: !!(lastLivePresence.online || persisted.online),
+      last_seen: lastLivePresence.last_seen || persisted.last_seen || null,
+      hidden: !!persisted.hidden,
+      hide_online: !!(lastLivePresence.hide_online || persisted.hide_online),
+    };
+    if (merged.hide_online) merged.online = false;
+    applyPresenceDot(document.getElementById("headerOnlineDot"), merged);
+    applyChatStatus(document.getElementById("headerStatus"), merged);
+  }
+
   async function refreshPresence() {
     if (isKnownSupportChat || otherUser?.is_admin || !userId) return;
     const map = await fetchPresenceMap([userId], { includeTyping: true });
-    const data = map[userId];
-    applyPresenceDot(document.getElementById("headerOnlineDot"), data);
-    applyChatStatus(document.getElementById("headerStatus"), data);
+    applyMergedPresence(map[userId] || {});
   }
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
@@ -652,6 +696,7 @@
 
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
+      if (data.presence) applyMergedPresence(data.presence);
       if (data.listing_context) {
         applyListingContext(data.listing_context);
       } else if (!activeListing && listingIdFromUrl) {
