@@ -96,7 +96,7 @@
 
   .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .menu-overlay.open { display: flex; }
-  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; }
+  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px)); max-height: 85vh; overflow-y: auto; }
   .menu-section-label { font-size: 11px; font-weight: 700; color: var(--subtext); text-transform: uppercase; margin-bottom: 8px; }
   .setting-row {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
