@@ -592,7 +592,7 @@
     btn.textContent = "Getting location…";
 
     try {
-      const { lat, lng } = await getDeviceCoords();
+      const { lat, lng } = await requestUserLocationCoords();
       coords = { lat, lng };
       locationLabel = await reverseGeocodeLabel(lat, lng);
       document.getElementById("locationInput").value = locationLabel;

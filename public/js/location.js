@@ -101,11 +101,21 @@
   }
 
   async function requestUserLocationCoords() {
-    return getDeviceCoords({
-      enableHighAccuracy: false,
-      maximumAge: 0,
-      timeout: 12000,
-    });
+    const bridge = window.ZedMarketLocation;
+    try {
+      if (bridge && typeof bridge.beginUserLocationRequest === "function") {
+        bridge.beginUserLocationRequest();
+      }
+      return await getDeviceCoords({
+        enableHighAccuracy: false,
+        maximumAge: 0,
+        timeout: 180000,
+      });
+    } finally {
+      if (bridge && typeof bridge.endUserLocationRequest === "function") {
+        bridge.endUserLocationRequest();
+      }
+    }
   }
 
   async function requestDeviceCoords(forceFresh) {

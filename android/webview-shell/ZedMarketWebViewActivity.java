@@ -25,6 +25,8 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
@@ -111,9 +113,12 @@ public class ZedMarketWebViewActivity extends Activity {
     private long mOpenedAppSettingsAt;
     private long mLocPermRequestedAt;
     private boolean mNotifyDialogShowing;
+    private boolean mNotifyPermissionInFlight;
     private long mLastNotifyAskAt;
     private long mStoppedAt;
     private boolean mAskedNotifyThisOpen;
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mAskNotifyRunnable = this::maybeAskNotificationPermission;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -368,6 +373,8 @@ public class ZedMarketWebViewActivity extends Activity {
             } else {
                 markNotifyAsked();
             }
+            mNotifyPermissionInFlight = false;
+            continueLocationAfterNotify();
             return;
         }
 
@@ -585,8 +592,21 @@ public class ZedMarketWebViewActivity extends Activity {
                 .commit();
     }
 
+    private boolean locationShowsRationale() {
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                || ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
     private boolean systemWillNotShowLocationDialog() {
-        return !hasLocationPermission() && locationDenyCount() >= 2;
+        if (hasLocationPermission()) {
+            return false;
+        }
+        if (locationDenyCount() < 2) {
+            return false;
+        }
+        return !locationShowsRationale();
     }
 
     private void denyInAppLocation() {
@@ -743,6 +763,9 @@ public class ZedMarketWebViewActivity extends Activity {
                 finishGeoGrant(false);
                 return;
             }
+            if (mNotifyPermissionInFlight || mNotifyDialogShowing) {
+                return;
+            }
             mAskedRuntimePermissionThisFlow = true;
             if (systemWillNotShowLocationDialog()) {
                 notifyWebLocationBlocked();
@@ -801,9 +824,8 @@ public class ZedMarketWebViewActivity extends Activity {
                 injectLocationHelper(view);
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
-                    view.postDelayed(
-                            () -> maybeAskNotificationPermission(),
-                            800L);
+                    mMainHandler.removeCallbacks(mAskNotifyRunnable);
+                    mMainHandler.postDelayed(mAskNotifyRunnable, 2500L);
                 }
             }
 
@@ -1080,7 +1102,11 @@ public class ZedMarketWebViewActivity extends Activity {
         if (isFinishing() || hasNotificationPermission()) {
             return;
         }
-        if (mPendingGeoCallback != null || mTurnOnDialogShowing || mNotifyDialogShowing) {
+        if (mUserLocRequestActive
+                || mPendingGeoCallback != null
+                || mTurnOnDialogShowing
+                || mNotifyDialogShowing
+                || mNotifyPermissionInFlight) {
             return;
         }
         if (mLastNotifyAskAt > 0
@@ -1101,10 +1127,35 @@ public class ZedMarketWebViewActivity extends Activity {
             showInAppNotifyDialog();
             return;
         }
+        mNotifyPermissionInFlight = true;
         ActivityCompat.requestPermissions(
                 this,
                 new String[]{ Manifest.permission.POST_NOTIFICATIONS },
                 REQ_NOTIFY);
+    }
+
+    private void continueLocationAfterNotify() {
+        if (mPendingGeoCallback == null) {
+            return;
+        }
+        if (hasLocationPermission()) {
+            ensureSystemLocationOnThenGrant();
+            return;
+        }
+        if (mAskedRuntimePermissionThisFlow) {
+            return;
+        }
+        mAskedRuntimePermissionThisFlow = true;
+        if (systemWillNotShowLocationDialog()) {
+            notifyWebLocationBlocked();
+            denyInAppLocation();
+            return;
+        }
+        mLocPermRequestedAt = SystemClock.elapsedRealtime();
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
+                REQ_LOCATION);
     }
 
     private boolean recentlyDeclinedTurnOn() {
@@ -1121,6 +1172,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mStartedTurnOnThisFlow = false;
             mRetryingFromInAppAllow = false;
             mIgnoreGeoRetryUntilMs = 0;
+            mMainHandler.post(() -> mMainHandler.removeCallbacks(mAskNotifyRunnable));
         }
 
         @JavascriptInterface
