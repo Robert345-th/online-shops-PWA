@@ -43,7 +43,7 @@
 
   .listing-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; flex: 1; }
   .top-strip { background: var(--black); height: calc(16px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
-  .hero-wrap { position: relative; flex: 1 1 auto; max-height: 380px; min-height: 200px; background: var(--thumb-bg); }
+  .hero-wrap { position: relative; flex: 1 1 auto; max-height: 420px; min-height: 200px; background: var(--thumb-bg); }
   .hero-photo { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
   .hero-photo-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -57,45 +57,38 @@
   }
   html.play-store-webview .listing-shell .hero-wrap .round-btn { top: 8px; }
   .back-button { left: 12px; }
+  .favorite-button { right: 68px; }
   .more-button { right: 12px; }
   .back-button svg, .round-btn svg {
     display: block; width: 22px; height: 22px; flex-shrink: 0;
     stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   }
   .more-button svg { fill: var(--gold); stroke: none; }
-  .title-row { display: flex; align-items: flex-start; gap: 12px; }
-  .title-main { flex: 1; min-width: 0; }
-  .price { font-size: 24px; font-weight: 700; color: var(--price-red); }
-  .item-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
-  .view-count { font-size: 11px; color: var(--subtext); margin-bottom: 8px; }
-  .fav-inline {
-    width: 48px; height: 48px; min-width: 48px; border-radius: 24px;
-    background: var(--black); border: none; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    margin-top: 2px; cursor: pointer; padding: 0;
-    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  .favorite-button svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
+  .photo-price {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+    padding: 36px 16px 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.82));
+    pointer-events: none;
   }
-  .fav-inline svg {
-    width: 22px; height: 22px; stroke: var(--gold); fill: none;
-    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-  }
-  .fav-inline svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
-  .thumb-row { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; gap: 8px; overflow-x: auto; padding: 0 10px; }
+  .photo-price .price { font-size: 26px; font-weight: 700; color: var(--gold); }
+  .photo-price .item-title { font-size: 15px; font-weight: 600; color: #fff; margin: 4px 0 4px; }
+  .photo-meta { font-size: 11px; color: #ddd; }
+  #viewCountEl.is-hidden { display: none; }
+  #viewCountEl:not(.is-hidden) + .meta-rest:not(:empty)::before { content: " · "; }
+  .thumb-row { position: absolute; bottom: 96px; left: 0; right: 0; display: flex; gap: 8px; overflow-x: auto; padding: 0 10px; z-index: 8; }
   .thumb-box { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; cursor: pointer; }
   .thumb-box.active { border-color: var(--gold); }
   .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 
   .listing-bottom {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
     background: var(--bg);
-    border-radius: 16px 16px 0 0;
-    margin-top: -10px;
     position: relative;
     z-index: 5;
-    box-shadow: 0 -6px 18px rgba(0,0,0,0.08);
   }
   .body-scroll {
     flex: 1 1 auto;
@@ -483,7 +476,10 @@
         if (data && typeof data.view_count === "number") {
           listing.view_count = data.view_count;
           const el = document.getElementById("viewCountEl");
-          if (el) el.textContent = t("listing_views_count", { count: data.view_count });
+          if (el) {
+            el.textContent = t("listing_views_count", { count: data.view_count });
+            el.classList.remove("is-hidden");
+          }
         }
       })
       .catch(() => {});
@@ -491,12 +487,15 @@
 
   function render() {
     const photos = listing.photos && listing.photos.length > 0 ? listing.photos : [];
+    const metaRest = [listing.category, listing.location_label].filter(Boolean).join(" · ");
+    const viewsHidden = !(listing.view_count > 0);
 
     app.innerHTML = `
       <div class="listing-shell">
       <div class="top-strip"></div>
       <div class="hero-wrap">
         <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="round-btn favorite-button" id="favoriteBtn" type="button" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
         <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>
         ${photos.length > 0
           ? `<img class="hero-photo" id="heroPhoto" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" />`
@@ -505,23 +504,19 @@
           <div class="thumb-row" id="thumbRow">
             ${photos.map((url, i) => `<div class="thumb-box ${i === mainPhotoIndex ? "active" : ""}" data-idx="${i}">${zmImg(url, { preset: "thumb" })}</div>`).join("")}
           </div>` : ""}
+        <div class="photo-price">
+          <div class="price">K${listing.price}</div>
+          <div class="item-title">${listing.title}</div>
+          <div class="photo-meta">
+            <span id="viewCountEl" class="${viewsHidden ? "is-hidden" : ""}">${viewsHidden ? "" : t("listing_views_count", { count: listing.view_count })}</span>
+            <span class="meta-rest">${metaRest}</span>
+          </div>
+        </div>
       </div>
 
       <div class="listing-bottom">
       <div class="body-scroll">
-        <div class="title-row">
-          <div class="title-main">
-            <div class="price">K${listing.price}</div>
-            <div class="item-title">${listing.title}</div>
-            ${listing.view_count > 0 ? `<div class="view-count" id="viewCountEl">${t("listing_views_count", { count: listing.view_count })}</div>` : `<div class="view-count" id="viewCountEl" style="display:none;"></div>`}
-          </div>
-          <button class="fav-inline" id="favoriteBtn" type="button" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
-        </div>
-        <div class="badge-row">
-          ${listing.category ? `<div class="badge">${listing.category}</div>` : ""}
-          ${listing.location_label ? `<div class="badge dist">${listing.location_label}</div>` : ""}
-          ${listing.seller_nrc_verified ? `<div class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</div>` : ""}
-        </div>
+        <div id="sellerRowWrap"></div>
 
         ${listing.car_details ? `
           <div class="specs-box">
@@ -540,8 +535,6 @@
           </div>` : ""}
 
         ${listing.description ? `<div class="description">${listing.description}</div>` : ""}
-
-        <div id="sellerRowWrap"></div>
 
         <div class="safety-row">
           <div class="safety-btn" id="safetyOpenBtn">${t("safety_tips")}</div>
