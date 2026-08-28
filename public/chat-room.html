@@ -386,6 +386,45 @@
   let currentAudio = null;
 
   const messagesList = document.getElementById("messagesList");
+  let longPressTimer = null;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
+
+  function clearLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  function bindMessageLongPress(el, messageId) {
+    el.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      openMessageActions(messageId);
+    });
+    el.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      longPressStartX = t.clientX;
+      longPressStartY = t.clientY;
+      clearLongPress();
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        openMessageActions(messageId);
+      }, 550);
+    }, { passive: true });
+    el.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      if (Math.abs(t.clientX - longPressStartX) > 10 || Math.abs(t.clientY - longPressStartY) > 10) {
+        clearLongPress();
+      }
+    }, { passive: true });
+    el.addEventListener("touchend", clearLongPress, { passive: true });
+    el.addEventListener("touchcancel", clearLongPress, { passive: true });
+  }
+
+  messagesList.addEventListener("scroll", clearLongPress, { passive: true });
   if (userId) {
     try { localStorage.removeItem(`zm_call_log_${userId}`); } catch { /* ignore */ }
   }
@@ -599,12 +638,7 @@
     messages.forEach(msg => {
       if (msg.pending) return;
       const el = document.getElementById(`msg-${msg.id}`);
-      if (el) {
-        el.addEventListener("contextmenu", (e) => { e.preventDefault(); openMessageActions(msg.id); });
-        let pressTimer;
-        el.addEventListener("touchstart", () => { pressTimer = setTimeout(() => openMessageActions(msg.id), 500); });
-        el.addEventListener("touchend", () => clearTimeout(pressTimer));
-      }
+      if (el) bindMessageLongPress(el, msg.id);
       const photoEl = document.getElementById(`photo-${msg.id}`);
       if (photoEl) photoEl.addEventListener("click", () => openViewer(msg.photo_url));
       const audioEl = document.getElementById(`audio-${msg.id}`);
