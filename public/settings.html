@@ -170,16 +170,6 @@
   </div>
 
   <div class="section-label" data-i18n="section_notifications">Notifications</div>
-  <div class="row" id="pushNotificationsRow">
-    <div style="flex:1; margin-right:10px;">
-      <div class="row-title" data-i18n="push_notifications">Message Notifications</div>
-      <div class="row-sub" data-i18n="push_notifications_sub">On by default — turn off here if you don't want message alerts</div>
-    </div>
-    <label class="switch">
-      <input type="checkbox" id="pushNotificationsToggle" />
-      <span class="slider"></span>
-    </label>
-  </div>
   <div class="row">
     <div style="flex:1; margin-right:10px;">
       <div class="row-title" data-i18n="daily_digest">Daily Digest</div>
@@ -334,34 +324,8 @@
   });
   loadDigestSetting();
 
-  const pushToggle = document.getElementById("pushNotificationsToggle");
   if (user && token) {
-    refreshPushToggle(pushToggle);
-    autoEnablePushNotifications().finally(() => refreshPushToggle(pushToggle));
-    pushToggle.addEventListener("change", async () => {
-      if (pushToggle.checked) {
-        setPushOptOut(false);
-        try {
-          await enablePushNotifications();
-          startMessageNotificationPoll(API_URL, token, user.id);
-        } catch (e) {
-          pushToggle.checked = false;
-          setPushEnabled(false);
-          if (e.message === "denied") alert(t("push_denied"));
-          else if (e.message === "unsupported") alert(t("push_unsupported"));
-          else if (e.message === "vapid_unavailable" || e.message === "subscribe_failed") {
-            alert(t("push_server_unavailable"));
-          } else alert(t("push_enable_failed"));
-        }
-      } else {
-        setPushOptOut(true);
-        await unsubscribeFromPush();
-        stopMessageNotificationPoll();
-      }
-    });
-  } else {
-    document.getElementById("pushNotificationsRow").style.opacity = "0.5";
-    pushToggle.disabled = true;
+    autoEnablePushNotifications();
   }
 
   let settingsCoords = null;

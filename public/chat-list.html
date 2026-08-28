@@ -153,16 +153,6 @@
         <span class="slider"></span>
       </label>
     </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-title" data-i18n="push_notifications">Message Notifications</div>
-        <div class="setting-sub" data-i18n="push_notifications_sub">Get alerted when someone messages you</div>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="pushNotificationsToggle" />
-        <span class="slider"></span>
-      </label>
-    </div>
     <button class="menu-cancel-btn" id="settingsCancelBtn" data-i18n="cancel">Cancel</button>
   </div>
 </div>
@@ -229,35 +219,7 @@
     showOnlineToggle.addEventListener("change", () => updatePresenceSetting("online"));
     showLastSeenToggle.addEventListener("change", () => updatePresenceSetting("last_seen"));
 
-    const pushToggle = document.getElementById("pushNotificationsToggle");
-    refreshPushToggle(pushToggle);
-    autoEnablePushNotifications().finally(() => {
-      if (!isPushOptOut() && !/chat-list\.html/i.test(location.pathname)) {
-        startMessageNotificationPoll(API_URL, token, user.id);
-      }
-    });
-
-    pushToggle.addEventListener("change", async () => {
-      if (pushToggle.checked) {
-        setPushOptOut(false);
-        try {
-          await enablePushNotifications();
-          startMessageNotificationPoll(API_URL, token, user.id);
-        } catch (e) {
-          pushToggle.checked = false;
-          setPushEnabled(false);
-          if (e.message === "denied") alert(t("push_denied"));
-          else if (e.message === "unsupported") alert(t("push_unsupported"));
-          else if (e.message === "vapid_unavailable" || e.message === "subscribe_failed") {
-            alert(t("push_server_unavailable", "Push server is unavailable. Make sure the app is running on zedmarket.app with Node.js."));
-          } else alert(t("push_enable_failed"));
-        }
-      } else {
-        setPushOptOut(true);
-        await unsubscribeFromPush();
-        stopMessageNotificationPoll();
-      }
-    });
+    autoEnablePushNotifications();
   }
 
   function formatTime(dateString) {
