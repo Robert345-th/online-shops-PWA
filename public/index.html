@@ -400,7 +400,8 @@
     if (mapOpenInFlight) return;
     mapOpenInFlight = true;
     try {
-      await requestUserLocationCoords();
+      const coords = await requestUserLocationCoords();
+      sessionStorage.setItem("zm_map_coords", JSON.stringify(coords));
       window.location.href = "/map-view.html";
     } catch {
       showMapLocationNeeded();

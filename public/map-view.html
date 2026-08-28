@@ -166,17 +166,17 @@
   }
 
   function loadLocation() {
-    getDeviceCoords()
-      .then((coords) => {
-        myCoords = coords;
-        renderAll();
-      })
-      .catch(() => {
-        const el = document.getElementById("noLocationText");
-        if (!el) return;
-        el.textContent = t("map_needs_location");
-        el.style.display = "block";
-      });
+    try {
+      const raw = sessionStorage.getItem("zm_map_coords");
+      if (raw) {
+        const coords = JSON.parse(raw);
+        if (typeof isValidCoords === "function" && isValidCoords(coords)) {
+          myCoords = coords;
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+    window.location.replace("/index.html?needslocation=1");
   }
 
   function initMap() {
@@ -303,8 +303,8 @@
   document.getElementById("radiusInput").addEventListener("input", renderAll);
   window.addEventListener("langchange", updateMapCount);
 
-  loadListings();
   loadLocation();
+  if (myCoords) loadListings();
 </script>
 </body>
 </html>
