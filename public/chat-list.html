@@ -232,14 +232,54 @@
     return date.toLocaleDateString([], { month: "short", day: "numeric" });
   }
 
+  function conversationHref(conv) {
+    const supportName = t("support_chat_name", "Customer Support");
+    const name = isSupportConversation(conv) ? supportName : (conv.other_user_name || "");
+    return `/chat-room.html?userId=${conv.other_user_id}&name=${encodeURIComponent(name)}${isSupportConversation(conv) ? "&support=1" : ""}`;
+  }
+
+  function bindConversationRows(conversations) {
+    conversations.forEach((conv) => {
+      const row = document.getElementById(`convrow-${conv.other_user_id}`);
+      if (row) row.addEventListener("click", () => {
+        window.location.href = conversationHref(conv);
+      });
+    });
+  }
+
+  function paintConversationList(conversations) {
+    conversationsCache = conversations;
+    conversations.forEach((conv) => unreadCache.set(conv.other_user_id, parseInt(conv.unread_count) || 0));
+    content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
+    bindConversationRows(conversations);
+  }
+
   async function loadConversations() {
     try {
-      const res = await fetch(`${API_URL}/messages/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(`zm_chat_list_${user.id}`) || "null");
+        if (Array.isArray(cached) && cached.length && !content.querySelector(".list")) {
+          paintConversationList(cached);
+        }
+      } catch (e) {}
+
+      const [res] = await Promise.all([
+        fetch(`${API_URL}/messages/conversations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        loadSupportContactId(),
+      ]);
       const conversations = await res.json();
 
+      if (!res.ok || !Array.isArray(conversations)) {
+        if (!content.querySelector(".list")) {
+          content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
+        }
+        return;
+      }
+
       if (!conversations.length) {
+        try { sessionStorage.removeItem(`zm_chat_list_${user.id}`); } catch (e) {}
         content.innerHTML = `
           <div class="center-box">
             <div class="empty-text">${t("no_conversations")}</div>
@@ -249,23 +289,14 @@
         return;
       }
 
-      conversationsCache = conversations;
-      conversations.forEach((conv) => unreadCache.set(conv.other_user_id, parseInt(conv.unread_count) || 0));
-      await loadSupportContactId();
-      content.innerHTML = `<div class="list">${conversations.map(renderRow).join("")}</div>`;
+      paintConversationList(conversations);
+      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify(conversations)); } catch (e) {}
       await applyListPresence(conversations);
       applyConversationNames(conversations);
-
-      conversations.forEach(conv => {
-        const row = document.getElementById(`convrow-${conv.other_user_id}`);
-        if (row) row.addEventListener("click", () => {
-          const supportName = t("support_chat_name", "Customer Support");
-          const name = isSupportConversation(conv) ? supportName : (conv.other_user_name || "");
-          window.location.href = `/chat-room.html?userId=${conv.other_user_id}&name=${encodeURIComponent(name)}${isSupportConversation(conv) ? "&support=1" : ""}`;
-        });
-      });
     } catch (e) {
-      content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
+      if (!content.querySelector(".list")) {
+        content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
+      }
     }
   }
 
@@ -360,6 +391,7 @@
       if (!res.ok) return;
       const conversations = await res.json();
       conversationsCache = conversations;
+      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify(conversations)); } catch (e) {}
       conversations.forEach((conv) => {
         const id = conv.other_user_id;
         const prevUnread = unreadCache.get(id) || 0;

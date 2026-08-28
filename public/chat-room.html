@@ -572,34 +572,96 @@
     window.location.href = `/listing.html?id=${encodeURIComponent(activeListingId)}`;
   });
 
-  async function loadMessages(showSpinner) {
+  function chatCacheKey() {
+    return `zm_chat_${userId}`;
+  }
+
+  function lastServerMessageId() {
+    let max = 0;
+    for (const m of messages) {
+      const id = Number(m.id);
+      if (Number.isFinite(id) && id > max) max = id;
+    }
+    return max;
+  }
+
+  function applyLatestRead(latestReadId) {
+    if (!latestReadId || !currentUser) return false;
+    let changed = false;
+    for (const m of messages) {
+      if (m.sender_id === currentUser.id && Number(m.id) <= latestReadId && !m.read_at && !m.pending) {
+        m.read_at = m.read_at || new Date().toISOString();
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  function cacheMessages() {
     try {
-      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">${t("loading")}</div>`;
-      const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
+      sessionStorage.setItem(chatCacheKey(), JSON.stringify({
+        ts: Date.now(),
+        messages: messages.filter((m) => !m.pending),
+      }));
+    } catch (e) {}
+  }
+
+  function readCachedMessages() {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(chatCacheKey()) || "null");
+      return Array.isArray(parsed?.messages) ? parsed.messages : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loadMessages(showSpinner, opts) {
+    try {
+      if (showSpinner && !messages.length) {
+        messagesList.innerHTML = `<div class="empty-text">${t("loading")}</div>`;
+      }
+      const allowIncremental = !showSpinner && opts?.full !== true;
+      const afterId = allowIncremental ? lastServerMessageId() : 0;
+      const url = afterId
+        ? `${API_URL}/messages/conversation/${userId}?after_id=${afterId}`
+        : `${API_URL}/messages/conversation/${userId}`;
+      const res = await fetch(url, { headers: authHeaders() });
       if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       const data = await res.json();
+      const incoming = data.messages || [];
       const pending = messages.filter((m) => m.pending);
-      const server = data.messages || [];
-      messages = server.concat(pending.filter((p) => {
-        return !server.some((m) =>
-          m.sender_id === p.sender_id && (
-            (p.content && m.content === p.content) ||
-            (p.photo_url && m.photo_url === p.photo_url) ||
-            (p.audio_url && m.audio_url === p.audio_url)
-          )
-        );
-      }));
+
+      if (data.incremental) {
+        const seen = new Set(messages.map((m) => String(m.id)));
+        for (const m of incoming) {
+          if (!seen.has(String(m.id))) messages.push(m);
+        }
+        applyLatestRead(data.latest_read_id);
+      } else {
+        messages = incoming.concat(pending.filter((p) => {
+          return !incoming.some((m) =>
+            m.sender_id === p.sender_id && (
+              (p.content && m.content === p.content) ||
+              (p.photo_url && m.photo_url === p.photo_url) ||
+              (p.audio_url && m.audio_url === p.audio_url)
+            )
+          );
+        }));
+        applyLatestRead(data.latest_read_id);
+      }
+
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
       if (data.listing_context) {
         applyListingContext(data.listing_context);
       } else if (!activeListing && listingIdFromUrl) {
-        await loadListingContextFromApi();
+        loadListingContextFromApi();
       } else if (wantedTitleFromUrl && !listingIdFromUrl) {
         applyWantedContext();
       }
       renderBlockedBanner();
       renderMessages(false);
+      cacheMessages();
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
       if (!recording) updateComposerVisibility();
     } catch (e) {}
@@ -810,6 +872,9 @@
       const data = await res.json();
       messages = messages.filter((m) => m.id !== tempId);
       if (!res.ok) { renderMessages(true); alert(data.error || t("chat_send_fail")); return; }
+      messages.push({ ...data, pending: false });
+      renderMessages(true);
+      cacheMessages();
       if (window.notifyMessagePush && currentUser) {
         const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
         notifyMessagePush(userId, {
@@ -818,7 +883,6 @@
           url: `/chat-room.html?userId=${currentUser.id}&name=${encodeURIComponent(senderName)}`,
         });
       }
-      loadMessages(false);
     } catch (e) {
       messages = messages.filter((m) => m.id !== tempId);
       renderMessages(true);
@@ -1044,7 +1108,14 @@
     if (window.autoEnablePushNotifications) autoEnablePushNotifications();
     if (wantedTitleFromUrl && !listingIdFromUrl) applyWantedContext();
     loadOtherUser();
-    loadMessages(true);
+    const cached = readCachedMessages();
+    if (cached && cached.length) {
+      messages = cached;
+      renderMessages(true);
+      loadMessages(false, { full: true });
+    } else {
+      loadMessages(true);
+    }
     refreshPresence();
     startPollers();
     window.addEventListener("langchange", () => {
