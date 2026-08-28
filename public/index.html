@@ -466,7 +466,7 @@
   let mapStayBlocked = false;
 
   if (new URLSearchParams(window.location.search).get("needslocation") === "1") {
-    showMapLocationNeeded(true);
+    showMapLocationNeeded(sessionStorage.getItem("zm_map_blocked") === "1");
     const clean = new URL(window.location.href);
     clean.searchParams.delete("needslocation");
     history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
@@ -474,6 +474,7 @@
 
   window.addEventListener("zm-location-blocked", () => {
     mapStayBlocked = true;
+    sessionStorage.setItem("zm_map_blocked", "1");
     showMapLocationNeeded(true);
   });
 

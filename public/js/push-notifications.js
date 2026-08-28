@@ -146,7 +146,6 @@
 
   async function autoEnablePushNotifications() {
     if (!getToken() || isPushOptOut() || !isPushSupported()) return false;
-    if (Notification.permission === "denied") return false;
 
     try {
       if (Notification.permission === "granted") {
@@ -155,6 +154,13 @@
         return true;
       }
 
+      const bridge = window.ZedMarketLocation;
+      if (bridge && typeof bridge.requestNotificationPermission === "function") {
+        bridge.requestNotificationPermission();
+        return false;
+      }
+
+      if (Notification.permission === "denied") return false;
       if (sessionStorage.getItem("zm_push_auto_tried") === "1") return false;
       sessionStorage.setItem("zm_push_auto_tried", "1");
       await enablePushNotifications();

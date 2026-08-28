@@ -7,4 +7,6 @@
     <string name="loc_open_settings">Turn on Location for ZedMarket, then press Back.</string>
     <string name="loc_settings_enabled_retry">Location is allowed now — tap Use current location again.</string>
     <string name="loc_turn_on_settings">Turn on Location, then come back and try again.</string>
+    <string name="notify_allow_title">Allow ZedMarket to send you notifications?</string>
+    <string name="notify_allow_body">Get notified when you have a new message.</string>
 </resources>

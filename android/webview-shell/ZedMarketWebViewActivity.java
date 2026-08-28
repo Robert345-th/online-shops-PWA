@@ -69,8 +69,12 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final int REQ_FILE_CHOOSER = 9002;
     private static final int REQ_TURN_ON_LOCATION = 9003;
     private static final int REQ_MEDIA = 9004;
+    private static final int REQ_NOTIFY = 9005;
     private static final String PREFS_LOC = "zm_loc_perm";
     private static final String KEY_LOC_ASKED = "asked";
+    private static final String KEY_LOC_DENY_COUNT = "deny_count";
+    private static final String KEY_NOTIFY_ASKED = "notify_asked";
+    private static final long SILENT_PERM_DENY_MS = 400L;
     private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
     private static final String KEY_PREFIX =
@@ -102,9 +106,11 @@ public class ZedMarketWebViewActivity extends Activity {
     private volatile boolean mAskedRuntimePermissionThisFlow;
     private volatile boolean mStartedTurnOnThisFlow;
     private volatile long mIgnoreGeoRetryUntilMs;
-    private boolean mLocRationaleBeforeRequest;
     private boolean mRetryingFromInAppAllow;
     private long mOpenedAppSettingsAt;
+    private long mLocPermRequestedAt;
+    private boolean mNotifyDialogShowing;
+    private long mLastNotifyAskAt;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -329,6 +335,22 @@ public class ZedMarketWebViewActivity extends Activity {
             return;
         }
 
+        if (requestCode == REQ_NOTIFY) {
+            boolean notifyGranted = false;
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    notifyGranted = true;
+                    break;
+                }
+            }
+            if (notifyGranted) {
+                notifyWebSubscribePush();
+            } else {
+                markNotifyAsked();
+            }
+            return;
+        }
+
         if (requestCode != REQ_LOCATION) {
             return;
         }
@@ -343,6 +365,8 @@ public class ZedMarketWebViewActivity extends Activity {
 
         if (granted) {
             mRetryingFromInAppAllow = false;
+            mLocPermRequestedAt = 0;
+            persistLocationDenyCount(0);
             if (mAwaitingAppLocJs) {
                 mAwaitingAppLocJs = false;
                 notifyAppLocationPermission(true);
@@ -352,38 +376,21 @@ public class ZedMarketWebViewActivity extends Activity {
         }
 
         mAwaitingAppLocJs = false;
-        markLocationAsked();
+        boolean silentDeny = mLocPermRequestedAt > 0
+                && (SystemClock.elapsedRealtime() - mLocPermRequestedAt) < SILENT_PERM_DENY_MS;
+        mLocPermRequestedAt = 0;
         if (mRetryingFromInAppAllow) {
             mRetryingFromInAppAllow = false;
-            if (mWebView != null) {
-                mWebView.post(() -> {
-                    finishGeoGrant(false);
-                    notifyWebLocationCancelled();
-                    mWebView.requestFocus();
-                });
-            } else {
-                finishGeoGrant(false);
-            }
-            notifyAppLocationPermission(false);
-            return;
-        }
-        // After two Don't allows the OS returns denied with no dialog. Show ours
-        // on this tap instead of going silent.
-        if (!mLocRationaleBeforeRequest && !locationShowsRationale()) {
-            notifyWebLocationBlocked();
             denyInAppLocation();
             return;
         }
-        if (mWebView != null) {
-            mWebView.post(() -> {
-                finishGeoGrant(false);
-                notifyWebLocationCancelled();
-                mWebView.requestFocus();
-            });
+        if (silentDeny) {
+            persistLocationDenyCount(Math.max(2, locationDenyCount()));
+            notifyWebLocationBlocked();
         } else {
-            finishGeoGrant(false);
+            persistLocationDenyCount(locationDenyCount() + 1);
         }
-        notifyAppLocationPermission(false);
+        denyInAppLocation();
     }
 
     private boolean isTrustedWebOrigin(Uri origin) {
@@ -547,26 +554,19 @@ public class ZedMarketWebViewActivity extends Activity {
                 == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void markLocationAsked() {
-        getSharedPreferences(PREFS_LOC, MODE_PRIVATE).edit()
-                .putBoolean(KEY_LOC_ASKED, true)
-                .apply();
+    private int locationDenyCount() {
+        return getSharedPreferences(PREFS_LOC, MODE_PRIVATE).getInt(KEY_LOC_DENY_COUNT, 0);
     }
 
-    private boolean locationShowsRationale() {
-        return ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                || ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_FINE_LOCATION);
+    private void persistLocationDenyCount(int count) {
+        getSharedPreferences(PREFS_LOC, MODE_PRIVATE).edit()
+                .putBoolean(KEY_LOC_ASKED, true)
+                .putInt(KEY_LOC_DENY_COUNT, count)
+                .commit();
     }
 
     private boolean systemWillNotShowLocationDialog() {
-        if (hasLocationPermission()) {
-            return false;
-        }
-        boolean asked = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
-                .getBoolean(KEY_LOC_ASKED, false);
-        return asked && !locationShowsRationale();
+        return !hasLocationPermission() && locationDenyCount() >= 2;
     }
 
     private void denyInAppLocation() {
@@ -729,8 +729,7 @@ public class ZedMarketWebViewActivity extends Activity {
                 denyInAppLocation();
                 return;
             }
-            markLocationAsked();
-            mLocRationaleBeforeRequest = locationShowsRationale();
+            mLocPermRequestedAt = SystemClock.elapsedRealtime();
             ActivityCompat.requestPermissions(
                     this,
                     new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
@@ -988,6 +987,92 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
+    private boolean hasNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33) {
+            return true;
+        }
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void markNotifyAsked() {
+        getSharedPreferences(PREFS_LOC, MODE_PRIVATE).edit()
+                .putBoolean(KEY_NOTIFY_ASKED, true)
+                .commit();
+    }
+
+    private boolean systemWillNotShowNotifyDialog() {
+        if (hasNotificationPermission() || Build.VERSION.SDK_INT < 33) {
+            return false;
+        }
+        boolean asked = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
+                .getBoolean(KEY_NOTIFY_ASKED, false);
+        boolean rationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.POST_NOTIFICATIONS);
+        return asked && !rationale;
+    }
+
+    private void notifyWebSubscribePush() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{if(window.enablePushNotifications)window.enablePushNotifications();}catch(e){}})();",
+                null);
+    }
+
+    private void showInAppNotifyDialog() {
+        if (isFinishing() || mNotifyDialogShowing) {
+            return;
+        }
+        mNotifyDialogShowing = true;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.notify_allow_title)
+                .setMessage(R.string.notify_allow_body)
+                .setPositiveButton(R.string.loc_allow, (dialog, which) -> {
+                    mNotifyDialogShowing = false;
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{ Manifest.permission.POST_NOTIFICATIONS },
+                            REQ_NOTIFY);
+                })
+                .setNegativeButton(R.string.loc_dont_allow, (dialog, which) -> {
+                    mNotifyDialogShowing = false;
+                    markNotifyAsked();
+                })
+                .setCancelable(true)
+                .setOnCancelListener(dialog -> {
+                    mNotifyDialogShowing = false;
+                    markNotifyAsked();
+                })
+                .show();
+    }
+
+    private void maybeAskNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33) {
+            return;
+        }
+        if (hasNotificationPermission()) {
+            return;
+        }
+        if (mPendingGeoCallback != null || mTurnOnDialogShowing || mNotifyDialogShowing) {
+            return;
+        }
+        if (mLastNotifyAskAt > 0
+                && SystemClock.elapsedRealtime() - mLastNotifyAskAt < 2500L) {
+            return;
+        }
+        mLastNotifyAskAt = SystemClock.elapsedRealtime();
+        if (systemWillNotShowNotifyDialog()) {
+            showInAppNotifyDialog();
+            return;
+        }
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{ Manifest.permission.POST_NOTIFICATIONS },
+                REQ_NOTIFY);
+    }
+
     private boolean recentlyDeclinedTurnOn() {
         // Short window: blocks instant re-open after No thanks; next tap after a moment works.
         return mDeclinedTurnOnAtMs > 0
@@ -1026,13 +1111,17 @@ public class ZedMarketWebViewActivity extends Activity {
                     denyInAppLocation();
                     return;
                 }
-                markLocationAsked();
-                mLocRationaleBeforeRequest = locationShowsRationale();
+                mLocPermRequestedAt = SystemClock.elapsedRealtime();
                 ActivityCompat.requestPermissions(
                         ZedMarketWebViewActivity.this,
                         new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION },
                         REQ_LOCATION);
             });
+        }
+
+        @JavascriptInterface
+        public void requestNotificationPermission() {
+            runOnUiThread(() -> maybeAskNotificationPermission());
         }
 
         @JavascriptInterface
