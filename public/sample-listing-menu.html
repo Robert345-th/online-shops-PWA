@@ -42,17 +42,29 @@
     border: none; padding: 0; margin: 0; overflow: hidden; cursor: pointer; z-index: 10;
   }
   .back-button { left: 12px; }
+  .more-button { right: 12px; }
   .round-btn svg {
     display: block; width: 22px; height: 22px;
     stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
   }
-  .hero-actions {
-    position: absolute; top: 8px; right: 12px; z-index: 10;
-    display: grid; grid-template-columns: 48px 48px; column-gap: 8px; width: 104px;
-  }
-  .hero-actions .round-btn { position: relative; top: auto; left: auto; right: auto; }
-  .favorite-button svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
   .more-button svg { fill: var(--gold); stroke: none; }
+
+  .title-row { display: flex; align-items: flex-start; gap: 12px; }
+  .title-main { flex: 1; min-width: 0; }
+  .price { font-size: 24px; font-weight: 700; color: var(--price-red); }
+  .item-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
+  .view-count { font-size: 11px; color: var(--subtext); margin-bottom: 8px; }
+  .fav-inline {
+    width: 48px; height: 48px; min-width: 48px; border-radius: 24px;
+    background: var(--black); border: none; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px; cursor: pointer; padding: 0;
+  }
+  .fav-inline svg {
+    width: 22px; height: 22px; stroke: var(--gold); fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .fav-inline svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
 
   .listing-bottom {
     flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column;
@@ -63,9 +75,6 @@
     flex: 1 1 auto; min-height: 0; overflow-y: auto;
     padding: 14px 18px calc(84px + env(safe-area-inset-bottom, 0px));
   }
-  .price { font-size: 24px; font-weight: 700; color: var(--price-red); }
-  .item-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
-  .view-count { font-size: 11px; color: var(--subtext); margin-bottom: 8px; }
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
@@ -153,27 +162,29 @@
 </script>
 
 <div class="listing-shell">
-  <div class="sample-banner">Sample only — tap the 3 dots. Real listing is unchanged.</div>
+  <div class="sample-banner">Sample only — heart is next to the price. 3 dots is on the photo.</div>
   <div class="hero-wrap">
     <button class="round-btn back-button" type="button" onclick="history.back()" aria-label="Go back">
       <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <div class="hero-actions">
-      <button class="round-btn favorite-button" id="favoriteBtn" type="button" aria-label="Save listing">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      </button>
-      <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
-      </button>
-    </div>
+    <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+    </button>
     <img class="hero-photo" alt="D shoe" src="https://res.cloudinary.com/kstg72vx/image/upload/v1785387706/v91e7pfqupvzihnxckkv.jpg" />
   </div>
 
   <div class="listing-bottom">
     <div class="body-scroll">
-      <div class="price">K350.00</div>
-      <div class="item-title">D shoe</div>
-      <div class="view-count">39 views</div>
+      <div class="title-row">
+        <div class="title-main">
+          <div class="price">K350.00</div>
+          <div class="item-title">D shoe</div>
+          <div class="view-count">39 views</div>
+        </div>
+        <button class="fav-inline" id="favoriteBtn" type="button" aria-label="Save listing">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
       <div class="badge-row">
         <div class="badge">Electronics</div>
         <div class="badge dist">Chawama, Lusaka Province</div>
