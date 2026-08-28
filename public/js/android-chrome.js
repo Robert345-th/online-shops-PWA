@@ -67,6 +67,9 @@
       html.play-store-webview .hero-wrap .hero-actions {
         top: calc(14px + var(--ps-top-inset));
       }
+      html.play-store-webview .listing-shell .hero-wrap .round-btn {
+        top: 8px;
+      }
       html.play-store-webview .viewer-back {
         top: calc(40px + var(--ps-top-inset));
       }
