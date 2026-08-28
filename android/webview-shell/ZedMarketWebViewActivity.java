@@ -95,6 +95,10 @@ public class ZedMarketWebViewActivity extends Activity {
     /** Prevents stacking multiple Location Accuracy dialogs from concurrent GPS requests. */
     private boolean mTurnOnDialogShowing;
     private boolean mSettingsCheckInFlight;
+    private volatile boolean mUserLocRequestActive;
+    private volatile boolean mAskedRuntimePermissionThisFlow;
+    private volatile boolean mStartedTurnOnThisFlow;
+    private volatile long mIgnoreGeoRetryUntilMs;
 
     public static Intent createLaunchIntent(
             Context context,
@@ -523,6 +527,11 @@ public class ZedMarketWebViewActivity extends Activity {
             finishGeoGrant(true);
             return;
         }
+        if (mStartedTurnOnThisFlow) {
+            finishGeoGrant(false);
+            notifyWebLocationCancelled();
+            return;
+        }
         if (mTurnOnDialogShowing || mSettingsCheckInFlight) {
             return;
         }
@@ -556,6 +565,7 @@ public class ZedMarketWebViewActivity extends Activity {
                         }
                         if (e instanceof ResolvableApiException) {
                             try {
+                                mStartedTurnOnThisFlow = true;
                                 mTurnOnDialogShowing = true;
                                 ((ResolvableApiException) e)
                                         .startResolutionForResult(this, REQ_TURN_ON_LOCATION);
@@ -610,9 +620,13 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void handleGeolocationPrompt(String origin, GeolocationPermissions.Callback callback) {
-        // Duplicate WebView prompt for the same tap: wait for the same Allow / Don't allow.
-        // Denying extras here rejected GPS while the dialog was still up, so the next
-        // Map tap skipped the ask and opened Map View.
+        // Chromium retries getCurrentPosition after ~20s. That re-opens Allow / Turn on.
+        if (!mUserLocRequestActive
+                && mIgnoreGeoRetryUntilMs > 0
+                && SystemClock.elapsedRealtime() < mIgnoreGeoRetryUntilMs) {
+            invokeGeoCallback(callback, origin, false);
+            return;
+        }
         if (mTurnOnDialogShowing || mPendingGeoCallback != null) {
             mExtraGeoOrigins.add(origin);
             mExtraGeoCallbacks.add(callback);
@@ -623,6 +637,11 @@ public class ZedMarketWebViewActivity extends Activity {
         mPendingGeoCallback = callback;
 
         if (!hasLocationPermission()) {
+            if (mAskedRuntimePermissionThisFlow) {
+                finishGeoGrant(false);
+                return;
+            }
+            mAskedRuntimePermissionThisFlow = true;
             ActivityCompat.requestPermissions(
                     this,
                     new String[]{
@@ -890,6 +909,20 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private final class LocationBridge {
+        @JavascriptInterface
+        public void beginUserLocationRequest() {
+            mUserLocRequestActive = true;
+            mAskedRuntimePermissionThisFlow = false;
+            mStartedTurnOnThisFlow = false;
+            mIgnoreGeoRetryUntilMs = 0;
+        }
+
+        @JavascriptInterface
+        public void endUserLocationRequest() {
+            mUserLocRequestActive = false;
+            mIgnoreGeoRetryUntilMs = SystemClock.elapsedRealtime() + 45000L;
+        }
+
         @JavascriptInterface
         public void requestAppLocationPermission() {
             runOnUiThread(() -> {
