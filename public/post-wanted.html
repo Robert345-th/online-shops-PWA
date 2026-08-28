@@ -79,7 +79,9 @@
     width: 100%; background: var(--card); border: 2px solid var(--red-btn); border-radius: 0;
     padding: 14px; text-align: center; color: var(--price-red); font-weight: 800; font-size: 12px;
     cursor: pointer; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+    font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
+  .loc-hint { font-size: 12px; color: var(--subtext); margin: -4px 0 16px; line-height: 1.4; }
 
   .step-panel { display: none; }
   .step-panel.active { display: block; }
@@ -169,8 +171,9 @@
     <div class="step-title">Location</div>
     <div class="subtitle">Where do you want to find this? Optional — helps sellers near you see this.</div>
     <div class="label">Preferred area</div>
-    <div class="loc-button" id="locButton">Use my current location</div>
+    <button type="button" class="loc-button" id="locButton">Use my current location</button>
     <input class="field-input" id="locationInput" placeholder="Or type your area (e.g. Lusaka, Kabulonga)" />
+    <div class="loc-hint" id="locHint">You can tap for GPS or type your area.</div>
     <div class="btn-row">
       <button type="button" class="back-btn" id="back4Btn">Back</button>
       <button type="button" class="submit-btn" id="submitBtn">Post to Wanted Board</button>
@@ -309,6 +312,34 @@
     }
   }
 
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+    ]);
+  }
+
+  function loadSavedLocation() {
+    try {
+      locationLabel = localStorage.getItem("zm_user_location_label")
+        || localStorage.getItem("zm_home_selling_label")
+        || localStorage.getItem("zm_shop_location_label")
+        || "";
+      const raw = localStorage.getItem("zm_home_location");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof isValidCoords === "function" && isValidCoords(parsed)) coords = parsed;
+      }
+    } catch { /* ignore */ }
+  }
+
+  function applyLocationStepDefaults() {
+    const locInput = document.getElementById("locationInput");
+    if (locInput && locationLabel) locInput.value = locationLabel;
+    const locBtn = document.getElementById("locButton");
+    if (locBtn && locationLabel) locBtn.textContent = locationLabel;
+  }
+
   function updateStepUI() {
     [1, 2, 3, 4].forEach((n) => {
       document.getElementById(`step${n}`).classList.toggle("active", step === n);
@@ -320,22 +351,42 @@
     });
     stepSubtitle.textContent = SUBTITLES[step];
     clearBanner();
+    if (step === 4) applyLocationStepDefaults();
   }
 
   async function handleUseLocation() {
     if (gettingLocation) return;
     gettingLocation = true;
     const btn = document.getElementById("locButton");
-    btn.textContent = "Getting location…";
+    const previous = btn.textContent;
+    btn.textContent = typeof t === "function" ? t("loc_getting") : "Getting location…";
+    clearBanner();
     try {
-      const { lat, lng } = await requestUserLocationCoords();
-      coords = { lat, lng };
-      locationLabel = await reverseGeocodeLabel(lat, lng);
-      document.getElementById("locationInput").value = locationLabel;
-      btn.textContent = locationLabel;
+      if (window.ZedMarketLocation && typeof requestPlayStoreLocationPermission === "function") {
+        const allowed = await withTimeout(requestPlayStoreLocationPermission(), 25000);
+        if (!allowed) throw new Error("denied");
+      }
+      const found = await withTimeout(
+        requestUserLocationCoords(),
+        20000
+      );
+      if (typeof isValidCoords === "function" && !isValidCoords(found)) throw new Error("invalid");
+      coords = found;
+      let label;
+      try {
+        label = await withTimeout(reverseGeocodeLabel(found.lat, found.lng), 8000);
+      } catch {
+        label = `${found.lat.toFixed(4)}, ${found.lng.toFixed(4)}`;
+      }
+      locationLabel = label;
+      document.getElementById("locationInput").value = label;
+      btn.textContent = label;
     } catch {
       coords = null;
-      btn.textContent = "Use my current location";
+      btn.textContent = previous && previous !== (typeof t === "function" ? t("loc_getting") : "Getting location…")
+        ? previous
+        : "Use my current location";
+      showError(typeof t === "function" ? t("listing_location_gps_fail") : "Could not get GPS. Type your area instead.");
     } finally {
       gettingLocation = false;
     }
@@ -389,6 +440,7 @@
   renderCategoryChips();
   initPhotoAddControls();
   renderPhotoGrid();
+  loadSavedLocation();
   document.getElementById("locButton").addEventListener("click", handleUseLocation);
   document.getElementById("locationInput").addEventListener("input", (e) => {
     locationLabel = e.target.value.trim();
