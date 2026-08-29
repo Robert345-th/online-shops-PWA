@@ -201,25 +201,45 @@
   }
   .verified-chip svg { width: 10px; height: 10px; display: block; }
   .verified-chip path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
-  .top-sellers-wrap { padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
-  .top-sellers-head { padding: 0 12px 8px; }
-  .top-sellers-title { font-size: 15px; font-weight: 700; }
+  .top-sellers-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
+  .top-sellers-head { padding: 0 14px 12px; }
+  .top-sellers-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .top-sellers-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
   .top-sellers-row {
-    display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 8px;
+    display: flex; gap: 18px; overflow-x: auto; padding: 0 14px 4px;
     -ms-overflow-style: none; scrollbar-width: none;
   }
   .top-sellers-row::-webkit-scrollbar { display: none; }
-  .top-seller-card {
-    flex-shrink: 0; width: 118px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 10px; text-align: center; cursor: pointer;
+  .top-seller-item {
+    flex-shrink: 0; width: 76px; text-align: center; cursor: pointer;
   }
+  .top-seller-pic { position: relative; width: 56px; height: 56px; margin: 0 auto 10px; }
   .top-seller-avatar {
-    width: 40px; height: 40px; border-radius: 20px; background: #E01B27; color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 8px;
+    width: 56px; height: 56px; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;
   }
-  .top-seller-name { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
-  .top-seller-rating { font-size: 11px; color: var(--price-red); font-weight: 600; }
+  .top-seller-item.r2 .top-seller-avatar { background: var(--black); color: var(--gold); }
+  .top-seller-item.r3 .top-seller-avatar { background: #5C5955; color: #fff; }
+  .top-seller-badge {
+    position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
+    background: var(--gold); color: var(--black);
+    font-size: 12px; font-weight: 900; line-height: 22px; text-align: center;
+  }
+  .top-seller-item.r2 .top-seller-badge { background: #C0C0C0; color: var(--black); }
+  .top-seller-item.r3 .top-seller-badge { background: #C47A3A; color: #fff; }
+  .top-seller-item.r4 .top-seller-badge,
+  .top-seller-item.r5 .top-seller-badge,
+  .top-seller-item.r6 .top-seller-badge,
+  .top-seller-item.r7 .top-seller-badge,
+  .top-seller-item.r8 .top-seller-badge {
+    background: var(--text); color: var(--bg);
+  }
+  .top-seller-name {
+    font-size: 11px; font-weight: 700; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .top-seller-rating { font-size: 10px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
   .card {
     width: calc(50% - 5px);
     background: var(--card); border: 1px solid var(--border); border-radius: 14px;
@@ -942,11 +962,15 @@
             <div class="top-sellers-sub">${t("top_sellers_sub")}</div>
           </div>
           <div class="top-sellers-row">
-            ${sellers.slice(0, 8).map((s) => {
+            ${sellers.slice(0, 8).map((s, i) => {
               const name = s.shop_name || s.name || "Seller";
+              const rank = i + 1;
               return `
-                <div class="top-seller-card" data-seller-id="${s.id}">
-                  <div class="top-seller-avatar">${name.charAt(0).toUpperCase()}</div>
+                <div class="top-seller-item r${rank}" data-seller-id="${s.id}">
+                  <div class="top-seller-pic">
+                    <div class="top-seller-avatar">${name.charAt(0).toUpperCase()}</div>
+                    <div class="top-seller-badge">${rank}</div>
+                  </div>
                   <div class="top-seller-name">${name}</div>
                   <div class="top-seller-rating">★ ${s.average} (${s.total})</div>
                 </div>`;
