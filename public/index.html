@@ -472,6 +472,9 @@
     history.replaceState({}, "", clean.pathname + clean.search + clean.hash);
   }
 
+  window.addEventListener("zm-location-denied", () => {
+    showMapLocationNeeded(false);
+  });
   window.addEventListener("zm-location-blocked", () => {
     mapStayBlocked = true;
     sessionStorage.setItem("zm_map_blocked", "1");
@@ -498,7 +501,7 @@
       sessionStorage.setItem("zm_map_coords", JSON.stringify(coords));
       window.location.href = "/map-view.html";
     } catch {
-      showMapLocationNeeded(mapStayBlocked);
+      if (mapStayBlocked) showMapLocationNeeded(true);
     } finally {
       mapOpenInFlight = false;
     }

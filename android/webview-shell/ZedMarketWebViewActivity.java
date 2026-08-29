@@ -109,6 +109,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private volatile boolean mAskedRuntimePermissionThisFlow;
     private volatile boolean mStartedTurnOnThisFlow;
     private volatile long mIgnoreGeoRetryUntilMs;
+    private int mSessionLocDenyCount;
     private boolean mRetryingFromInAppAllow;
     private long mOpenedAppSettingsAt;
     private long mLocPermRequestedAt;
@@ -394,6 +395,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mRetryingFromInAppAllow = false;
             mLocPermRequestedAt = 0;
             persistLocationDenyCount(0);
+            mSessionLocDenyCount = 0;
             if (mAwaitingAppLocJs) {
                 mAwaitingAppLocJs = false;
                 notifyAppLocationPermission(true);
@@ -412,10 +414,11 @@ public class ZedMarketWebViewActivity extends Activity {
             return;
         }
         if (silentDeny) {
-            persistLocationDenyCount(Math.max(2, locationDenyCount()));
+            mSessionLocDenyCount = Math.max(2, mSessionLocDenyCount);
             notifyWebLocationBlocked();
         } else {
-            persistLocationDenyCount(locationDenyCount() + 1);
+            mSessionLocDenyCount++;
+            notifyWebLocationDenied();
         }
         denyInAppLocation();
     }
@@ -574,6 +577,15 @@ public class ZedMarketWebViewActivity extends Activity {
                 null);
     }
 
+    private void notifyWebLocationDenied() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{window.dispatchEvent(new CustomEvent('zm-location-denied'));}catch(e){}})();",
+                null);
+    }
+
     private boolean hasLocationPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
@@ -592,21 +604,8 @@ public class ZedMarketWebViewActivity extends Activity {
                 .commit();
     }
 
-    private boolean locationShowsRationale() {
-        return ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                || ActivityCompat.shouldShowRequestPermissionRationale(
-                this, Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
     private boolean systemWillNotShowLocationDialog() {
-        if (hasLocationPermission()) {
-            return false;
-        }
-        if (locationDenyCount() < 2) {
-            return false;
-        }
-        return !locationShowsRationale();
+        return !hasLocationPermission() && mSessionLocDenyCount >= 2;
     }
 
     private void denyInAppLocation() {
@@ -825,7 +824,7 @@ public class ZedMarketWebViewActivity extends Activity {
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
                     mMainHandler.removeCallbacks(mAskNotifyRunnable);
-                    mMainHandler.postDelayed(mAskNotifyRunnable, 2500L);
+                    mMainHandler.postDelayed(mAskNotifyRunnable, 12000L);
                 }
             }
 
