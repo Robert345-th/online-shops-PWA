@@ -53,6 +53,39 @@
     return typeof Notification !== "undefined" && Notification.permission === "granted";
   }
 
+  function isPushSupported() {
+    if (getNativeBridge()) return true;
+    return typeof Notification !== "undefined"
+      && "serviceWorker" in navigator
+      && "PushManager" in window;
+  }
+
+  async function registerNativeFcmToken() {
+    const auth = getToken();
+    const apiUrl = window.ZM_API_URL;
+    if (!auth || !apiUrl) return false;
+    const bridge = getNativeBridge();
+    let fcm = "";
+    if (window.__zmFcmToken) fcm = String(window.__zmFcmToken);
+    if (!fcm && bridge && typeof bridge.getFcmToken === "function") {
+      try { fcm = String(bridge.getFcmToken() || ""); } catch (e) { fcm = ""; }
+    }
+    if (!fcm) return false;
+    try {
+      const res = await fetch(`${apiUrl}/notifications/save-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth}`,
+        },
+        body: JSON.stringify({ token: fcm }),
+      });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
   async function sendTestPushNotification() {
     if (nativeShowNotification("ZedMarket", typeof t === "function" ? t("push_on_body") : "Notifications are on. You will get a ping for new messages.", "/chat-list.html")) {
       return true;
@@ -156,19 +189,21 @@
     if (nativeHasNotifyPermission()) {
       setPushEnabled(true);
       setPushOptOut(false);
-      if (isPushSupported()) {
+      try { await registerNativeFcmToken(); } catch (e) {}
+      if (isPushSupported() && typeof Notification !== "undefined" && Notification.permission === "granted") {
         try { await subscribeToPush(); } catch (e) { /* WebView often cannot use web push */ }
       }
       return true;
     }
 
     const bridge = getNativeBridge();
-    if (bridge && typeof bridge.requestNotificationPermission === "function" && !isPushSupported()) {
+    if (bridge && typeof bridge.requestNotificationPermission === "function") {
       try { bridge.requestNotificationPermission(); } catch (e) {}
       return false;
     }
 
     if (!isPushSupported()) throw new Error("unsupported");
+    if (typeof Notification === "undefined") throw new Error("unsupported");
 
     let permission = Notification.permission;
     if (permission === "default") {
@@ -186,13 +221,16 @@
     if (nativeHasNotifyPermission()) {
       setPushOptOut(false);
       setPushEnabled(true);
+      try { await registerNativeFcmToken(); } catch (e) {}
     }
     if (!isPushSupported()) return;
-    if (Notification.permission === "granted") setPushOptOut(false);
-    if (Notification.permission !== "granted" && !nativeHasNotifyPermission()) {
+    const webGranted = typeof Notification !== "undefined" && Notification.permission === "granted";
+    if (webGranted) setPushOptOut(false);
+    if (!webGranted && !nativeHasNotifyPermission()) {
       setPushEnabled(false);
       return;
     }
+    if (nativeHasNotifyPermission() && !webGranted) return;
     try {
       const registration = await ensureServiceWorker();
       if (!registration) return;
@@ -234,6 +272,7 @@
       if (notificationsAllowed()) {
         setPushEnabled(true);
         await syncPushSubscription();
+        try { await registerNativeFcmToken(); } catch (e) {}
         return true;
       }
 
@@ -391,4 +430,5 @@
   window.showLocalMessageNotification = showLocalMessageNotification;
   window.startMessageNotificationPoll = startMessageNotificationPoll;
   window.stopMessageNotificationPoll = stopMessageNotificationPoll;
+  window.registerNativeFcmToken = registerNativeFcmToken;
 })();

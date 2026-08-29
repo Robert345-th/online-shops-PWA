@@ -47,6 +47,18 @@ npx bubblewrap fingerprint list
 
 Copy the SHA-256 into `public/.well-known/assetlinks.json`, then deploy.
 
+## Closed-app notifications (Firebase)
+
+The Play Store WebView cannot receive web push after you leave the app. Background pings use Firebase Cloud Messaging.
+
+1. Open [Firebase Console](https://console.firebase.google.com/) → **Add project** → name it `zedmarket`.
+2. Add an **Android** app with package name `app.zedmarket.twa`. Download **google-services.json**.
+3. GitHub → repo **Settings → Secrets → Actions** → new secret `GOOGLE_SERVICES_JSON` → paste the whole JSON file.
+4. Firebase → Project settings → **Service accounts** → Generate new private key. On Railway for `online-shops`, add env var `FIREBASE_SERVICE_ACCOUNT` with that JSON (one line is fine).
+5. Push any `android/**` change (or run **Build Android APK**). Install the new APK, Allow notifications, then fully close the app and send yourself a chat.
+
+Until both secrets exist, the APK still builds; closed-app pings stay off.
+
 ## Keystore
 
 - First build creates `android/android.keystore` — **back this up safely**

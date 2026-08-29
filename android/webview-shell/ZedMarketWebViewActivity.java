@@ -85,6 +85,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final String KEY_LOC_DENY_COUNT = "deny_count";
     private static final String KEY_NOTIFY_ASKED = "notify_asked";
     private static final String KEY_NOTIFY_WELCOME = "notify_welcome_shown";
+    private static final String KEY_FCM_TOKEN = "fcm_token";
     private static final String CHANNEL_MESSAGES = "zedmarket_messages";
     private static final int NOTIFY_ID_BASE = 7100;
     private static final long SILENT_PERM_DENY_MS = 400L;
@@ -172,6 +173,11 @@ public class ZedMarketWebViewActivity extends Activity {
             Uri notifyData = getIntent().getData();
             if (notifyData != null && isZedMarketHost(notifyData)) {
                 mLaunchUrl = notifyData;
+            } else {
+                String fcmUrl = getIntent().getStringExtra("url");
+                if (fcmUrl != null && !fcmUrl.trim().isEmpty()) {
+                    mLaunchUrl = resolveNotifyUrl(fcmUrl);
+                }
             }
             if (mLaunchUrl == null || mLaunchUrl.getScheme() == null
                     || !"https".equalsIgnoreCase(mLaunchUrl.getScheme())) {
@@ -216,6 +222,8 @@ public class ZedMarketWebViewActivity extends Activity {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
             hideSystemNavigation();
+            ZedMarketNotifier.ensureChannel(this);
+            fetchFcmToken();
 
             if (Build.VERSION.SDK_INT >= 33) {
                 getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
@@ -241,6 +249,7 @@ public class ZedMarketWebViewActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        ZedMarketNotifier.appVisible = true;
         if (mWebView != null) {
             mWebView.onResume();
         }
@@ -328,6 +337,7 @@ public class ZedMarketWebViewActivity extends Activity {
 
     @Override
     protected void onPause() {
+        ZedMarketNotifier.appVisible = false;
         super.onPause();
         if (mWebView != null) {
             mWebView.onPause();
@@ -547,6 +557,7 @@ public class ZedMarketWebViewActivity extends Activity {
             }
             if (notifyGranted) {
                 notifyWebSubscribePush();
+                fetchFcmToken();
                 showWelcomeNotification();
             } else {
                 markNotifyAsked();
@@ -998,6 +1009,7 @@ public class ZedMarketWebViewActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 injectLocationHelper(view);
+                injectFcmToken(view);
                 hideSystemNavigation();
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
@@ -1205,6 +1217,36 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
+    private void fetchFcmToken() {
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                    .getToken()
+                    .addOnSuccessListener(token -> {
+                        if (token == null || token.isEmpty()) return;
+                        getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
+                                .edit()
+                                .putString(KEY_FCM_TOKEN, token)
+                                .apply();
+                        injectFcmToken(mWebView);
+                    });
+        } catch (Throwable ignored) {
+            // Firebase is optional until google-services.json is present.
+        }
+    }
+
+    private void injectFcmToken(WebView view) {
+        if (view == null) return;
+        String token = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
+                .getString(KEY_FCM_TOKEN, "");
+        if (token == null || token.isEmpty()) return;
+        String quoted = org.json.JSONObject.quote(token);
+        view.evaluateJavascript(
+                "(function(){try{window.__zmFcmToken=" + quoted
+                        + ";if(window.registerNativeFcmToken)window.registerNativeFcmToken();}"
+                        + "catch(e){}})();",
+                null);
+    }
+
     private void showWelcomeNotification() {
         SharedPreferences prefs = getSharedPreferences(PREFS_LOC, MODE_PRIVATE);
         if (prefs.getBoolean(KEY_NOTIFY_WELCOME, false)) return;
@@ -1218,8 +1260,14 @@ public class ZedMarketWebViewActivity extends Activity {
     private void openNotificationUrl(Intent intent) {
         if (intent == null || mWebView == null) return;
         Uri data = intent.getData();
-        if (data == null || !isZedMarketHost(data)) return;
-        mWebView.loadUrl(data.toString());
+        if (data != null && isZedMarketHost(data)) {
+            mWebView.loadUrl(data.toString());
+            return;
+        }
+        String extraUrl = intent.getStringExtra("url");
+        if (extraUrl != null && !extraUrl.trim().isEmpty()) {
+            mWebView.loadUrl(resolveNotifyUrl(extraUrl).toString());
+        }
     }
 
     private Uri resolveNotifyUrl(String url) {
@@ -1251,42 +1299,7 @@ public class ZedMarketWebViewActivity extends Activity {
 
     @SuppressLint("MissingPermission")
     private void showAppNotification(String title, String body, String url) {
-        if (!hasNotificationPermission()) return;
-        ensureNotifyChannel();
-        Uri target = resolveNotifyUrl(url);
-        Intent tap = new Intent(this, ZedMarketWebViewActivity.class);
-        tap.setAction(Intent.ACTION_VIEW);
-        tap.setData(target);
-        tap.putExtra(KEY_LAUNCH_URI, target);
-        tap.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        if (Build.VERSION.SDK_INT >= 23) {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
-        int notifyId = mNextNotifyId++;
-        PendingIntent pending = PendingIntent.getActivity(this, notifyId, tap, flags);
-
-        Notification.Builder builder;
-        if (Build.VERSION.SDK_INT >= 26) {
-            builder = new Notification.Builder(this, CHANNEL_MESSAGES);
-        } else {
-            builder = new Notification.Builder(this);
-            builder.setPriority(Notification.PRIORITY_HIGH);
-            builder.setDefaults(Notification.DEFAULT_ALL);
-        }
-        Notification notification = builder
-                .setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setStyle(new Notification.BigTextStyle().bigText(body))
-                .setAutoCancel(true)
-                .setContentIntent(pending)
-                .build();
-        NotificationManager manager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (manager != null) {
-            manager.notify(notifyId, notification);
-        }
+        ZedMarketNotifier.show(this, title, body, url);
     }
 
     private boolean hasNotificationPermission() {
@@ -1358,6 +1371,7 @@ public class ZedMarketWebViewActivity extends Activity {
         }
         if (hasNotificationPermission()) {
             notifyWebSubscribePush();
+            fetchFcmToken();
             showWelcomeNotification();
             return;
         }
@@ -1472,6 +1486,13 @@ public class ZedMarketWebViewActivity extends Activity {
         @JavascriptInterface
         public boolean hasNotificationPermission() {
             return ZedMarketWebViewActivity.this.hasNotificationPermission();
+        }
+
+        @JavascriptInterface
+        public String getFcmToken() {
+            String token = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
+                    .getString(KEY_FCM_TOKEN, "");
+            return token == null ? "" : token;
         }
 
         @JavascriptInterface

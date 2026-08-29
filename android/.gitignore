@@ -1,6 +1,7 @@
 android.keystore
 *.jks
 app/
+google-services.json
 .gradle/
 build/
 local.properties
