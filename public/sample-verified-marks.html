@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<script src="/js/android-chrome.js"></script>
+<title>ZedMarket - Verification mark samples</title>
+<meta name="theme-color" content="#111111" />
+<style>
+  :root {
+    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --text: #211D1A; --subtext: #5C5955; --black: #111111;
+    --gold: #F5C518; --red-btn: #E01B27;
+  }
+  body.dark {
+    --bg: #121212; --card: #1E1E1E; --border: #333333;
+    --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+  .stage { height: 100dvh; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .picker {
+    flex-shrink: 0; background: var(--black); color: var(--gold);
+    padding: 8px 10px 10px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+  .picker-label { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; margin-bottom: 8px; }
+  .picker-row { display: flex; gap: 5px; margin-bottom: 5px; }
+  .picker-row:last-child { margin-bottom: 0; }
+  .pick {
+    flex: 1; background: #2A2A2A; color: #F0EDE8; border: 2px solid #2A2A2A;
+    padding: 8px 2px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .pick.on { background: var(--gold); color: var(--black); border-color: var(--gold); }
+
+  .sheet {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .caption {
+    font-size: 12px; color: var(--subtext); margin-bottom: 12px; line-height: 1.4;
+  }
+  .caption b { color: var(--text); }
+
+  .seller-row {
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--card); border: 1.5px solid var(--text);
+    border-radius: 12px; padding: 12px;
+  }
+  .seller-go { display: flex; align-items: center; gap: 10px; }
+  .seller-avatar {
+    width: 44px; height: 44px; border-radius: 22px; background: var(--red-btn);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0;
+  }
+  .seller-info { flex: 1; min-width: 0; }
+  .seller-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .seller-name { font-size: 14px; font-weight: 800; }
+  .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .seller-actions { display: flex; gap: 8px; }
+  .view-shop-btn, .review-btn {
+    flex: 1; padding: 11px 12px; border-radius: 12px; font-size: 12px; font-weight: 800; border: none;
+  }
+  .view-shop-btn { background: var(--black); color: var(--gold); }
+  .review-btn { background: var(--card); color: var(--text); border: 1.5px solid var(--text); }
+
+  .tick { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+  .tick-lg { width: 18px; height: 18px; }
+
+  .m-blue circle { fill: #1D9BF0; }
+  .m-blue path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .m-gold circle { fill: var(--gold); }
+  .m-gold path { fill: none; stroke: #111; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .m-green circle { fill: #1B8A4A; }
+  .m-green path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .official {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--black); color: #fff;
+    padding: 3px 8px 3px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.01em;
+  }
+  .official svg { width: 12px; height: 12px; display: block; flex-shrink: 0; }
+  .official circle { fill: #1D9BF0; }
+  .official path { fill: none; stroke: #fff; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .shield { width: 16px; height: 16px; display: block; flex-shrink: 0; }
+  .shield .body { fill: #1A365D; }
+  .shield .check { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .quiet {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; color: var(--subtext);
+  }
+  .quiet svg { width: 13px; height: 13px; }
+  .quiet circle { fill: var(--gold); }
+  .quiet path { fill: none; stroke: #111; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .meta { width: 15px; height: 15px; display: block; flex-shrink: 0; }
+  .meta .sq { fill: #1877F2; }
+  .meta .ck { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+  .stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .stamp svg { width: 10px; height: 10px; }
+  .stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .seal { width: 18px; height: 18px; display: block; flex-shrink: 0; }
+  .seal .ring { fill: none; stroke: var(--gold); stroke-width: 2; }
+  .seal .dot { fill: var(--gold); }
+  .seal .ck { fill: none; stroke: #111; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .idmark {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; color: #1B8A4A;
+  }
+  .idmark svg { width: 14px; height: 14px; }
+  .idmark .card { fill: none; stroke: #1B8A4A; stroke-width: 1.8; }
+  .idmark .ck { fill: none; stroke: #1B8A4A; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<script>document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");</script>
+<div class="stage">
+  <div class="picker">
+    <div class="picker-label">Verification marks — pick one, then tell me the number</div>
+    <div class="picker-row">
+      <button class="pick on" type="button" data-id="1">1</button>
+      <button class="pick" type="button" data-id="2">2</button>
+      <button class="pick" type="button" data-id="3">3</button>
+      <button class="pick" type="button" data-id="4">4</button>
+      <button class="pick" type="button" data-id="5">5</button>
+    </div>
+    <div class="picker-row">
+      <button class="pick" type="button" data-id="6">6</button>
+      <button class="pick" type="button" data-id="7">7</button>
+      <button class="pick" type="button" data-id="8">8</button>
+      <button class="pick" type="button" data-id="9">9</button>
+      <button class="pick" type="button" data-id="10">10</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="caption" id="caption"><b>1 Blue tick</b> — same idea as X / Twitter. Icon only, next to the name.</div>
+    <div class="seller-row">
+      <div class="seller-go">
+        <div class="seller-avatar">J</div>
+        <div class="seller-info">
+          <div class="seller-name-line">
+            <span class="seller-name">JOEL</span>
+            <span id="markSlot"></span>
+          </div>
+          <div class="seller-sub">Shop Seller</div>
+        </div>
+      </div>
+      <div class="seller-actions">
+        <button class="view-shop-btn" type="button">View Shop</button>
+        <button class="review-btn" type="button">Rate Seller</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const tick = (cls) =>
+    `<svg class="tick tick-lg ${cls}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7.2 12.4l3.1 3.2 6.5-7"/></svg>`;
+
+  const samples = {
+    1: {
+      name: "1 Blue tick",
+      note: "Same idea as X / Twitter. Icon only, next to the name.",
+      html: tick("m-blue"),
+    },
+    2: {
+      name: "2 Gold tick",
+      note: "Same shape in ZedMarket gold. Looks like it belongs on the app.",
+      html: tick("m-gold"),
+    },
+    3: {
+      name: "3 Green tick",
+      note: "Common for ID / trust on African marketplaces. Icon only.",
+      html: tick("m-green"),
+    },
+    4: {
+      name: "4 Official Store",
+      note: "Jumia-style chip. Reads as a real shop badge, not a sticker.",
+      html: `<span class="official"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7.2 12.4l3.1 3.2 6.5-7"/></svg> Official Store</span>`,
+    },
+    5: {
+      name: "5 Shield",
+      note: "Security-style mark. Used by banks and payment apps.",
+      html: `<svg class="shield" viewBox="0 0 24 24" aria-hidden="true"><path class="body" d="M12 2.5l8 3.2v6.4c0 5.1-3.4 8.6-8 9.9-4.6-1.3-8-4.8-8-9.9V5.7L12 2.5z"/><path class="check" d="M8 12.1l2.7 2.7 5.3-5.6"/></svg>`,
+    },
+    6: {
+      name: "6 Quiet text",
+      note: "Small gold tick plus the word Verified. No coloured pill.",
+      html: `<span class="quiet">${tick("m-gold").replace("tick tick-lg", "tick")} Verified</span>`,
+    },
+    7: {
+      name: "7 Meta badge",
+      note: "Facebook-style rounded square. Familiar, so it reads as real.",
+      html: `<svg class="meta" viewBox="0 0 24 24" aria-hidden="true"><rect class="sq" x="2" y="2" width="20" height="20" rx="6"/><path class="ck" d="M7.2 12.4l3.1 3.2 6.5-7"/></svg>`,
+    },
+    8: {
+      name: "8 Stamp",
+      note: "Thin green outline, like a certificate stamp. No fill.",
+      html: `<span class="stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg> Verified shop</span>`,
+    },
+    9: {
+      name: "9 Gold seal",
+      note: "Ring seal with a check inside. Feels like a mark, not a label.",
+      html: `<svg class="seal" viewBox="0 0 24 24" aria-hidden="true"><circle class="ring" cx="12" cy="12" r="10"/><circle class="dot" cx="12" cy="12" r="7"/><path class="ck" d="M8.2 12.2l2.6 2.6 5-5.4"/></svg>`,
+    },
+    10: {
+      name: "10 ID mark",
+      note: "Small ID-card icon plus Verified. Makes the ID check obvious.",
+      html: `<span class="idmark"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="card" x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="1.6" fill="#1B8A4A"/><path d="M12 10.5h6M12 13.5h4" stroke="#1B8A4A" stroke-width="1.6" stroke-linecap="round"/><path class="ck" d="M16.2 8.2l1.3 1.3 2.3-2.4"/></svg> Verified</span>`,
+    },
+  };
+
+  const slot = document.getElementById("markSlot");
+  const caption = document.getElementById("caption");
+  const picks = document.querySelectorAll(".pick");
+
+  function show(id) {
+    const s = samples[id];
+    slot.innerHTML = s.html;
+    caption.innerHTML = `<b>${s.name}</b> — ${s.note}`;
+    picks.forEach((p) => p.classList.toggle("on", p.dataset.id === String(id)));
+  }
+
+  picks.forEach((p) => p.addEventListener("click", () => show(p.dataset.id)));
+  show(1);
+</script>
+</body>
+</html>

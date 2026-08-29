@@ -54,11 +54,17 @@
         --ps-top-inset: max(env(safe-area-inset-top, 0px), 28px);
         --ps-bottom-inset: max(env(safe-area-inset-bottom, 0px), 48px);
       }
+      html.play-store-webview.play-store-immersive {
+        --ps-bottom-inset: env(safe-area-inset-bottom, 0px);
+      }
       html.play-store-webview .topbar {
         padding-top: calc(16px + var(--ps-top-inset));
       }
       html.play-store-webview #composerDock {
         padding-bottom: calc(12px + var(--ps-bottom-inset));
+      }
+      html.play-store-webview .menu-box {
+        padding-bottom: calc(24px + var(--ps-bottom-inset));
       }
       html.play-store-webview .sticky-header {
         padding-top: 0;
@@ -66,6 +72,9 @@
       html.play-store-webview .hero-wrap .round-btn,
       html.play-store-webview .hero-wrap .hero-actions {
         top: calc(14px + var(--ps-top-inset));
+      }
+      html.play-store-webview .listing-shell .hero-wrap .round-btn {
+        top: 8px;
       }
       html.play-store-webview .viewer-back {
         top: calc(40px + var(--ps-top-inset));
@@ -75,6 +84,12 @@
       }
       html.play-store-webview .preview-overlay .preview-close-btn {
         top: calc(50px + var(--ps-top-inset));
+      }
+      html.play-store-webview .bottom-nav {
+        padding-bottom: max(6px, var(--ps-bottom-inset));
+      }
+      html.play-store-webview .fab {
+        bottom: calc(72px + var(--ps-bottom-inset));
       }
     `;
     document.head.appendChild(style);
@@ -186,6 +201,34 @@
     sessionStorage.setItem(REDIRECT_KEY, stamp);
     openInChrome();
   }
+
+  function isHomePath() {
+    const p = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    return p === "/" || p === "/index.html";
+  }
+
+  function closeOpenOverlay() {
+    const open = document.querySelectorAll(
+      ".viewer-overlay.open, .modal-overlay.open, .camera-modal.open, .preview-overlay.open, #menuOverlay.open, #settingsOverlay.open, #messageActionsOverlay.open, #callConfirmOverlay.open, #chatPrefOverlay.open"
+    );
+    if (!open.length) return false;
+    open[open.length - 1].classList.remove("open");
+    return true;
+  }
+
+  window.__zmHandleBack = function () {
+    if (closeOpenOverlay()) return true;
+    if (isHomePath()) return false;
+    try {
+      const ref = document.referrer || "";
+      if (ref.indexOf(location.origin) === 0) {
+        history.back();
+        return true;
+      }
+    } catch (e) {}
+    location.href = "/index.html";
+    return true;
+  };
 
   window.isPlayStoreApp = isPlayStoreApp;
   window.isAndroidWebView = isAndroidWebView;

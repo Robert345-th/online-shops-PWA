@@ -126,8 +126,13 @@
     border: 1px solid var(--border); border-bottom-left-radius: 5px;
   }
   .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; box-shadow: none; }
-  .tick { font-size: 11px; color: var(--subtext); margin-bottom: 2px; }
-  .tick.read { color: #1B8A5A; }
+  .tick { display: flex; align-items: flex-end; color: #8A8680; margin-bottom: 2px; line-height: 0; }
+  .tick.read { color: #53BDEB; }
+  .tick.sending { color: #8A8680; }
+  .tick .rc { width: 16px; height: 11px; display: block; }
+  .tick .rc path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tick .clock { width: 12px; height: 12px; display: block; }
+  .tick .clock circle, .tick .clock path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
   .photo-bubble { max-width: 65%; border-radius: 18px; overflow: hidden; padding: 4px; cursor: pointer; }
   .photo-bubble.mine { padding: 4px; }
   .chat-photo { width: 180px; height: 180px; border-radius: 14px; object-fit: cover; background: var(--border); display: block; }
@@ -202,11 +207,27 @@
 
   .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .menu-overlay.open { display: flex; }
-  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px; }
+  .menu-box { background: var(--bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px)); }
   .menu-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
   .menu-row svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .menu-row.danger { color: var(--price-red); }
   .menu-cancel-btn { display: block; width: 100%; padding: 14px; text-align: center; background: none; border: none; color: var(--subtext); font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 4px; }
+
+  .call-confirm-box { padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+  .call-confirm-handle {
+    width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px;
+  }
+  .call-confirm-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .call-confirm-phone { font-size: 20px; font-weight: 800; color: var(--gold); letter-spacing: 0.02em; margin-bottom: 18px; }
+  .call-confirm-actions { display: flex; gap: 10px; }
+  .call-confirm-cancel {
+    flex: 1; background: var(--card); border: 1.5px solid var(--border); padding: 14px;
+    border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--subtext); cursor: pointer;
+  }
+  .call-confirm-call {
+    flex: 1; background: var(--red-btn); border: none; padding: 14px;
+    border-radius: 12px; font-size: 14px; font-weight: 800; color: #fff; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -265,11 +286,24 @@
   </div>
 </div>
 
+<div class="menu-overlay" id="callConfirmOverlay">
+  <div class="menu-box call-confirm-box">
+    <div class="call-confirm-handle"></div>
+    <div class="call-confirm-title" id="callConfirmTitle">Call?</div>
+    <div class="call-confirm-phone" id="callConfirmPhone"></div>
+    <div class="call-confirm-actions">
+      <button class="call-confirm-cancel" id="callConfirmCancel" type="button" data-i18n="cancel">Cancel</button>
+      <button class="call-confirm-call" id="callConfirmCall" type="button" data-i18n="chat_call_btn">Call</button>
+    </div>
+  </div>
+</div>
+
 <div class="menu-overlay" id="messageActionsOverlay">
   <div class="menu-box" id="messageActionsBox"></div>
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/chat-receipts.js"></script>
 <script src="/js/presence.js"></script>
 <script src="/js/push-notifications.js"></script>
 <script src="/js/data-saver.js"></script>
@@ -352,6 +386,45 @@
   let currentAudio = null;
 
   const messagesList = document.getElementById("messagesList");
+  let longPressTimer = null;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
+
+  function clearLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  function bindMessageLongPress(el, messageId) {
+    el.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      openMessageActions(messageId);
+    });
+    el.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      longPressStartX = t.clientX;
+      longPressStartY = t.clientY;
+      clearLongPress();
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        openMessageActions(messageId);
+      }, 550);
+    }, { passive: true });
+    el.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      if (Math.abs(t.clientX - longPressStartX) > 10 || Math.abs(t.clientY - longPressStartY) > 10) {
+        clearLongPress();
+      }
+    }, { passive: true });
+    el.addEventListener("touchend", clearLongPress, { passive: true });
+    el.addEventListener("touchcancel", clearLongPress, { passive: true });
+  }
+
+  messagesList.addEventListener("scroll", clearLongPress, { passive: true });
   if (userId) {
     try { localStorage.removeItem(`zm_call_log_${userId}`); } catch { /* ignore */ }
   }
@@ -382,9 +455,13 @@
       if (!res.ok) throw new Error("fetch failed");
       const data = await res.json();
       otherUser = data;
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      try {
+        const { last_seen, online, hide_online, presence_hidden, ...rest } = data;
+        localStorage.setItem(cacheKey, JSON.stringify(rest));
+      } catch (e) {}
       renderHeader();
       updateComposerVisibility();
+      applyMergedPresence();
     } catch (e) {
       // One retry after a short delay, in case it was a transient network hiccup
       setTimeout(async () => {
@@ -393,9 +470,13 @@
           if (!res.ok) return;
           const data = await res.json();
           otherUser = data;
-          localStorage.setItem(cacheKey, JSON.stringify(data));
+          try {
+            const { last_seen, online, hide_online, presence_hidden, ...rest } = data;
+            localStorage.setItem(cacheKey, JSON.stringify(rest));
+          } catch (e2) {}
           renderHeader();
           updateComposerVisibility();
+          applyMergedPresence();
         } catch (e2) {}
       }, 1000);
     }
@@ -420,12 +501,48 @@
   }
   if (nameFromLink) renderHeader();
 
+  let lastLivePresence = {};
+
+  function persistedPresence() {
+    if (!otherUser || otherUser.is_admin) return { online: false, last_seen: null, hidden: true };
+    return {
+      online: !!otherUser.online,
+      last_seen: otherUser.last_seen || null,
+      hidden: !!otherUser.presence_hidden,
+      hide_online: !!otherUser.hide_online,
+    };
+  }
+
+  function applyMergedPresence(live) {
+    if (isKnownSupportChat || otherUser?.is_admin) {
+      applyPresenceDot(document.getElementById("headerOnlineDot"), { online: false });
+      applyChatStatus(document.getElementById("headerStatus"), { hidden: true });
+      return;
+    }
+    if (live) {
+      const prevSeen = lastLivePresence.last_seen;
+      lastLivePresence = { ...lastLivePresence, ...live };
+      if (!lastLivePresence.last_seen && prevSeen) lastLivePresence.last_seen = prevSeen;
+      if (live.last_seen && otherUser) otherUser.last_seen = live.last_seen;
+      if (typeof live.online === "boolean" && live.online && otherUser) otherUser.online = true;
+    }
+    const persisted = persistedPresence();
+    const merged = {
+      typing: !!lastLivePresence.typing,
+      online: !!(lastLivePresence.online || persisted.online),
+      last_seen: lastLivePresence.last_seen || persisted.last_seen || null,
+      hidden: !!persisted.hidden,
+      hide_online: !!(lastLivePresence.hide_online || persisted.hide_online),
+    };
+    if (merged.hide_online) merged.online = false;
+    applyPresenceDot(document.getElementById("headerOnlineDot"), merged);
+    applyChatStatus(document.getElementById("headerStatus"), merged);
+  }
+
   async function refreshPresence() {
     if (isKnownSupportChat || otherUser?.is_admin || !userId) return;
     const map = await fetchPresenceMap([userId], { includeTyping: true });
-    const data = map[userId];
-    applyPresenceDot(document.getElementById("headerOnlineDot"), data);
-    applyChatStatus(document.getElementById("headerStatus"), data);
+    applyMergedPresence(map[userId] || {});
   }
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
@@ -499,24 +616,97 @@
     window.location.href = `/listing.html?id=${encodeURIComponent(activeListingId)}`;
   });
 
-  async function loadMessages(showSpinner) {
+  function chatCacheKey() {
+    return `zm_chat_${userId}`;
+  }
+
+  function lastServerMessageId() {
+    let max = 0;
+    for (const m of messages) {
+      const id = Number(m.id);
+      if (Number.isFinite(id) && id > max) max = id;
+    }
+    return max;
+  }
+
+  function applyLatestRead(latestReadId) {
+    if (!latestReadId || !currentUser) return false;
+    let changed = false;
+    for (const m of messages) {
+      if (m.sender_id === currentUser.id && Number(m.id) <= latestReadId && !m.read_at && !m.pending) {
+        m.read_at = m.read_at || new Date().toISOString();
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  function cacheMessages() {
     try {
-      if (showSpinner) messagesList.innerHTML = `<div class="empty-text">${t("loading")}</div>`;
-      const res = await fetch(`${API_URL}/messages/conversation/${userId}`, { headers: authHeaders() });
+      sessionStorage.setItem(chatCacheKey(), JSON.stringify({
+        ts: Date.now(),
+        messages: messages.filter((m) => !m.pending),
+      }));
+    } catch (e) {}
+  }
+
+  function readCachedMessages() {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(chatCacheKey()) || "null");
+      return Array.isArray(parsed?.messages) ? parsed.messages : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loadMessages(showSpinner, opts) {
+    try {
+      if (showSpinner && !messages.length) {
+        messagesList.innerHTML = `<div class="empty-text">${t("loading")}</div>`;
+      }
+      const allowIncremental = !showSpinner && opts?.full !== true;
+      const afterId = allowIncremental ? lastServerMessageId() : 0;
+      const url = afterId
+        ? `${API_URL}/messages/conversation/${userId}?after_id=${afterId}`
+        : `${API_URL}/messages/conversation/${userId}`;
+      const res = await fetch(url, { headers: authHeaders() });
       if (window.handleAuthResponse && !handleAuthResponse(res)) return;
       const data = await res.json();
-      messages = data.messages || [];
+      const incoming = data.messages || [];
+      const pending = messages.filter((m) => m.pending);
+
+      if (data.incremental) {
+        const seen = new Set(messages.map((m) => String(m.id)));
+        for (const m of incoming) {
+          if (!seen.has(String(m.id))) messages.push(m);
+        }
+        applyLatestRead(data.latest_read_id);
+      } else {
+        messages = incoming.concat(pending.filter((p) => {
+          return !incoming.some((m) =>
+            m.sender_id === p.sender_id && (
+              (p.content && m.content === p.content) ||
+              (p.photo_url && m.photo_url === p.photo_url) ||
+              (p.audio_url && m.audio_url === p.audio_url)
+            )
+          );
+        }));
+        applyLatestRead(data.latest_read_id);
+      }
+
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
+      if (data.presence) applyMergedPresence(data.presence);
       if (data.listing_context) {
         applyListingContext(data.listing_context);
       } else if (!activeListing && listingIdFromUrl) {
-        await loadListingContextFromApi();
+        loadListingContextFromApi();
       } else if (wantedTitleFromUrl && !listingIdFromUrl) {
         applyWantedContext();
       }
       renderBlockedBanner();
       renderMessages(false);
+      cacheMessages();
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
       if (!recording) updateComposerVisibility();
     } catch (e) {}
@@ -536,7 +726,7 @@
 
   function messagesFingerprint() {
     return messages.map((m) =>
-      `${m.id}:${m.read_at || ""}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
+      `${m.id}:${m.read_at || ""}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
     ).join("|");
   }
 
@@ -553,13 +743,9 @@
     messagesList.scrollTop = messagesList.scrollHeight;
 
     messages.forEach(msg => {
+      if (msg.pending) return;
       const el = document.getElementById(`msg-${msg.id}`);
-      if (el) {
-        el.addEventListener("contextmenu", (e) => { e.preventDefault(); openMessageActions(msg.id); });
-        let pressTimer;
-        el.addEventListener("touchstart", () => { pressTimer = setTimeout(() => openMessageActions(msg.id), 500); });
-        el.addEventListener("touchend", () => clearTimeout(pressTimer));
-      }
+      if (el) bindMessageLongPress(el, msg.id);
       const photoEl = document.getElementById(`photo-${msg.id}`);
       if (photoEl) photoEl.addEventListener("click", () => openViewer(msg.photo_url));
       const audioEl = document.getElementById(`audio-${msg.id}`);
@@ -590,8 +776,9 @@
       inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${escHtml(msg.content)}</div>`;
     }
 
+    const tickStatus = msg.pending ? "sending" : (msg.read_at ? "read" : "sent");
     const tick = isMine
-      ? `<div class="tick ${msg.read_at ? "read" : ""}">${msg.read_at ? "✓✓" : "✓"}</div>`
+      ? `<div class="tick ${tickStatus}">${chatReceiptInner(tickStatus)}</div>`
       : "";
     return `<div class="bubble-row ${rowClass}" id="msg-${msg.id}">${inner}${tick}</div>`;
   }
@@ -707,6 +894,20 @@
   }
 
   async function sendMessagePayload(payload) {
+    const tempId = `pending-${Date.now()}`;
+    if (currentUser) {
+      messages.push({
+        id: tempId,
+        sender_id: currentUser.id,
+        pending: true,
+        content: payload.content || "",
+        photo_url: payload.photo_url || null,
+        audio_url: payload.audio_url || null,
+        audio_duration: payload.audio_duration || 0,
+        read_at: null,
+      });
+      renderMessages(true);
+    }
     try {
       const res = await fetch(`${API_URL}/messages`, {
         method: "POST",
@@ -714,7 +915,11 @@
         body: JSON.stringify({ receiver_id: userId, ...(activeListingId ? { listing_id: activeListingId } : {}), ...payload })
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error || t("chat_send_fail")); return; }
+      messages = messages.filter((m) => m.id !== tempId);
+      if (!res.ok) { renderMessages(true); alert(data.error || t("chat_send_fail")); return; }
+      messages.push({ ...data, pending: false });
+      renderMessages(true);
+      cacheMessages();
       if (window.notifyMessagePush && currentUser) {
         const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
         notifyMessagePush(userId, {
@@ -723,8 +928,10 @@
           url: `/chat-room.html?userId=${currentUser.id}&name=${encodeURIComponent(senderName)}`,
         });
       }
-      loadMessages(false);
-    } catch (e) {}
+    } catch (e) {
+      messages = messages.filter((m) => m.id !== tempId);
+      renderMessages(true);
+    }
   }
 
   async function handlePickPhoto(e) {
@@ -824,6 +1031,7 @@
 
   function openMessageActions(messageId) {
     const msg = messages.find(m => m.id === messageId);
+    if (!msg || msg.pending) return;
     const isMine = currentUser && msg?.sender_id === currentUser.id;
     const canUnsend = isMine && msg && !msg.read_at;
 
@@ -881,11 +1089,21 @@
 
   document.getElementById("viewContactBtn").addEventListener("click", () => {
     document.getElementById("menuOverlay").classList.remove("open");
-    if (otherUser?.is_admin) return;
-    if (!otherUser?.phone) return;
-    if (confirm(t("chat_call_confirm").replace("{name}", otherUser.display_name).replace("{phone}", otherUser.phone))) {
-      window.location.href = `tel:${otherUser.phone}`;
-    }
+    if (otherUser?.is_admin || !otherUser?.phone) return;
+    document.getElementById("callConfirmTitle").textContent = t("chat_call_title", { name: otherUser.display_name || "" });
+    document.getElementById("callConfirmPhone").textContent = otherUser.phone;
+    document.getElementById("callConfirmOverlay").classList.add("open");
+  });
+  document.getElementById("callConfirmCancel").addEventListener("click", () => {
+    document.getElementById("callConfirmOverlay").classList.remove("open");
+  });
+  document.getElementById("callConfirmOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "callConfirmOverlay") e.target.classList.remove("open");
+  });
+  document.getElementById("callConfirmCall").addEventListener("click", () => {
+    const phone = otherUser?.phone;
+    document.getElementById("callConfirmOverlay").classList.remove("open");
+    if (phone) window.location.href = `tel:${phone}`;
   });
 
   document.getElementById("reportUserBtn").addEventListener("click", () => {
@@ -928,6 +1146,12 @@
     window.location.href = "/login.html";
   } else {
     buildComposerOnce();
+    if (params.get("preset") === "still_available") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("preset");
+      history.replaceState({}, "", url);
+      sendMessagePayload({ content: t("still_available_msg") });
+    }
     updateComposerVisibility();
     setTimeout(updateComposerVisibility, 300);
     startPresenceHeartbeat();
@@ -935,7 +1159,14 @@
     if (window.autoEnablePushNotifications) autoEnablePushNotifications();
     if (wantedTitleFromUrl && !listingIdFromUrl) applyWantedContext();
     loadOtherUser();
-    loadMessages(true);
+    const cached = readCachedMessages();
+    if (cached && cached.length) {
+      messages = cached;
+      renderMessages(true);
+      loadMessages(false, { full: true });
+    } else {
+      loadMessages(true);
+    }
     refreshPresence();
     startPollers();
     window.addEventListener("langchange", () => {

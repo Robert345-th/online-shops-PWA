@@ -43,37 +43,68 @@
 
   .listing-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; flex: 1; }
   .top-strip { background: var(--black); height: calc(16px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
-  .hero-wrap { position: relative; flex: 1 1 auto; max-height: 380px; min-height: 200px; background: var(--thumb-bg); }
-  .hero-photo { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-  .hero-photo-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .hero-wrap {
+    position: relative;
+    flex: 0 0 min(56dvh, 420px);
+    height: min(56dvh, 420px);
+    min-height: 300px;
+    max-height: 420px;
+    overflow: hidden;
+    background: var(--thumb-bg);
+  }
+  .hero-photo, .hero-photo-empty {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+  }
+  .hero-photo {
+    object-fit: cover; display: block; cursor: pointer;
+    opacity: 0; pointer-events: none;
+  }
+  .hero-photo.on { opacity: 1; pointer-events: auto; }
+  .hero-photo-empty { display: flex; align-items: center; justify-content: center; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
-  .round-btn { position: absolute; top: 8px; width: 48px; height: 48px; border-radius: 24px; background: var(--black); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 10; }
-  .back-button { left: 18px; }
-  .back-button svg, .round-btn svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-  .hero-actions { position: absolute; top: 8px; right: 18px; display: flex; gap: 8px; z-index: 10; }
-  .hero-actions .round-btn { position: static; }
+  .round-btn {
+    position: absolute; top: 8px; width: 48px; height: 48px;
+    min-width: 48px; max-width: 48px; min-height: 48px; max-height: 48px;
+    border-radius: 24px; background: var(--black);
+    display: flex; align-items: center; justify-content: center;
+    border: none; padding: 0; margin: 0; overflow: hidden; cursor: pointer; z-index: 10;
+  }
+  html.play-store-webview .listing-shell .hero-wrap .round-btn { top: 8px; }
+  .back-button { left: 12px; }
+  .favorite-button { right: 68px; }
+  .more-button { right: 12px; }
+  .back-button svg, .round-btn svg {
+    display: block; width: 22px; height: 22px; flex-shrink: 0;
+    stroke: var(--gold); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .more-button svg { fill: var(--gold); stroke: none; }
   .favorite-button svg.filled { fill: var(--red-btn); stroke: var(--red-btn); }
-  .share-button svg { stroke: none; fill: var(--gold); }
-  .report-button svg { width: 20px; height: 20px; }
-  .report-button svg path { fill: var(--gold); }
-  .report-button svg line { stroke: var(--gold); stroke-width: 2; }
-  .thumb-row { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; gap: 8px; overflow-x: auto; padding: 0 10px; }
+  .photo-price {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+    padding: 36px 16px 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.82));
+    pointer-events: none;
+  }
+  .photo-price .price { font-size: 26px; font-weight: 700; color: var(--gold); }
+  .photo-price .item-title { font-size: 15px; font-weight: 600; color: #fff; margin: 4px 0 4px; }
+  .photo-meta { font-size: 11px; color: #ddd; }
+  #viewCountEl.is-hidden { display: none; }
+  #viewCountEl:not(.is-hidden) + .meta-rest:not(:empty)::before { content: " · "; }
+  .thumb-row { position: absolute; bottom: 96px; left: 0; right: 0; display: flex; gap: 8px; overflow-x: auto; padding: 0 10px; z-index: 8; }
   .thumb-box { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; cursor: pointer; }
   .thumb-box.active { border-color: var(--gold); }
   .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 
   .listing-bottom {
-    flex: 0 1 auto;
+    flex: 1 1 0%;
     min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--bg);
-    border-radius: 16px 16px 0 0;
-    margin-top: -10px;
     position: relative;
     z-index: 5;
-    box-shadow: 0 -6px 18px rgba(0,0,0,0.08);
   }
   .body-scroll {
     flex: 1 1 auto;
@@ -83,31 +114,68 @@
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     -webkit-overflow-scrolling: touch;
   }
-  .price { font-size: 24px; font-weight: 700; color: var(--price-red); }
-  .item-title { font-size: 15px; font-weight: 600; margin: 4px 0; }
-  .view-count { font-size: 11px; color: var(--subtext); margin-bottom: 8px; }
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
-  .verified-badge {
+  .verified-stamp {
     display: inline-flex; align-items: center; gap: 4px;
-    background: #1B7A4A; color: #fff; padding: 3px 8px; border-radius: 20px;
-    font-size: 10px; font-weight: 700;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+    flex-shrink: 0;
   }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
   .specs-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .specs-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
   .specs-row { display: flex; justify-content: space-between; padding: 2px 0; }
   .spec-label { font-size: 11px; color: var(--subtext); }
   .spec-value { font-size: 11px; font-weight: 600; }
   .description { font-size: 13px; color: var(--subtext); line-height: 1.5; margin-bottom: 12px; }
-  .seller-row { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); padding-top: 10px; cursor: pointer; }
-  .seller-avatar { width: 36px; height: 36px; border-radius: 18px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; flex-shrink: 0; }
+  .status-banner { border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+  .status-banner.reserved { background: #FFF4D6; color: #8A5A00; }
+  .status-banner.sold { background: #F3E7E7; color: #A3131C; }
+  .still-btn {
+    width: 100%; background: var(--card); border: 2px solid var(--text); color: var(--text);
+    border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 800;
+    margin: 12px 0; cursor: pointer;
+  }
+  .similar-head { font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 8px 0 10px; }
+  .similar-row { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+  .similar-card { width: 120px; flex-shrink: 0; cursor: pointer; }
+  .similar-card img { width: 120px; height: 90px; object-fit: cover; border-radius: 10px; display: block; background: var(--border); }
+  .similar-card .p { font-size: 12px; font-weight: 800; color: var(--price-red); margin-top: 4px; }
+  .similar-card .n { font-size: 11px; }
+  .seller-row {
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--card); border: 1.5px solid var(--text);
+    border-radius: 12px; padding: 12px; margin-top: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .seller-go {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;
+    background: none; border: none; padding: 0; margin: 0;
+    text-align: left; cursor: pointer; color: inherit; font: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .seller-avatar { width: 44px; height: 44px; border-radius: 22px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
   .seller-info { flex: 1; min-width: 0; }
-  .seller-name { font-size: 13px; font-weight: 600; }
-  .seller-sub { font-size: 11px; color: var(--subtext); }
+  .seller-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .seller-name { font-size: 14px; font-weight: 800; }
+  .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
-  .review-btn { background: var(--black); color: var(--gold); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; flex-shrink: 0; }
-  .safety-row { display: flex; gap: 8px; margin-top: 12px; }
+  .seller-actions {
+    display: flex; align-items: stretch; gap: 12px; width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .view-shop-btn, .review-btn {
+    flex: 1; background: var(--black); color: var(--gold); padding: 11px 12px; border-radius: 12px;
+    font-size: 12px; font-weight: 800; border: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .view-shop-btn:active, .review-btn:active { opacity: 0.75; }
+  .review-btn { background: var(--card); color: var(--text); border: 1.5px solid var(--text); }
+  .safety-row { display: flex; gap: 12px; margin-top: 12px; }
   .safety-btn { flex: 1; background: var(--warn-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 10px; text-align: center; color: var(--warn-text); font-size: 11px; font-weight: 700; cursor: pointer; }
 
   .fixed-cta-row {
@@ -117,22 +185,41 @@
     bottom: 0;
     z-index: 50;
     flex-shrink: 0;
-    display: flex; gap: 8px;
-    padding: 8px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; gap: 10px;
+    padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px));
     background: var(--bg); border-top: 1px solid var(--border);
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
   }
-  .cta-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .msg-btn { background: var(--red-btn); }
-  .msg-btn svg { width: 22px; height: 22px; fill: #fff; }
-  .wa-btn { background: var(--black); }
-  .wa-btn svg { width: 22px; height: 22px; fill: #25D366; }
-  .sms-btn { background: var(--card); border: 1.5px solid var(--black); color: var(--black); }
-  .sms-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .call-btn { background: var(--card); border: 1.5px solid var(--red-btn); color: var(--red-btn); }
-  .call-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cta-btn {
+    flex: 1; height: 48px; padding: 0;
+    border-radius: 999px; background: #fff; border: 1px solid #D9D6D0;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  body.dark .cta-btn { background: var(--card); border-color: var(--border); }
+  .cta-btn:active { opacity: 0.75; }
+  .cta-btn svg { width: 22px; height: 22px; }
+  .msg-btn {
+    background: linear-gradient(180deg, #FF3B4A 0%, #E01B27 52%, #C41520 100%);
+    border-color: transparent;
+  }
+  body.dark .msg-btn {
+    background: linear-gradient(180deg, #FF3B4A 0%, #E01B27 52%, #C41520 100%);
+    border-color: transparent;
+  }
+  .msg-btn svg { fill: #fff; stroke: none; }
+  .wa-btn svg { fill: #25D366; }
+  .sms-btn {
+    background: linear-gradient(180deg, #4AE05C 0%, #2BC93D 52%, #22B934 100%);
+    border-color: transparent;
+  }
+  body.dark .sms-btn {
+    background: linear-gradient(180deg, #4AE05C 0%, #2BC93D 52%, #22B934 100%);
+    border-color: transparent;
+  }
+  .sms-btn svg { fill: #fff; stroke: none; }
+  .call-btn svg { fill: none; stroke: var(--red-btn); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; }
+  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; overflow: hidden; }
   .viewer-overlay.open { display: block; }
   .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
   .viewer-nav-btn {
@@ -146,7 +233,7 @@
     position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
     color: #fff; font-size: 13px; font-weight: 600; z-index: 10;
   }
-  .viewer-img { width: 100%; height: 100%; object-fit: contain; }
+  .viewer-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
@@ -176,6 +263,31 @@
   .center-box { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 24px; text-align: center; }
   .error-text { color: var(--price-red); margin-bottom: 12px; }
   .back-btn-flat { background: var(--black); color: var(--gold); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+  .menu-box {
+    background: var(--bg); width: 100%; max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .menu-handle {
+    width: 40px; height: 4px; background: var(--border); border-radius: 2px;
+    margin: 4px auto 14px;
+  }
+  .menu-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 8px 10px; }
+  .menu-row {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; background: var(--card); border: 2px solid var(--border);
+    padding: 14px 12px; margin-bottom: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 700; color: var(--text); text-align: left;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .menu-row svg { width: 20px; height: 20px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .menu-row.danger { color: var(--price-red); }
+  .menu-row.danger svg { stroke: var(--price-red); }
+  .menu-cancel {
+    width: 100%; margin-top: 4px; padding: 14px; background: var(--black); color: var(--gold);
+    border: none; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -219,6 +331,30 @@
       <button class="modal-cancel-btn" id="reportCancelBtn" data-i18n="cancel">Cancel</button>
       <button class="modal-submit-btn" id="reportSubmitBtn" data-i18n="submit">Submit</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="moreMenu">
+  <div class="menu-box">
+    <div class="menu-handle"></div>
+    <div class="menu-title">More</div>
+    <button class="menu-row" type="button" id="shareListingBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span data-i18n="share_listing">Share listing</span>
+    </button>
+    <button class="menu-row" type="button" id="shareWhatsappBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span data-i18n="share_whatsapp">Share on WhatsApp</span>
+    </button>
+    <button class="menu-row" type="button" id="shareShopBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span data-i18n="share_shop">Share shop</span>
+    </button>
+    <button class="menu-row danger" type="button" id="reportOpenBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <span data-i18n="report_listing">Report listing</span>
+    </button>
+    <button class="menu-cancel" type="button" id="moreMenuCancel" data-i18n="cancel">Cancel</button>
   </div>
 </div>
 
@@ -276,10 +412,6 @@
     return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   }
 
-  function shareIcon() {
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"/></svg>`;
-  }
-
   function isOwnListing() {
     return currentUser && listing?.seller_id === currentUser.id;
   }
@@ -334,7 +466,7 @@
       render();
       loadFavoriteStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
-      trackRecentlyViewed(listing.id);
+      trackRecentlyViewed(listing);
       try {
         sessionStorage.setItem("zm_listing_" + listingId, JSON.stringify({ ts: Date.now(), data: listing }));
       } catch (e) {}
@@ -345,11 +477,22 @@
     }
   }
 
-  function trackRecentlyViewed(id) {
+  function trackRecentlyViewed(item) {
     try {
+      const entry = {
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        photo: Array.isArray(item.photos) && item.photos[0] ? item.photos[0] : null,
+      };
+      let items = JSON.parse(localStorage.getItem("zm_recent_listings") || "[]");
+      if (!Array.isArray(items)) items = [];
+      items = items.filter((x) => String(x.id) !== String(item.id));
+      items.unshift(entry);
+      localStorage.setItem("zm_recent_listings", JSON.stringify(items.slice(0, 12)));
       let ids = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
-      ids = ids.filter(x => x !== id);
-      ids.unshift(id);
+      ids = ids.filter((x) => x !== item.id);
+      ids.unshift(item.id);
       localStorage.setItem("recentlyViewed", JSON.stringify(ids.slice(0, 10)));
     } catch (e) {}
   }
@@ -402,7 +545,10 @@
         if (data && typeof data.view_count === "number") {
           listing.view_count = data.view_count;
           const el = document.getElementById("viewCountEl");
-          if (el) el.textContent = t("listing_views_count", { count: data.view_count });
+          if (el) {
+            el.textContent = t("listing_views_count", { count: data.view_count });
+            el.classList.remove("is-hidden");
+          }
         }
       })
       .catch(() => {});
@@ -410,36 +556,39 @@
 
   function render() {
     const photos = listing.photos && listing.photos.length > 0 ? listing.photos : [];
+    const metaRest = [listing.category, listing.location_label].filter(Boolean).join(" · ");
+    const viewsHidden = !(listing.view_count > 0);
 
     app.innerHTML = `
       <div class="listing-shell">
       <div class="top-strip"></div>
       <div class="hero-wrap">
         <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <div class="hero-actions">
-          <button class="round-btn favorite-button" id="favoriteBtn" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
-          <button class="round-btn share-button" id="shareListingBtn" aria-label="Share listing">${shareIcon()}</button>
-          <button class="round-btn report-button" id="reportOpenBtn" aria-label="Report listing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>
-        </div>
+        <button class="round-btn favorite-button" id="favoriteBtn" type="button" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
+        <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>
         ${photos.length > 0
-          ? `<img class="hero-photo" id="heroPhoto" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" />`
+          ? `<img class="hero-photo on" id="heroPhotoA" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" alt="" />
+             <img class="hero-photo" id="heroPhotoB" alt="" />`
           : `<div class="hero-photo-empty">${photoPlaceholder(56)}</div>`}
         ${photos.length > 1 ? `
           <div class="thumb-row" id="thumbRow">
             ${photos.map((url, i) => `<div class="thumb-box ${i === mainPhotoIndex ? "active" : ""}" data-idx="${i}">${zmImg(url, { preset: "thumb" })}</div>`).join("")}
           </div>` : ""}
+        <div class="photo-price">
+          <div class="price">K${listing.price}</div>
+          <div class="item-title">${listing.title}</div>
+          <div class="photo-meta">
+            <span id="viewCountEl" class="${viewsHidden ? "is-hidden" : ""}">${viewsHidden ? "" : t("listing_views_count", { count: listing.view_count })}</span>
+            <span class="meta-rest">${metaRest}</span>
+          </div>
+        </div>
       </div>
 
       <div class="listing-bottom">
       <div class="body-scroll">
-        <div class="price">K${listing.price}</div>
-        <div class="item-title">${listing.title}</div>
-        ${listing.view_count > 0 ? `<div class="view-count" id="viewCountEl">${t("listing_views_count", { count: listing.view_count })}</div>` : `<div class="view-count" id="viewCountEl" style="display:none;"></div>`}
-        <div class="badge-row">
-          ${listing.category ? `<div class="badge">${listing.category}</div>` : ""}
-          ${listing.location_label ? `<div class="badge dist">${listing.location_label}</div>` : ""}
-          ${listing.seller_nrc_verified ? `<div class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</div>` : ""}
-        </div>
+        ${listing.status === "reserved" ? `<div class="status-banner reserved">${t("listing_reserved_note")}</div>` : ""}
+        ${listing.status === "sold" ? `<div class="status-banner sold">${t("listing_sold_note")}</div>` : ""}
+        <div id="sellerRowWrap"></div>
 
         ${listing.car_details ? `
           <div class="specs-box">
@@ -459,18 +608,18 @@
 
         ${listing.description ? `<div class="description">${listing.description}</div>` : ""}
 
-        <div id="sellerRowWrap"></div>
-
         <div class="safety-row">
           <div class="safety-btn" id="safetyOpenBtn">${t("safety_tips")}</div>
           <div class="safety-btn" id="shareMeetupBtn">${t("share_meetup")}</div>
         </div>
+        ${listing.status !== "sold" && !isOwnListing() ? `<button type="button" class="still-btn" id="stillBtn">${t("still_available")}</button>` : ""}
+        <div id="similarWrap"></div>
       </div>
 
-      <div class="fixed-cta-row">
-        <button class="cta-btn msg-btn" id="msgBtn" aria-label="Message seller"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></button>
+      <div class="fixed-cta-row" ${listing.status === "sold" ? 'style="display:none"' : ""}>
+        <button class="cta-btn msg-btn" id="msgBtn" aria-label="Message seller"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.92 2 11.75c0 2.48 1.22 4.72 3.2 6.28-.2 1.55-1.02 3.12-2.45 4.22 2.12-.18 3.86-1.1 5.02-1.92 1.3.37 2.72.57 4.23.57 5.52 0 10-3.92 10-8.75S17.52 3 12 3z"/></svg></button>
         <button class="cta-btn wa-btn" id="waBtn" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
-        <button class="cta-btn sms-btn" id="smsBtn" aria-label="Send SMS"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></button>
+        <button class="cta-btn sms-btn" id="smsBtn" aria-label="Send SMS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.48 3 2 6.92 2 11.75c0 2.48 1.22 4.72 3.2 6.28-.2 1.55-1.02 3.12-2.45 4.22 2.12-.18 3.86-1.1 5.02-1.92 1.3.37 2.72.57 4.23.57 5.52 0 10-3.92 10-8.75S17.52 3 12 3z"/></svg></button>
         <button class="cta-btn call-btn" id="callBtn" aria-label="Call seller"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
       </div>
       </div>
@@ -555,53 +704,151 @@
     window.open(`https://wa.me/?text=${waText}`, "_blank");
   }
 
+  function getShopShareUrl() {
+    return `${window.location.origin}/seller-profile.html?id=${listing.seller_id}`;
+  }
+
+  async function handleShareShop() {
+    const name = listing.shop_name || listing.seller_name || t("unknown_seller");
+    const url = getShopShareUrl();
+    const text = `${name} on ZedMarket`;
+    const waText = encodeURIComponent(`${text}\n${url}`);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, text, url });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
+    }
+
+    window.open(`https://wa.me/?text=${waText}`, "_blank");
+  }
+
+  function closeMoreMenu() {
+    document.getElementById("moreMenu").classList.remove("open");
+  }
+
+  function verifiedStamp(label) {
+    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
+  }
+
+  function sellerTrustBadge() {
+    if (listing.seller_account_type === "shop") {
+      return verifiedStamp(t("verified_shop"));
+    }
+    if (listing.seller_nrc_verified) {
+      return verifiedStamp(t("seller_id_verified", "ID Verified"));
+    }
+    return "";
+  }
+
+  function replyLabel() {
+    const n = parseInt(listing?.reply_count, 10) || 0;
+    const secs = parseInt(listing?.avg_reply_secs, 10) || 0;
+    if (n < 3 || !secs) return "";
+    if (secs < 5 * 60) return t("reply_few_min");
+    if (secs < 60 * 60) return t("reply_about_min", { n: Math.max(1, Math.round(secs / 60)) });
+    if (secs < 12 * 3600) return t("reply_few_hours");
+    return t("reply_a_day");
+  }
+
   function renderSellerRow() {
     const wrap = document.getElementById("sellerRowWrap");
     if (!wrap) return;
     const displayName = listing.shop_name || listing.seller_name || t("unknown_seller");
+    const badge = sellerTrustBadge();
     wrap.innerHTML = `
       <div class="seller-row" id="sellerRow">
-        <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
-        <div class="seller-info">
-          <div class="seller-name">${displayName}${listing.seller_nrc_verified ? ` <span class="verified-badge">✓ ${t("seller_id_verified", "ID Verified")}</span>` : ""}</div>
-          <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
-          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
+        <div class="seller-go" id="sellerGo" role="button" tabindex="0">
+          <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
+          <div class="seller-info">
+            <div class="seller-name-line">
+              <span class="seller-name">${displayName}</span>
+              ${badge}
+            </div>
+            <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
+            ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
+            ${replyLabel() ? `<div class="seller-sub">${replyLabel()}</div>` : ""}
+          </div>
         </div>
-        <button class="review-btn" id="rateSellerBtn">${t("rate_seller")}</button>
+        <div class="seller-actions">
+          <button class="view-shop-btn" id="viewShopBtn" type="button">${t("view_shop_btn")}</button>
+          <button class="review-btn" id="rateSellerBtn" type="button">${t("rate_seller")}</button>
+        </div>
       </div>`;
-    document.getElementById("sellerRow").addEventListener("click", () => {
+    const goToShop = () => {
       window.location.href = `/seller-profile.html?id=${listing.seller_id}`;
-    });
-    document.getElementById("rateSellerBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      openReviewModal();
-    });
+    };
+    document.getElementById("sellerGo").addEventListener("click", goToShop);
+    document.getElementById("viewShopBtn").addEventListener("click", goToShop);
+    document.getElementById("rateSellerBtn").addEventListener("click", openReviewModal);
   }
 
   function wireEvents(photos) {
     document.getElementById("favoriteBtn").addEventListener("click", toggleFavorite);
-    document.getElementById("shareListingBtn").addEventListener("click", handleShareListing);
-    document.getElementById("reportOpenBtn").addEventListener("click", openReportModal);
+    document.getElementById("moreBtn").addEventListener("click", () => document.getElementById("moreMenu").classList.add("open"));
     document.getElementById("safetyOpenBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.add("open"));
     document.getElementById("shareMeetupBtn").addEventListener("click", () => {
       if (!zmRequireLogin()) return;
       handleShareMeetup();
     });
 
-    const heroPhoto = document.getElementById("heroPhoto");
-    if (heroPhoto) heroPhoto.addEventListener("click", () => openViewer(mainPhotoIndex, photos));
+    const heroA = document.getElementById("heroPhotoA");
+    const heroB = document.getElementById("heroPhotoB");
+    if (heroA) heroA.dataset.shown = heroA.getAttribute("src") || "";
+    let heroFront = "A";
+
+    document.querySelector(".hero-wrap")?.addEventListener("click", (e) => {
+      if (e.target.closest(".round-btn, .thumb-row, .thumb-box")) return;
+      if (e.target.closest(".hero-photo")) openViewer(mainPhotoIndex, photos);
+    });
+
+    function showHeroAt(index) {
+      if (!photos[index] || !heroA || !heroB) return;
+      mainPhotoIndex = index;
+      document.querySelectorAll("#thumbRow .thumb-box").forEach((t) => {
+        t.classList.toggle("active", parseInt(t.dataset.idx, 10) === index);
+      });
+      const next = optimizeImageUrl(photos[index], "hero");
+      const front = heroFront === "A" ? heroA : heroB;
+      const back = heroFront === "A" ? heroB : heroA;
+      if (front.dataset.shown === next) return;
+      let applied = false;
+      const apply = () => {
+        if (applied || mainPhotoIndex !== index) return;
+        applied = true;
+        back.src = next;
+        back.dataset.shown = next;
+        back.classList.add("on");
+        front.classList.remove("on");
+        heroFront = heroFront === "A" ? "B" : "A";
+      };
+      const ready = new Image();
+      ready.onload = apply;
+      ready.onerror = apply;
+      ready.src = next;
+      if (ready.complete) apply();
+    }
 
     document.querySelectorAll("#thumbRow .thumb-box").forEach(el => {
       el.addEventListener("click", () => {
-        mainPhotoIndex = parseInt(el.dataset.idx);
-        render();
+        showHeroAt(parseInt(el.dataset.idx, 10));
       });
     });
 
-    document.getElementById("msgBtn").addEventListener("click", handleMessage);
-    document.getElementById("waBtn").addEventListener("click", handleWhatsApp);
-    document.getElementById("smsBtn").addEventListener("click", handleSMS);
-    document.getElementById("callBtn").addEventListener("click", handleCall);
+    photos.forEach((url) => {
+      const preload = new Image();
+      preload.src = optimizeImageUrl(url, "hero");
+    });
+
+    document.getElementById("msgBtn")?.addEventListener("click", handleMessage);
+    document.getElementById("waBtn")?.addEventListener("click", handleWhatsApp);
+    document.getElementById("smsBtn")?.addEventListener("click", handleSMS);
+    document.getElementById("callBtn")?.addEventListener("click", handleCall);
+    document.getElementById("stillBtn")?.addEventListener("click", handleStillAvailable);
+    loadSimilar();
   }
 
   let viewerPhotos = [];
@@ -615,7 +862,19 @@
   }
 
   function updateViewerImage() {
-    document.getElementById("viewerImg").src = optimizeImageUrl(viewerPhotos[viewerIndex], "full");
+    const img = document.getElementById("viewerImg");
+    const next = optimizeImageUrl(viewerPhotos[viewerIndex], "full");
+    let applied = false;
+    const ready = new Image();
+    const apply = () => {
+      if (applied) return;
+      applied = true;
+      img.src = next;
+    };
+    ready.onload = apply;
+    ready.onerror = apply;
+    ready.src = next;
+    if (ready.complete) apply();
     const prevBtn = document.getElementById("viewerPrevBtn");
     const nextBtn = document.getElementById("viewerNextBtn");
     const counter = document.getElementById("viewerCounter");
@@ -679,6 +938,43 @@
       window.location.href = `sms:${listing.seller_phone}?body=${encodeURIComponent(message)}`;
     });
   }
+  function handleStillAvailable() {
+    if (!zmRequireLogin()) return;
+    if (isOwnListing()) { alert(t("cant_message_own")); return; }
+    requireContactSafety(() => {
+      const sellerName = listing.shop_name || listing.seller_name || "";
+      window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}&listingId=${listingId}&preset=still_available`;
+    });
+  }
+
+  async function loadSimilar() {
+    const wrap = document.getElementById("similarWrap");
+    if (!wrap || !listingId) return;
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}/similar`);
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows) || !rows.length) return;
+      wrap.innerHTML = `<div class="similar-head">${t("similar_listings")}</div>
+        <div class="similar-row">${rows.map((item) => {
+          const photo = Array.isArray(item.photos) && item.photos[0] ? optimizeImageUrl(item.photos[0], "card") : "";
+          return `<div class="similar-card" data-id="${item.id}">
+            ${photo ? `<img src="${photo}" alt="">` : `<div style="height:90px;background:var(--border);border-radius:10px;"></div>`}
+            <div class="p">K${item.price}</div>
+            <div class="n">${item.title || ""}</div>
+          </div>`;
+        }).join("")}</div>`;
+      wrap.querySelectorAll(".similar-card").forEach((el) => {
+        el.addEventListener("click", () => { window.location.href = `/listing.html?id=${el.dataset.id}`; });
+      });
+    } catch (e) {}
+  }
+
+  function handleShareWhatsApp() {
+    const text = encodeURIComponent(`${getListingShareText()}\n${getListingShareUrl()}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  }
+
   function handleMessage() {
     if (!zmRequireLogin()) return;
     if (isOwnListing()) {
@@ -691,13 +987,20 @@
     });
   }
   async function handleShareMeetup() {
-    const message = `I'm meeting ${listing.seller_name || "a seller"} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
-    if (navigator.share) {
-      try { await navigator.share({ text: message }); } catch (e) {}
-    } else {
-      navigator.clipboard.writeText(message);
-      alert(t("meetup_copied"));
+    const seller = listing.shop_name || listing.seller_name || "a seller";
+    const message = `I'm meeting ${seller} about their listing "${listing.title}" (K${listing.price}) on ZedMarket.\n\nSeller's number: ${listing.seller_phone || "not shown"}\nLocation: ${listing.location_label || "Not specified"}\n\nJust letting you know where I'll be, in case anything happens.`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const inPlayStore = typeof isPlayStoreApp === "function" && isPlayStoreApp();
+    if (!inPlayStore && navigator.share) {
+      try {
+        await navigator.share({ text: message });
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return;
+      }
     }
+    const opened = window.open(whatsappUrl, "_blank");
+    if (!opened) window.location.href = whatsappUrl;
   }
 
   function openReviewModal() {
@@ -758,6 +1061,26 @@
     );
     document.getElementById("reportModal").classList.add("open");
   }
+  document.getElementById("moreMenuCancel").addEventListener("click", closeMoreMenu);
+  document.getElementById("moreMenu").addEventListener("click", (e) => {
+    if (e.target.id === "moreMenu") closeMoreMenu();
+  });
+  document.getElementById("shareListingBtn").addEventListener("click", () => {
+    closeMoreMenu();
+    handleShareListing();
+  });
+  document.getElementById("shareWhatsappBtn").addEventListener("click", () => {
+    closeMoreMenu();
+    handleShareWhatsApp();
+  });
+  document.getElementById("shareShopBtn").addEventListener("click", () => {
+    closeMoreMenu();
+    handleShareShop();
+  });
+  document.getElementById("reportOpenBtn").addEventListener("click", () => {
+    closeMoreMenu();
+    openReportModal();
+  });
   document.getElementById("reportCancelBtn").addEventListener("click", () => document.getElementById("reportModal").classList.remove("open"));
   document.getElementById("reportSubmitBtn").addEventListener("click", async () => {
     if (!zmRequireLogin()) return;

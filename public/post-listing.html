@@ -250,6 +250,77 @@
   let homeLocationLabel = "";
   let listingFrom = null;
   let copyPrefill = null;
+  const DRAFT_KEY = "zm_listing_draft";
+  let draftTimer = null;
+
+  function collectDraft() {
+    return {
+      step,
+      photos: photos.filter((p) => p.url).map((p) => ({ url: p.url })),
+      categoryId,
+      condition,
+      landUnit,
+      coords,
+      locationLabel,
+      listingFrom,
+      title: document.getElementById("titleInput")?.value || "",
+      price: document.getElementById("priceInput")?.value || "",
+      description: document.getElementById("descInput")?.value || "",
+      carMake: document.getElementById("carMake")?.value || "",
+      carModel: document.getElementById("carModel")?.value || "",
+      carYear: document.getElementById("carYear")?.value || "",
+      carMileage: document.getElementById("carMileage")?.value || "",
+      landSize: document.getElementById("landSize")?.value || "",
+      landDeedStatus: document.getElementById("landDeedStatus")?.value || "",
+    };
+  }
+
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft())); } catch (e) {}
+  }
+
+  function scheduleDraftSave() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 400);
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+
+  function restoreDraft() {
+    if (copyPrefill) return;
+    try {
+      const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (!draft) return;
+      categoryId = draft.categoryId || null;
+      condition = draft.condition || null;
+      landUnit = draft.landUnit || landUnit;
+      coords = draft.coords || null;
+      locationLabel = draft.locationLabel || "";
+      listingFrom = draft.listingFrom || null;
+      photos = Array.isArray(draft.photos) ? draft.photos.filter((p) => p.url) : [];
+      step = draft.step || 1;
+      setTimeout(() => {
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+        setVal("titleInput", draft.title);
+        setVal("priceInput", draft.price);
+        setVal("descInput", draft.description);
+        setVal("carMake", draft.carMake);
+        setVal("carModel", draft.carModel);
+        setVal("carYear", draft.carYear);
+        setVal("carMileage", draft.carMileage);
+        setVal("landSize", draft.landSize);
+        setVal("landDeedStatus", draft.landDeedStatus);
+        const loc = document.getElementById("locationInput");
+        if (loc && locationLabel) loc.value = locationLabel;
+        updateStepUI();
+        renderPhotoGrid();
+        renderCategoryChips();
+        updateConditionChips();
+      }, 50);
+    } catch (e) {}
+  }
 
   const formBanner = document.getElementById("formBanner");
   const stepSubtitle = document.getElementById("stepSubtitle");
@@ -730,6 +801,7 @@
       }
 
       alert("Listing posted! Your item is now live.");
+      clearDraft();
       window.location.href = "/index.html";
     } catch {
       showError("Could not connect to the server.");
@@ -874,6 +946,8 @@
       const bootParams = new URLSearchParams(window.location.search);
       if (bootParams.get("copy")) await applyListingCopy(bootParams.get("copy"));
       else if (bootParams.has("similar")) applySimilarTemplate(parseInt(bootParams.get("similar"), 10));
+      else restoreDraft();
+      document.addEventListener("input", scheduleDraftSave);
     } catch (e) {
       showBlockedView("register");
     }

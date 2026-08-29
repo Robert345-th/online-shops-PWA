@@ -194,28 +194,52 @@
   }
   .load-more-btn:disabled { opacity: 0.6; cursor: wait; }
   .verified-chip {
-    display: inline-block; background: #1B7A4A; color: #fff;
-    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-top: 4px;
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 3px; margin-top: 4px;
+    letter-spacing: 0.04em; text-transform: uppercase;
   }
-  .top-sellers-wrap { padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
-  .top-sellers-head { padding: 0 12px 8px; }
-  .top-sellers-title { font-size: 15px; font-weight: 700; }
+  .verified-chip svg { width: 10px; height: 10px; display: block; }
+  .verified-chip path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+  .top-sellers-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
+  .top-sellers-head { padding: 0 14px 12px; }
+  .top-sellers-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .top-sellers-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
   .top-sellers-row {
-    display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 8px;
+    display: flex; gap: 18px; overflow-x: auto; padding: 0 14px 4px;
     -ms-overflow-style: none; scrollbar-width: none;
   }
   .top-sellers-row::-webkit-scrollbar { display: none; }
-  .top-seller-card {
-    flex-shrink: 0; width: 118px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 10px; text-align: center; cursor: pointer;
+  .top-seller-item {
+    flex-shrink: 0; width: 76px; text-align: center; cursor: pointer;
   }
+  .top-seller-pic { position: relative; width: 56px; height: 56px; margin: 0 auto 10px; }
   .top-seller-avatar {
-    width: 40px; height: 40px; border-radius: 20px; background: #E01B27; color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 8px;
+    width: 56px; height: 56px; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;
   }
-  .top-seller-name { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
-  .top-seller-rating { font-size: 11px; color: var(--price-red); font-weight: 600; }
+  .top-seller-item.r2 .top-seller-avatar { background: var(--black); color: var(--gold); }
+  .top-seller-item.r3 .top-seller-avatar { background: #5C5955; color: #fff; }
+  .top-seller-badge {
+    position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
+    background: var(--gold); color: var(--black);
+    font-size: 12px; font-weight: 900; line-height: 22px; text-align: center;
+  }
+  .top-seller-item.r2 .top-seller-badge { background: #C0C0C0; color: var(--black); }
+  .top-seller-item.r3 .top-seller-badge { background: #C47A3A; color: #fff; }
+  .top-seller-item.r4 .top-seller-badge,
+  .top-seller-item.r5 .top-seller-badge,
+  .top-seller-item.r6 .top-seller-badge,
+  .top-seller-item.r7 .top-seller-badge,
+  .top-seller-item.r8 .top-seller-badge {
+    background: var(--text); color: var(--bg);
+  }
+  .top-seller-name {
+    font-size: 11px; font-weight: 700; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .top-seller-rating { font-size: 10px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
   .card {
     width: calc(50% - 5px);
     background: var(--card); border: 1px solid var(--border); border-radius: 14px;
@@ -246,10 +270,29 @@
   .title { font-size: 12px; color: var(--text); margin: 3px 0; }
   .loc { font-size: 10.5px; color: var(--subtext); }
   .loc-dist { color: var(--orange); font-weight: 700; }
-  .empty, .loading, .error {
+  .empty, .loading, .error, .offline {
     text-align: center; padding: 60px 20px; color: var(--subtext);
   }
   .empty-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .status-chip {
+    position: absolute; left: 8px; top: 8px; z-index: 2;
+    background: var(--black); color: var(--gold); font-size: 9px; font-weight: 800;
+    padding: 3px 7px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px;
+  }
+  .recent-wrap { padding: 4px 0 12px; }
+  .recent-head { font-size: 12px; font-weight: 800; padding: 0 16px 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .recent-scroller { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+  .recent-card { width: 110px; flex-shrink: 0; cursor: pointer; }
+  .recent-card img, .recent-card .ph { width: 110px; height: 90px; object-fit: cover; background: var(--border); border-radius: 10px; display: block; }
+  .recent-card .ph { color: var(--subtext); }
+  .recent-title { font-size: 11px; margin-top: 6px; font-weight: 700; }
+  .recent-price { font-size: 11px; color: var(--price-red); font-weight: 800; }
+  .save-search-bar { padding: 0 16px 12px; }
+  .save-search-btn {
+    width: 100%; background: var(--card); border: 2px solid var(--text); color: var(--text);
+    padding: 12px; font-size: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer;
+  }
+  .save-search-btn.on { background: var(--black); color: var(--gold); border-color: var(--black); }
   .error { color: var(--price-red); }
 </style>
 </head>
@@ -314,6 +357,10 @@
 
 <div id="topSellersWrap" style="display:none;"></div>
 
+<div id="recentWrap" class="recent-wrap" style="display:none;"></div>
+<div id="saveSearchWrap" class="save-search-bar" style="display:none;">
+  <button type="button" class="save-search-btn" id="saveSearchBtn" data-i18n="save_search">Notify me of new matches</button>
+</div>
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
 <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
   <button type="button" class="load-more-btn" id="loadMoreBtn" data-i18n="load_more">Load more</button>
@@ -334,37 +381,56 @@
   const FEED_CACHE_KEY = "zm_feed_cache_v1";
   const FEED_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
-  function showCachedFeedIfFresh() {
+  function readFeedCache() {
     try {
-      const raw = sessionStorage.getItem(FEED_CACHE_KEY);
-      if (!raw) return false;
+      const raw = localStorage.getItem(FEED_CACHE_KEY) || sessionStorage.getItem(FEED_CACHE_KEY);
+      if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return false;
-      if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
-      listings = parsed.items;
-      serverOffset = parsed.items.length;
-      hasMore = parsed.hasMore !== false;
-      applyListingDistances();
-      renderFeed();
-      return true;
+      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
+      return parsed;
     } catch {
-      return false;
+      return null;
     }
   }
 
+  function applyCachedListings(parsed) {
+    listings = parsed.items;
+    serverOffset = parsed.items.length;
+    hasMore = parsed.hasMore !== false;
+    feedReady = true;
+    applyListingDistances();
+    renderFeed();
+  }
+
+  function showCachedFeedIfFresh() {
+    const parsed = readFeedCache();
+    if (!parsed) return false;
+    if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
+    applyCachedListings(parsed);
+    return true;
+  }
+
+  function showCachedFeedAny() {
+    const parsed = readFeedCache();
+    if (!parsed) return false;
+    applyCachedListings(parsed);
+    return true;
+  }
+
   function saveFeedCache() {
-    try {
-      sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({
-        ts: Date.now(),
-        items: listings.slice(0, PAGE_SIZE),
-        hasMore,
-      }));
-    } catch { /* ignore */ }
+    const payload = JSON.stringify({
+      ts: Date.now(),
+      items: listings.slice(0, PAGE_SIZE),
+      hasMore,
+    });
+    try { sessionStorage.setItem(FEED_CACHE_KEY, payload); } catch { /* ignore */ }
+    try { localStorage.setItem(FEED_CACHE_KEY, payload); } catch { /* ignore */ }
   }
 
   let activeCategory = "All";
   let sortBy = "Newest";
   let listings = [];
+  let feedReady = false;
   let serverOffset = 0;
   let hasMore = true;
   let loadingMore = false;
@@ -553,17 +619,44 @@
     });
   }
 
-  function renderFeedError() {
-    feed.className = "error";
+  function isOffline() {
+    return typeof navigator !== "undefined" && navigator.onLine === false;
+  }
+
+  function isNetworkFailure(err) {
+    if (isOffline()) return true;
+    if (!err) return false;
+    const name = err.name || "";
+    const msg = String(err.message || err);
+    return name === "AbortError" || name === "TypeError" || /failed to fetch|networkerror|load failed|aborted/i.test(msg);
+  }
+
+  function renderFeedError(offline) {
+    const noData = offline || isOffline();
+    feed.className = noData ? "offline" : "error";
     feed.innerHTML = `
-      <div>${t("feed_error")}</div>
+      <div>${noData ? t("feed_offline") : t("feed_error")}</div>
       <button type="button" class="empty-btn" id="feedRetryBtn">${t("gate_try_again")}</button>`;
     document.getElementById("feedRetryBtn")?.addEventListener("click", () => loadListings(true));
     updateLoadMoreButton();
   }
 
+  function fetchListingsPage(url) {
+    if (typeof AbortController === "undefined") return fetch(url, { cache: "no-store" });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    return fetch(url, { signal: ctrl.signal, cache: "no-store" }).finally(() => clearTimeout(timer));
+  }
+
   async function loadListings(reset = true) {
     if (loadingMore) return;
+    if (reset && isOffline() && !listings.length) {
+      if (showCachedFeedAny()) return;
+      renderFeedError(true);
+      return;
+    }
+    const prevOffset = serverOffset;
+    const prevHasMore = hasMore;
     if (reset) {
       serverOffset = 0;
       hasMore = true;
@@ -578,17 +671,27 @@
       loadMoreBtn.textContent = t("loading");
     }
     try {
-      const res = await fetch(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
+      const res = await fetchListingsPage(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
       if (!res.ok) throw new Error("Server error " + res.status);
       const batch = await res.json();
+      if (!Array.isArray(batch)) throw new Error("Bad listings response");
       listings = reset ? batch : listings.concat(batch);
       serverOffset += batch.length;
       hasMore = batch.length === PAGE_SIZE;
+      feedReady = true;
       applyListingDistances();
       renderFeed();
       if (reset) saveFeedCache();
     } catch (e) {
-      if (reset) renderFeedError();
+      const network = isNetworkFailure(e);
+      if (reset && listings.length) {
+        serverOffset = prevOffset;
+        hasMore = prevHasMore;
+      } else if (reset && network && showCachedFeedAny()) {
+        /* keep last listings while data is off */
+      } else if (reset) {
+        renderFeedError(network);
+      }
       console.error(e);
     } finally {
       loadingMore = false;
@@ -600,7 +703,7 @@
   }
 
   function updateLoadMoreButton() {
-    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("loading")) {
+    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("offline") || feed.classList.contains("loading")) {
       loadMoreWrap.style.display = "none";
       return;
     }
@@ -636,6 +739,11 @@
     }
 
     if (!items.length) {
+      if (!feedReady) return;
+      if (!listings.length && isOffline()) {
+        renderFeedError(true);
+        return;
+      }
       feed.className = "empty";
       feed.innerHTML = `
         <div>${t("feed_empty")}</div>
@@ -668,7 +776,69 @@
     });
     observeLazyImages(feed);
     updateLoadMoreButton();
+    updateSaveSearchBar();
   }
+
+  const RECENT_KEY = "zm_recent_listings";
+  function readRecent() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
+  }
+  function paintRecent() {
+    const wrap = document.getElementById("recentWrap");
+    if (!wrap) return;
+    const items = readRecent().slice(0, 10);
+    if (!items.length) { wrap.style.display = "none"; return; }
+    wrap.style.display = "block";
+    wrap.innerHTML = `<div class="recent-head">${t("recently_viewed")}</div>
+      <div class="recent-scroller">${items.map((item) => `
+        <div class="recent-card" data-id="${item.id}">
+          ${item.photo ? `<img src="${escHtml(item.photo)}" alt="">` : `<div class="ph"></div>`}
+          <div class="recent-price">K${escHtml(item.price)}</div>
+          <div class="recent-title">${escHtml(item.title || "")}</div>
+        </div>`).join("")}</div>`;
+    wrap.querySelectorAll(".recent-card").forEach((el) => {
+      el.addEventListener("click", () => { window.location.href = `/listing.html?id=${el.dataset.id}`; });
+    });
+  }
+
+  function currentSearchPayload() {
+    const query = searchInput.value.trim();
+    const category = activeCategory || "All";
+    return { query, category, city: "", max_price: null };
+  }
+
+  function updateSaveSearchBar() {
+    const wrap = document.getElementById("saveSearchWrap");
+    const btn = document.getElementById("saveSearchBtn");
+    if (!wrap || !btn) return;
+    const payload = currentSearchPayload();
+    const show = !!(payload.query || (payload.category && payload.category !== "All"));
+    wrap.style.display = show ? "block" : "none";
+    btn.classList.remove("on");
+    btn.textContent = t("save_search");
+  }
+
+  document.getElementById("saveSearchBtn")?.addEventListener("click", async () => {
+    if (!zmRequireLogin("/saved-searches.html")) return;
+    const btn = document.getElementById("saveSearchBtn");
+    const payload = currentSearchPayload();
+    try {
+      const res = await fetch(`${API_URL}/saved-searches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("zm_token")}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || t("feed_error")); return; }
+      btn.classList.add("on");
+      btn.textContent = t("save_search_saved");
+    } catch (e) {
+      alert(t("feed_error"));
+    }
+  });
 
   function photoPlaceholder(size) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" class="photo-ph"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>`;
@@ -727,13 +897,14 @@
       <div class="card" id="card-${item.id}">
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
+          ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>` : ""}
           <button type="button" class="fav-btn" data-id="${item.id}" aria-label="${isFav ? t("saved_listing") : t("save_listing")}" aria-pressed="${isFav ? "true" : "false"}">${heartIcon(isFav)}</button>
         </div>
         <div class="card-info">
           <div class="price">K${escHtml(item.price)}</div>
           <div class="title">${escHtml(item.title)}</div>
           <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
-          ${item.seller_nrc_verified ? `<div class="verified-chip">✓ ${t("seller_id_verified", "ID Verified")}</div>` : ""}
+          ${item.seller_nrc_verified ? `<div class="verified-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${t("seller_id_verified", "ID Verified")}</div>` : ""}
         </div>
       </div>`;
   }
@@ -794,11 +965,15 @@
             <div class="top-sellers-sub">${t("top_sellers_sub")}</div>
           </div>
           <div class="top-sellers-row">
-            ${sellers.slice(0, 8).map((s) => {
+            ${sellers.slice(0, 8).map((s, i) => {
               const name = s.shop_name || s.name || "Seller";
+              const rank = i + 1;
               return `
-                <div class="top-seller-card" data-seller-id="${s.id}">
-                  <div class="top-seller-avatar">${name.charAt(0).toUpperCase()}</div>
+                <div class="top-seller-item r${rank}" data-seller-id="${s.id}">
+                  <div class="top-seller-pic">
+                    <div class="top-seller-avatar">${name.charAt(0).toUpperCase()}</div>
+                    <div class="top-seller-badge">${rank}</div>
+                  </div>
                   <div class="top-seller-name">${name}</div>
                   <div class="top-seller-rating">★ ${s.average} (${s.total})</div>
                 </div>`;
@@ -855,6 +1030,7 @@
   renderChips();
   loadTopSellers();
   showCachedFeedIfFresh();
+  paintRecent();
   loadFavoriteIds().then(() => {
     if (feed.classList.contains("grid")) renderFeed();
   });
@@ -869,7 +1045,9 @@
     setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
     applyListingDistances();
-    loadFavoriteIds().then(() => renderFeed());
+    loadFavoriteIds().then(() => {
+      if (feedReady) renderFeed();
+    });
   });
   window.addEventListener("langchange", () => {
     const mapLocMsg = document.getElementById("mapLocNeededMsg");
@@ -886,11 +1064,22 @@
         window.location.href = "/post-listing.html";
       });
     }
-    if (feed.classList.contains("error")) renderFeedError();
+    if (feed.classList.contains("offline")) renderFeedError(true);
+    else if (feed.classList.contains("error")) renderFeedError(false);
     if (feed.classList.contains("loading")) feed.textContent = t("loading_listings");
     if (feed.classList.contains("grid")) renderFeed();
   });
-  window.addEventListener("lowdatachange", () => renderFeed());
+  window.addEventListener("lowdatachange", () => {
+    if (feedReady) renderFeed();
+  });
+  window.addEventListener("online", () => {
+    if (!listings.length || feed.classList.contains("offline") || feed.classList.contains("error")) {
+      loadListings(true);
+    }
+  });
+  window.addEventListener("offline", () => {
+    if (!listings.length && !showCachedFeedAny()) renderFeedError(true);
+  });
 
 </script>
 </body>

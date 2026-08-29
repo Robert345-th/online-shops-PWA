@@ -1,4 +1,4 @@
-const CACHE = "zedmarket-shell-v16";
+const CACHE = "zedmarket-shell-v51";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   OFFLINE_URL,
@@ -52,9 +52,31 @@ function isSameOrigin(request) {
   }
 }
 
+function isHtmlPage(request) {
+  const path = new URL(request.url).pathname;
+  return path.endsWith(".html") || path === "/";
+}
+
 function isAppShell(request) {
   const path = new URL(request.url).pathname;
-  return path.endsWith(".html") || path.startsWith("/js/") || path.startsWith("/css/");
+  return path.startsWith("/js/") || path.startsWith("/css/");
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) cache.put(request, response.clone());
+    return response;
+  } catch (e) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    if (isNavigationRequest(request)) {
+      const offline = await cache.match(OFFLINE_URL);
+      if (offline) return offline;
+    }
+    return new Response("Offline", { status: 503, statusText: "Offline" });
+  }
 }
 
 async function staleWhileRevalidate(request) {
@@ -96,7 +118,12 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (!isSameOrigin(event.request)) return;
 
-  if (isNavigationRequest(event.request) || isAppShell(event.request)) {
+  if (isNavigationRequest(event.request) || isHtmlPage(event.request)) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  if (isAppShell(event.request)) {
     event.respondWith(staleWhileRevalidate(event.request));
     return;
   }

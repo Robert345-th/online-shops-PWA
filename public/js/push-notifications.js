@@ -116,7 +116,8 @@
   }
 
   async function syncPushSubscription() {
-    if (isPushOptOut() || !getToken() || !isPushSupported()) return;
+    if (!getToken() || !isPushSupported()) return;
+    if (Notification.permission === "granted") setPushOptOut(false);
     if (Notification.permission !== "granted") {
       setPushEnabled(false);
       return;
@@ -145,7 +146,9 @@
   }
 
   async function autoEnablePushNotifications() {
-    if (isPushOptOut()) return false;
+    if (isPushSupported() && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      setPushOptOut(false);
+    }
 
     const bridge = window.ZedMarketLocation;
     if (bridge && typeof bridge.requestNotificationPermission === "function") {

@@ -34,6 +34,8 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -47,6 +49,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -91,6 +94,9 @@ public class ZedMarketWebViewActivity extends Activity {
     private int mStatusBarColor = FALLBACK_COLOR;
     private WebView mWebView;
     private final List<Uri> mExtraOrigins = new ArrayList<>();
+    private View mFullScreenView;
+    private WebChromeClient.CustomViewCallback mCustomViewCallback;
+    private int mOriginalOrientation;
 
     private String mPendingGeoOrigin;
     private GeolocationPermissions.Callback mPendingGeoCallback;
@@ -118,6 +124,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private long mLastNotifyAskAt;
     private long mStoppedAt;
     private boolean mAskedNotifyThisOpen;
+    private long mLastBackAt;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private final Runnable mAskNotifyRunnable = this::maybeAskNotificationPermission;
 
@@ -160,12 +167,11 @@ public class ZedMarketWebViewActivity extends Activity {
             }
 
             mStatusBarColor = getIntent().getIntExtra(KEY_STATUS_BAR_COLOR, FALLBACK_COLOR);
-            int navigationBarColor = getIntent().getIntExtra(KEY_NAVIGATION_BAR_COLOR, FALLBACK_COLOR);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 try {
                     getWindow().setStatusBarColor(mStatusBarColor);
-                    getWindow().setNavigationBarColor(navigationBarColor);
+                    getWindow().setNavigationBarColor(Color.TRANSPARENT);
                 } catch (Exception ignored) {
                     // Some OEMs reject status/nav bar color changes.
                 }
@@ -194,6 +200,13 @@ public class ZedMarketWebViewActivity extends Activity {
             setContentView(mWebView, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
+            hideSystemNavigation();
+
+            if (Build.VERSION.SDK_INT >= 33) {
+                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                        OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                        this::onSystemBack);
+            }
 
             if (savedInstanceState != null) {
                 mWebView.restoreState(savedInstanceState);
@@ -216,6 +229,7 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mWebView != null) {
             mWebView.onResume();
         }
+        hideSystemNavigation();
         if (mRetryLocationAfterSettings) {
             if (mOpenedAppSettingsAt > 0
                     && SystemClock.elapsedRealtime() - mOpenedAppSettingsAt < 800L) {
@@ -229,6 +243,47 @@ public class ZedMarketWebViewActivity extends Activity {
                 denyInAppLocation();
             }
         }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            hideSystemNavigation();
+        }
+    }
+
+    /** Hide the 3 Android buttons (Back / Home / Recents) while ZedMarket is open. */
+    private void hideSystemNavigation() {
+        try {
+            if (Build.VERSION.SDK_INT >= 30) {
+                WindowInsetsController controller = getWindow().getInsetsController();
+                if (controller != null) {
+                    controller.hide(WindowInsets.Type.navigationBars());
+                    controller.setSystemBarsBehavior(
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
+            } else {
+                View decor = getWindow().getDecorView();
+                decor.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
+        } catch (Exception ignored) {
+            // Some OEMs ignore immersive flags.
+        }
+        markImmersiveInWeb();
+    }
+
+    private void markImmersiveInWeb() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.post(() -> mWebView.evaluateJavascript(
+                "(function(){try{document.documentElement.classList.add('play-store-immersive');}catch(e){}})();",
+                null));
     }
 
     @Override
@@ -269,13 +324,111 @@ public class ZedMarketWebViewActivity extends Activity {
         super.onConfigurationChanged(newConfig);
     }
 
+    private void onSystemBack() {
+        if (!handleWebBack()) {
+            finish();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!handleWebBack()) {
+            super.onBackPressed();
+        }
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && mWebView != null && mWebView.canGoBack()) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (handleWebBack()) {
+                return true;
+            }
+            return super.onKeyDown(keyCode, event);
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private boolean isHomeUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        Uri uri = Uri.parse(url);
+        if (!isZedMarketHost(uri)) {
+            return false;
+        }
+        String path = uri.getPath();
+        return path == null || path.isEmpty() || "/".equals(path) || "/index.html".equals(path);
+    }
+
+    private void goHome() {
+        if (mWebView == null) {
+            return;
+        }
+        String home = mLaunchUrl != null
+                ? mLaunchUrl.toString()
+                : "https://zedmarket.app/?utm_source=android";
+        mWebView.loadUrl(home);
+    }
+
+    private void hideCustomViewIfOpen() {
+        if (mFullScreenView == null) {
+            return;
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        ViewGroup parent = (ViewGroup) mFullScreenView.getParent();
+        if (parent != null) {
+            parent.removeView(mFullScreenView);
+        }
+        mFullScreenView = null;
+        if (mCustomViewCallback != null) {
+            mCustomViewCallback.onCustomViewHidden();
+            mCustomViewCallback = null;
+        }
+        setRequestedOrientation(mOriginalOrientation);
+        hideSystemNavigation();
+    }
+
+    /** True if back was consumed (stay in app). False means the activity should exit. */
+    private boolean handleWebBack() {
+        long now = SystemClock.elapsedRealtime();
+        if (mLastBackAt > 0 && now - mLastBackAt < 400L) {
+            return true;
+        }
+        mLastBackAt = now;
+        if (mFullScreenView != null) {
+            hideCustomViewIfOpen();
+            return true;
+        }
+        if (mWebView == null) {
+            return false;
+        }
+        if (mWebView.canGoBack()) {
             mWebView.goBack();
             return true;
         }
-        return super.onKeyDown(keyCode, event);
+        if (isHomeUrl(mWebView.getUrl())) {
+            return false;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{if(window.__zmHandleBack)return!!window.__zmHandleBack();return false;}catch(e){return false;}})();",
+                value -> {
+                    boolean handled = "true".equals(value) || "\"true\"".equals(value);
+                    if (handled) {
+                        return;
+                    }
+                    runOnUiThread(() -> {
+                        if (mWebView == null) {
+                            finish();
+                            return;
+                        }
+                        if (isHomeUrl(mWebView.getUrl())) {
+                            finish();
+                        } else {
+                            goHome();
+                        }
+                    });
+                });
+        return true;
     }
 
     @Override
@@ -821,6 +974,7 @@ public class ZedMarketWebViewActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 injectLocationHelper(view);
+                hideSystemNavigation();
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
                     mMainHandler.removeCallbacks(mAskNotifyRunnable);
@@ -899,8 +1053,6 @@ public class ZedMarketWebViewActivity extends Activity {
 
     private WebChromeClient createWebChromeClient() {
         return new WebChromeClient() {
-            private View fullScreenView;
-            private int originalOrientation;
 
             @Override
             public void onGeolocationPermissionsShowPrompt(
@@ -954,13 +1106,14 @@ public class ZedMarketWebViewActivity extends Activity {
 
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
-                if (fullScreenView != null) {
-                    onHideCustomView();
+                if (mFullScreenView != null) {
+                    hideCustomViewIfOpen();
                 }
-                fullScreenView = view;
-                originalOrientation = getRequestedOrientation();
+                mFullScreenView = view;
+                mCustomViewCallback = callback;
+                mOriginalOrientation = getRequestedOrientation();
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                getWindow().addContentView(fullScreenView,
+                getWindow().addContentView(mFullScreenView,
                         new FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -969,13 +1122,7 @@ public class ZedMarketWebViewActivity extends Activity {
 
             @Override
             public void onHideCustomView() {
-                if (fullScreenView == null) {
-                    return;
-                }
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                ((ViewGroup) fullScreenView.getParent()).removeView(fullScreenView);
-                fullScreenView = null;
-                setRequestedOrientation(originalOrientation);
+                hideCustomViewIfOpen();
             }
         };
     }
