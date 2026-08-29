@@ -28,6 +28,25 @@ let gradle = fs.readFileSync(gradlePath, "utf8");
 gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${code}`);
 gradle = gradle.replace(/versionName\s+"[^"]*"/, `versionName "${name}"`);
 
+function setSdk(src, key, value) {
+  const spaced = new RegExp(`${key}\\s+\\d+`);
+  const equals = new RegExp(`${key}\\s*=\\s*\\d+`);
+  if (spaced.test(src)) return src.replace(spaced, `${key} ${value}`);
+  if (equals.test(src)) return src.replace(equals, `${key} = ${value}`);
+  return src;
+}
+gradle = setSdk(gradle, "compileSdkVersion", 36);
+gradle = setSdk(gradle, "compileSdk", 36);
+gradle = setSdk(gradle, "targetSdkVersion", 36);
+gradle = setSdk(gradle, "targetSdk", 36);
+if (!/targetSdk(Version)?\s*=?\s*36/.test(gradle)) {
+  gradle = gradle.replace(
+    /minSdk(Version)?\s*=?\s*\d+/,
+    (m) => `${m}\n        targetSdk 36`
+  );
+}
+console.log("Set compileSdk/targetSdk to 36 for Play Console.");
+
 if (fs.existsSync(proguardSrc)) {
   fs.copyFileSync(proguardSrc, proguardDest);
   if (!gradle.includes("proguard-rules.pro")) {

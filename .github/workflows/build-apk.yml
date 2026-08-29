@@ -29,6 +29,11 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36"
+
       - name: Restore signing keystore
         working-directory: android
         env:
