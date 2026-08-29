@@ -245,16 +245,27 @@
   window.showInAppBrowserGuide = goToInstallHelp;
   window.goToInstallHelp = goToInstallHelp;
 
+  function lockPortrait() {
+    try {
+      if (screen.orientation && typeof screen.orientation.lock === "function") {
+        screen.orientation.lock("portrait").catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   applyPlayStoreWebViewInsets();
+  lockPortrait();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       registerPlayStoreServiceWorker();
       applyPlayStoreWebViewInsets();
+      lockPortrait();
       maybeRedirectToChrome();
     });
   } else {
     registerPlayStoreServiceWorker();
     applyPlayStoreWebViewInsets();
+    lockPortrait();
     maybeRedirectToChrome();
   }
 })();

@@ -81,6 +81,7 @@ if (!manifest.includes("RECORD_AUDIO")) {
 }
 
 const webViewLauncherActivity = `<activity android:name=".ZedMarketWebViewActivity"
+            android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
             android:exported="true"
             android:launchMode="singleTask"
@@ -126,6 +127,16 @@ if (!manifest.includes('android:name=".ZedMarketWebViewActivity"')
   console.error("Failed to make ZedMarketWebViewActivity the home-screen launcher.");
   process.exit(1);
 }
+
+manifest = manifest.replace(
+  /<activity\b([^>]*?)(\s*\/>|>)/g,
+  (full, attrs, end) => {
+    if (/android:screenOrientation=/.test(attrs)) {
+      return `<activity${attrs.replace(/android:screenOrientation="[^"]*"/, 'android:screenOrientation="portrait"')}${end}`;
+    }
+    return `<activity${attrs}\n            android:screenOrientation="portrait"${end}`;
+  }
+);
 
 fs.writeFileSync(manifestPath, manifest);
 
