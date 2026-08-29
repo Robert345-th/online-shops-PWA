@@ -80,6 +80,23 @@ if (!manifest.includes("RECORD_AUDIO")) {
   }
 }
 
+const optionalHardware = `        <uses-feature android:name="android.hardware.camera" android:required="false" />
+        <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+        <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+        <uses-feature android:name="android.hardware.microphone" android:required="false" />
+        <uses-feature android:name="android.hardware.location" android:required="false" />
+        <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+        <uses-feature android:name="android.hardware.location.network" android:required="false" />
+`;
+if (!manifest.includes('android.hardware.camera" android:required="false"')) {
+  if (!manifest.includes("<application")) {
+    console.error("AndroidManifest.xml has no <application> tag.");
+    process.exit(1);
+  }
+  manifest = manifest.replace("<application", `${optionalHardware}\n    <application`);
+  console.log("Marked camera, microphone, and GPS as optional so Play does not drop devices.");
+}
+
 const webViewLauncherActivity = `<activity android:name=".ZedMarketWebViewActivity"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|smallestScreenSize|screenLayout"
