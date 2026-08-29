@@ -54,6 +54,9 @@
         --ps-top-inset: max(env(safe-area-inset-top, 0px), 28px);
         --ps-bottom-inset: max(env(safe-area-inset-bottom, 0px), 48px);
       }
+      html.play-store-webview.play-store-immersive {
+        --ps-bottom-inset: env(safe-area-inset-bottom, 0px);
+      }
       html.play-store-webview .topbar {
         padding-top: calc(16px + var(--ps-top-inset));
       }

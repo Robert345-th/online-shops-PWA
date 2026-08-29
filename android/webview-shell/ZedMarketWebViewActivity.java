@@ -34,6 +34,8 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -164,12 +166,11 @@ public class ZedMarketWebViewActivity extends Activity {
             }
 
             mStatusBarColor = getIntent().getIntExtra(KEY_STATUS_BAR_COLOR, FALLBACK_COLOR);
-            int navigationBarColor = getIntent().getIntExtra(KEY_NAVIGATION_BAR_COLOR, FALLBACK_COLOR);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 try {
                     getWindow().setStatusBarColor(mStatusBarColor);
-                    getWindow().setNavigationBarColor(navigationBarColor);
+                    getWindow().setNavigationBarColor(Color.TRANSPARENT);
                 } catch (Exception ignored) {
                     // Some OEMs reject status/nav bar color changes.
                 }
@@ -198,6 +199,7 @@ public class ZedMarketWebViewActivity extends Activity {
             setContentView(mWebView, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
+            hideSystemNavigation();
 
             if (Build.VERSION.SDK_INT >= 33) {
                 getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
@@ -226,6 +228,7 @@ public class ZedMarketWebViewActivity extends Activity {
         if (mWebView != null) {
             mWebView.onResume();
         }
+        hideSystemNavigation();
         if (mRetryLocationAfterSettings) {
             if (mOpenedAppSettingsAt > 0
                     && SystemClock.elapsedRealtime() - mOpenedAppSettingsAt < 800L) {
@@ -239,6 +242,47 @@ public class ZedMarketWebViewActivity extends Activity {
                 denyInAppLocation();
             }
         }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            hideSystemNavigation();
+        }
+    }
+
+    /** Hide the 3 Android buttons (Back / Home / Recents) while ZedMarket is open. */
+    private void hideSystemNavigation() {
+        try {
+            if (Build.VERSION.SDK_INT >= 30) {
+                WindowInsetsController controller = getWindow().getInsetsController();
+                if (controller != null) {
+                    controller.hide(WindowInsets.Type.navigationBars());
+                    controller.setSystemBarsBehavior(
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
+            } else {
+                View decor = getWindow().getDecorView();
+                decor.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
+        } catch (Exception ignored) {
+            // Some OEMs ignore immersive flags.
+        }
+        markImmersiveInWeb();
+    }
+
+    private void markImmersiveInWeb() {
+        if (mWebView == null) {
+            return;
+        }
+        mWebView.post(() -> mWebView.evaluateJavascript(
+                "(function(){try{document.documentElement.classList.add('play-store-immersive');}catch(e){}})();",
+                null));
     }
 
     @Override
@@ -340,6 +384,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mCustomViewCallback = null;
         }
         setRequestedOrientation(mOriginalOrientation);
+        hideSystemNavigation();
     }
 
     /** True if back was consumed (stay in app). False means the activity should exit. */
@@ -930,6 +975,7 @@ public class ZedMarketWebViewActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 injectLocationHelper(view);
+                hideSystemNavigation();
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
                     mMainHandler.removeCallbacks(mAskNotifyRunnable);
