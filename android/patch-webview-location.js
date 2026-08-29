@@ -80,21 +80,31 @@ if (!manifest.includes("RECORD_AUDIO")) {
   }
 }
 
-const optionalHardware = `        <uses-feature android:name="android.hardware.camera" android:required="false" />
-        <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-        <uses-feature android:name="android.hardware.camera.front" android:required="false" />
-        <uses-feature android:name="android.hardware.microphone" android:required="false" />
-        <uses-feature android:name="android.hardware.location" android:required="false" />
-        <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-        <uses-feature android:name="android.hardware.location.network" android:required="false" />
-`;
-if (!manifest.includes('android.hardware.camera" android:required="false"')) {
+const optionalFeatures = [
+  "android.hardware.camera",
+  "android.hardware.camera.any",
+  "android.hardware.camera.autofocus",
+  "android.hardware.camera.front",
+  "android.hardware.microphone",
+  "android.hardware.location",
+  "android.hardware.location.gps",
+  "android.hardware.location.network",
+  "android.hardware.screen.portrait",
+  "android.hardware.screen.landscape",
+];
+const missingFeatures = optionalFeatures.filter(
+  (name) => !manifest.includes(`android:name="${name}"`)
+);
+if (missingFeatures.length) {
   if (!manifest.includes("<application")) {
     console.error("AndroidManifest.xml has no <application> tag.");
     process.exit(1);
   }
-  manifest = manifest.replace("<application", `${optionalHardware}\n    <application`);
-  console.log("Marked camera, microphone, and GPS as optional so Play does not drop devices.");
+  const xml = missingFeatures
+    .map((name) => `        <uses-feature android:name="${name}" android:required="false" />`)
+    .join("\n") + "\n";
+  manifest = manifest.replace("<application", `${xml}\n    <application`);
+  console.log("Marked optional hardware so Play does not drop devices:", missingFeatures.join(", "));
 }
 
 const webViewLauncherActivity = `<activity android:name=".ZedMarketWebViewActivity"
