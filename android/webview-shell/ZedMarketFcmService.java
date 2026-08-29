@@ -1,6 +1,5 @@
 package app.zedmarket.twa;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -30,6 +29,8 @@ public class ZedMarketFcmService extends FirebaseMessagingService {
         String title = data.get("title");
         String body = data.get("body");
         String url = data.get("url");
+        String type = data.get("type");
+        String otherUserId = data.get("otherUserId");
         if (message.getNotification() != null) {
             if (title == null || title.isEmpty()) title = message.getNotification().getTitle();
             if (body == null || body.isEmpty()) body = message.getNotification().getBody();
@@ -37,6 +38,6 @@ public class ZedMarketFcmService extends FirebaseMessagingService {
         if ((title == null || title.isEmpty()) && (body == null || body.isEmpty())) {
             return;
         }
-        ZedMarketNotifier.show(this, title, body, url);
+        ZedMarketNotifier.show(this, title, body, url, type, otherUserId);
     }
 }

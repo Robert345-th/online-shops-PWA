@@ -32,6 +32,8 @@ if (!fs.existsSync(gradlePath) || !fs.existsSync(manifestPath)) {
 
 copyJava("ZedMarketNotifier.java");
 copyJava("ZedMarketFcmService.java");
+copyJava("ZedMarketAuthStore.java");
+copyJava("ZedMarketReplyReceiver.java");
 
 let gradle = fs.readFileSync(gradlePath, "utf8");
 if (!gradle.includes("firebase-messaging")) {
@@ -92,6 +94,13 @@ if (!manifest.includes("ZedMarketFcmService")) {
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".ZedMarketReplyReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.zedmarket.twa.REPLY" />
+            </intent-filter>
+        </receiver>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="zedmarket_messages" />`;
@@ -100,6 +109,20 @@ if (!manifest.includes("ZedMarketFcmService")) {
     fs.writeFileSync(manifestPath, manifest);
     console.log("Registered ZedMarketFcmService in AndroidManifest.xml");
   }
+}
+
+if (!manifest.includes("ZedMarketReplyReceiver") && manifest.includes("</application>")) {
+  const receiverXml = `
+        <receiver
+            android:name=".ZedMarketReplyReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.zedmarket.twa.REPLY" />
+            </intent-filter>
+        </receiver>`;
+  manifest = manifest.replace("</application>", `${receiverXml}\n    </application>`);
+  fs.writeFileSync(manifestPath, manifest);
+  console.log("Registered ZedMarketReplyReceiver in AndroidManifest.xml");
 }
 
 if (!manifest.includes("OPEN_ZEDMARKET") && manifest.includes(".ZedMarketWebViewActivity")) {

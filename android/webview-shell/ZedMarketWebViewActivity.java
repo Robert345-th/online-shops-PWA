@@ -1010,6 +1010,7 @@ public class ZedMarketWebViewActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 injectLocationHelper(view);
                 injectFcmToken(view);
+                syncJwtFromWeb(view);
                 hideSystemNavigation();
                 if (!mAskedNotifyThisOpen) {
                     mAskedNotifyThisOpen = true;
@@ -1232,6 +1233,25 @@ public class ZedMarketWebViewActivity extends Activity {
         } catch (Throwable ignored) {
             // Firebase is optional until google-services.json is present.
         }
+    }
+
+    private void syncJwtFromWeb(WebView view) {
+        if (view == null) return;
+        view.evaluateJavascript(
+                "(function(){try{return localStorage.getItem('zm_token')||'';}catch(e){return '';}})()",
+                raw -> {
+                    String token = "";
+                    if (raw != null && !"null".equals(raw)) {
+                        try {
+                            Object parsed = new org.json.JSONTokener(raw).nextValue();
+                            token = parsed == null ? "" : String.valueOf(parsed);
+                            if ("null".equals(token)) token = "";
+                        } catch (Exception e) {
+                            token = "";
+                        }
+                    }
+                    ZedMarketAuthStore.saveJwt(ZedMarketWebViewActivity.this, token);
+                });
     }
 
     private void injectFcmToken(WebView view) {
@@ -1493,6 +1513,11 @@ public class ZedMarketWebViewActivity extends Activity {
             String token = getSharedPreferences(PREFS_LOC, MODE_PRIVATE)
                     .getString(KEY_FCM_TOKEN, "");
             return token == null ? "" : token;
+        }
+
+        @JavascriptInterface
+        public void saveAuthToken(String token) {
+            ZedMarketAuthStore.saveJwt(ZedMarketWebViewActivity.this, token);
         }
 
         @JavascriptInterface

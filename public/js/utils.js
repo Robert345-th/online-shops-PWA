@@ -20,9 +20,18 @@
       .replace(/'/g, "&#39;");
   }
 
+  function syncNativeAuth() {
+    try {
+      if (window.ZedMarketLocation && typeof window.ZedMarketLocation.saveAuthToken === "function") {
+        window.ZedMarketLocation.saveAuthToken(localStorage.getItem("zm_token") || "");
+      }
+    } catch (e) {}
+  }
+
   function clearAuth() {
     localStorage.removeItem("zm_token");
     localStorage.removeItem("zm_user");
+    syncNativeAuth();
   }
 
   function zmIsLoggedIn() {
@@ -188,6 +197,19 @@
 
   installFetchAuthGuard();
   registerSiteServiceWorker();
+  syncNativeAuth();
+  try {
+    const origSet = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (key, value) {
+      origSet(key, value);
+      if (key === "zm_token") syncNativeAuth();
+    };
+    const origRemove = localStorage.removeItem.bind(localStorage);
+    localStorage.removeItem = function (key) {
+      origRemove(key);
+      if (key === "zm_token") syncNativeAuth();
+    };
+  } catch (e) {}
 
   /* ── Faster navigation: preconnect, loading bar, prefetch ── */
   if (!document.querySelector('link[rel="preconnect"][href*="railway"]')) {
