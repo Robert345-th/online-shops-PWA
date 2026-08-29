@@ -199,6 +199,34 @@
     openInChrome();
   }
 
+  function isHomePath() {
+    const p = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    return p === "/" || p === "/index.html";
+  }
+
+  function closeOpenOverlay() {
+    const open = document.querySelectorAll(
+      ".viewer-overlay.open, .modal-overlay.open, .camera-modal.open, .preview-overlay.open, #menuOverlay.open, #settingsOverlay.open, #messageActionsOverlay.open, #callConfirmOverlay.open, #chatPrefOverlay.open"
+    );
+    if (!open.length) return false;
+    open[open.length - 1].classList.remove("open");
+    return true;
+  }
+
+  window.__zmHandleBack = function () {
+    if (closeOpenOverlay()) return true;
+    if (isHomePath()) return false;
+    try {
+      const ref = document.referrer || "";
+      if (ref.indexOf(location.origin) === 0) {
+        history.back();
+        return true;
+      }
+    } catch (e) {}
+    location.href = "/index.html";
+    return true;
+  };
+
   window.isPlayStoreApp = isPlayStoreApp;
   window.isAndroidWebView = isAndroidWebView;
   window.openInChrome = openInChrome;
