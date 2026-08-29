@@ -261,14 +261,19 @@
       document.body.classList.remove("zm-nav-done");
     };
 
-    window.zmPrefetchListing = function (id, data) {
-      try {
-        sessionStorage.setItem("zm_listing_" + id, JSON.stringify({ ts: Date.now(), data }));
-      } catch (e) {}
+    window.zmPrefetchListing = function (id) {
       prefetchUrl("/listing.html?id=" + id);
       if (!prefetched.has("api:" + id)) {
         prefetched.add("api:" + id);
-        fetch(`${API_URL}/listings/${id}`).catch(() => {});
+        fetch(`${API_URL}/listings/${id}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((full) => {
+            if (!full || !full.id) return;
+            try {
+              sessionStorage.setItem("zm_listing_" + id, JSON.stringify({ ts: Date.now(), data: full }));
+            } catch (e) {}
+          })
+          .catch(() => {});
       }
     };
 

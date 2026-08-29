@@ -158,7 +158,7 @@
     content.innerHTML = `<div class="list">${posts.map(renderCard).join("")}</div>`;
 
     posts.forEach(post => {
-      const isMine = user && post.user_id === user.id;
+      const isMine = user && Number(post.user_id) === Number(user.id);
       const btn = document.getElementById(`action-${post.id}`);
       if (btn) {
         btn.addEventListener("click", () => isMine ? handleClosePost(post.id) : handleRespond(post));
@@ -167,7 +167,7 @@
   }
 
   function renderCard(post) {
-    const isMine = user && post.user_id === user.id;
+    const isMine = user && Number(post.user_id) === Number(user.id);
     const hasMeta = post.category || post.location_label;
     const photos = Array.isArray(post.photos) ? post.photos.filter(Boolean) : [];
     const hero = photos[0] ? (typeof optimizeImageUrl === "function" ? optimizeImageUrl(photos[0], "card") : photos[0]) : "";
@@ -192,7 +192,7 @@
 
   function handleRespond(post) {
     if (!user) { window.location.href = "/login.html"; return; }
-    if (post.user_id === user.id) { alert(t("wanted_own_post")); return; }
+    if (Number(post.user_id) === Number(user.id)) { alert(t("wanted_own_post")); return; }
     window.location.href = `/chat-room.html?userId=${post.user_id}&name=${encodeURIComponent(post.poster_name || "")}&wantedTitle=${encodeURIComponent(post.title || "")}${post.budget ? `&wantedBudget=${encodeURIComponent(post.budget)}` : ""}`;
   }
 

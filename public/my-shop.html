@@ -165,6 +165,9 @@
 <script src="/js/pwa-install.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
+  function shopDisplayName() {
+    return (shopCompliance && shopCompliance.shop_name) || user.shop_name || user.name || "My Shop";
+  }
   function myShopBrand() {
     return `<div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>${t("my_shop")}</div>`;
   }
@@ -233,7 +236,7 @@
       <div class="topbar">
         <div>
           ${myShopBrand()}
-          <div class="sub-brand">${user.name || ""}</div>
+          <div class="sub-brand">${shopDisplayName() || ""}</div>
         </div>
       </div>
       <div class="center-box"><div>${t("loading")}</div></div>`;
@@ -327,7 +330,7 @@
       <div class="topbar">
         <div>
           ${myShopBrand()}
-          <div class="sub-brand">${user.name} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
+          <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
         </div>
         ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
@@ -412,7 +415,7 @@
   }
 
   async function shareShop() {
-    const shopName = user.shop_name || user.name || "My Shop";
+    const shopName = shopDisplayName();
     const url = `${window.location.origin}/seller-profile.html?id=${user.id}`;
     const text = `${shopName} on ZedMarket\n${url}`;
     const waText = encodeURIComponent(text);

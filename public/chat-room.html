@@ -568,30 +568,39 @@
     };
   }
 
-  function applyMergedPresence(live) {
+  function applyMergedPresence(live, source) {
     if (isKnownSupportChat || otherUser?.is_admin) {
       applyPresenceDot(document.getElementById("headerOnlineDot"), { online: false });
       applyChatStatus(document.getElementById("headerStatus"), { hidden: true });
       return;
     }
     if (live) {
-      const prevSeen = lastLivePresence.last_seen;
-      const hasPresence = !!(live.online || live.last_seen);
-      if (hasPresence) {
-        lastLivePresence = { ...lastLivePresence, ...live };
-        if (typeof live.online === "boolean" && otherUser) otherUser.online = live.online;
-        if (live.last_seen && otherUser) otherUser.last_seen = live.last_seen;
-      }
       if (typeof live.typing === "boolean") lastLivePresence.typing = live.typing;
-      if (live.hide_online) lastLivePresence.hide_online = true;
-      if (!lastLivePresence.last_seen && prevSeen) lastLivePresence.last_seen = prevSeen;
+      if (source === "api") {
+        lastLivePresence.online = !!live.online;
+        lastLivePresence.hide_online = !!live.hide_online;
+        lastLivePresence.hidden = !!live.hidden;
+        if (live.last_seen) lastLivePresence.last_seen = live.last_seen;
+        if (otherUser) {
+          otherUser.online = !!live.online;
+          otherUser.hide_online = !!live.hide_online;
+          otherUser.presence_hidden = !!live.hidden;
+          if (live.last_seen) otherUser.last_seen = live.last_seen;
+        }
+      } else if (live.online) {
+        lastLivePresence.online = true;
+        if (otherUser) otherUser.online = true;
+      }
+      if (live.last_seen && source !== "api") lastLivePresence.last_seen = live.last_seen;
     }
     const persisted = persistedPresence();
     const merged = {
       typing: !!lastLivePresence.typing,
-      online: !!(lastLivePresence.online || persisted.online),
+      online: source === "api"
+        ? !!lastLivePresence.online
+        : !!(lastLivePresence.online || persisted.online),
       last_seen: lastLivePresence.last_seen || persisted.last_seen || null,
-      hidden: !!persisted.hidden,
+      hidden: !!(lastLivePresence.hidden || persisted.hidden),
       hide_online: !!(lastLivePresence.hide_online || persisted.hide_online),
     };
     if (merged.hide_online) merged.online = false;
@@ -602,7 +611,7 @@
   async function refreshPresence() {
     if (isKnownSupportChat || otherUser?.is_admin || !userId) return;
     const map = await fetchPresenceMap([userId], { includeTyping: true });
-    applyMergedPresence(map[userId] || {});
+    applyMergedPresence(map[userId] || map[String(userId)] || {}, "edge");
   }
 
   document.getElementById("headerProfileBtn").addEventListener("click", () => {
@@ -744,7 +753,7 @@
       } else {
         messages = incoming.concat(pending.filter((p) => {
           return !incoming.some((m) =>
-            m.sender_id === p.sender_id && (
+            Number(m.sender_id) === Number(p.sender_id) && (
               (p.content && m.content === p.content) ||
               (p.photo_url && m.photo_url === p.photo_url) ||
               (p.audio_url && m.audio_url === p.audio_url)
@@ -756,7 +765,7 @@
 
       iBlockedThem = data.i_blocked_them || false;
       theyBlockedMe = data.they_blocked_me || false;
-      if (data.presence) applyMergedPresence(data.presence);
+      if (data.presence) applyMergedPresence(data.presence, "api");
       if (data.listing_context) {
         applyListingContext(data.listing_context);
       } else if (!activeListing && listingIdFromUrl) {
@@ -866,7 +875,7 @@
         </div>`;
     } else if (msg.offer_amount) {
       const st = msg.offer_status || "pending";
-      const canRespond = currentUser && msg.receiver_id === currentUser.id && st === "pending" && !msg.pending;
+      const canRespond = currentUser && Number(msg.receiver_id) === Number(currentUser.id) && st === "pending" && !msg.pending;
       inner = `<div class="bubble offer-card ${isMine ? "mine" : "theirs"}">
         <div>${t("offer_label")}</div>
         <div class="offer-amt">K${msg.offer_amount}</div>
@@ -1070,7 +1079,13 @@
       const data = await res.json();
       messages = messages.filter((m) => m.id !== tempId);
       if (!res.ok) { renderMessages(true); alert(data.error || t("chat_send_fail")); return; }
-      messages.push({ ...data, pending: false });
+      const savedId = data && data.id != null ? String(data.id) : "";
+      const already = savedId && messages.some((m) => String(m.id) === savedId);
+      if (already) {
+        messages = messages.map((m) => String(m.id) === savedId ? { ...data, pending: false } : m);
+      } else {
+        messages.push({ ...data, pending: false });
+      }
       renderMessages(true);
       cacheMessages();
       if (window.notifyMessagePush && currentUser) {
@@ -1084,6 +1099,7 @@
     } catch (e) {
       messages = messages.filter((m) => m.id !== tempId);
       renderMessages(true);
+      alert(t("chat_send_fail"));
     }
   }
 
@@ -1183,9 +1199,9 @@
   }
 
   function openMessageActions(messageId) {
-    const msg = messages.find(m => m.id === messageId);
+    const msg = messages.find(m => String(m.id) === String(messageId));
     if (!msg || msg.pending) return;
-    const isMine = currentUser && msg?.sender_id === currentUser.id;
+    const isMine = currentUser && Number(msg.sender_id) === Number(currentUser.id);
     const canUnsend = isMine && msg && !msg.read_at;
 
     const box = document.getElementById("messageActionsBox");

@@ -392,7 +392,7 @@
         const id = conv.other_user_id;
         const prevUnread = messageUnreadCache.get(id) || 0;
         const nextUnread = parseInt(conv.unread_count, 10) || 0;
-        if (nextUnread > prevUnread && conv.sender_id !== userId) {
+        if (nextUnread > prevUnread && Number(conv.sender_id) !== Number(userId)) {
           const preview = conv.last_message || "New message";
           showLocalMessageNotification(
             conv.other_user_name || "ZedMarket",

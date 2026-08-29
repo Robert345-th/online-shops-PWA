@@ -110,7 +110,7 @@
     typingPingTimer = null;
     typingStopTimer = null;
     sendTypingState(id, false);
-    if (typingTargetId === id) typingTargetId = null;
+    if (typingTargetId != null && String(typingTargetId) === String(id)) typingTargetId = null;
   }
 
   function formatLastSeenTime(iso) {

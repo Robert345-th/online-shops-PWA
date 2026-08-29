@@ -273,8 +273,10 @@
   async function loadConversations() {
     try {
       try {
-        const cached = JSON.parse(sessionStorage.getItem(`zm_chat_list_${user.id}`) || "null");
-        if (Array.isArray(cached) && cached.length && !content.querySelector(".list")) {
+        const cachedRaw = JSON.parse(sessionStorage.getItem(`zm_chat_list_${user.id}`) || "null");
+        const cached = Array.isArray(cachedRaw) ? cachedRaw : cachedRaw?.conversations;
+        const cacheAge = Array.isArray(cachedRaw) ? 0 : (Date.now() - (cachedRaw?.ts || 0));
+        if (Array.isArray(cached) && cached.length && !content.querySelector(".list") && cacheAge < 60000) {
           paintConversationList(cached);
         }
       } catch (e) {}
@@ -306,7 +308,7 @@
       }
 
       paintConversationList(conversations);
-      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify(conversations)); } catch (e) {}
+      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify({ ts: Date.now(), conversations })); } catch (e) {}
       await applyListPresence(conversations);
       applyConversationNames(conversations);
     } catch (e) {
@@ -318,6 +320,9 @@
 
   function buildPreviewText(conv) {
     const isMine = Number(conv.sender_id) === Number(user.id);
+    if (conv.last_deleted_for_everyone) {
+      return isMine ? `${t("you_prefix")}: ${t("chat_deleted", "This message was deleted")}` : t("chat_deleted", "This message was deleted");
+    }
     let preview = isMine ? `${t("you_prefix")}: ${conv.last_message || ""}` : (conv.last_message || "");
     if (conv.last_photo_url) preview = isMine ? `${t("you_prefix")}: ${t("preview_photo")}` : t("preview_photo");
     if (conv.last_audio_url) preview = isMine ? `${t("you_prefix")}: ${t("preview_voice")}` : t("preview_voice");
@@ -393,7 +398,9 @@
         if (!badge) {
           badge = document.createElement("div");
           badge.className = "unread-badge";
-          sideEl.appendChild(badge);
+          const more = sideEl.querySelector(".row-more");
+          if (more) sideEl.insertBefore(badge, more);
+          else sideEl.appendChild(badge);
         }
         badge.textContent = conv.unread_count;
       } else if (badge) {
@@ -428,7 +435,7 @@
         unreadCache.set(id, nextUnread);
       });
       conversationsCache = conversations;
-      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify(conversations)); } catch (e) {}
+      try { sessionStorage.setItem(`zm_chat_list_${user.id}`, JSON.stringify({ ts: Date.now(), conversations })); } catch (e) {}
       if (prevOrder !== nextOrder || !document.querySelector(".list")) {
         paintConversationList(conversations);
       } else {
@@ -446,8 +453,8 @@
       typing: !!next.typing,
       online: !!(next.online || base.online),
       last_seen: next.last_seen || base.last_seen || null,
-      hidden: !!(base.hidden),
-      hide_online: !!(next.hide_online || base.hide_online),
+      hidden: !!base.hidden,
+      hide_online: !!(typeof next.hide_online === "boolean" ? next.hide_online : base.hide_online),
     };
     if (merged.hide_online) merged.online = false;
     return merged;
@@ -500,6 +507,8 @@
       );
       conversationsCache.sort((a, b) => Number(b.pinned) - Number(a.pinned) || new Date(b.last_sent_at) - new Date(a.last_sent_at));
       paintConversationList(conversationsCache);
+      applyListPresence(conversationsCache);
+      applyConversationNames(conversationsCache);
     } catch (e) {}
     chatPrefOverlay.classList.remove("open");
     prefTarget = null;
@@ -522,7 +531,6 @@
   });
 
   let supportContactId = null;
-  const displayNameCache = new Map();
 
   async function loadSupportContactId() {
     if (supportContactId) return supportContactId;
@@ -538,28 +546,17 @@
 
   function isSupportConversation(conv) {
     const otherId = String(conv.other_user_id);
-    if (supportContactId && otherId === supportContactId) return true;
-    if (conv.other_user_is_admin || conv.other_is_admin) return true;
-    const apiName = (conv.other_user_name || "").trim();
-    if (/^customer support$/i.test(apiName) || /^zedmarket support$/i.test(apiName)) return true;
-    return false;
+    return !!(supportContactId && otherId === supportContactId);
   }
 
   function getConversationName(conv) {
-    const otherId = String(conv.other_user_id);
     if (isSupportConversation(conv)) {
-      const label = t("support_chat_name", "Customer Support");
-      displayNameCache.set(otherId, label);
-      return label;
+      return t("support_chat_name", "Customer Support");
     }
-    const cached = displayNameCache.get(otherId);
-    if (cached) return cached;
-    const apiName = (conv.other_user_name || "").trim();
-    return apiName || t("chat_unknown_user", "Chat");
+    return (conv.other_user_name || "").trim() || t("chat_unknown_user", "Chat");
   }
 
   function updateRowName(userId, name) {
-    displayNameCache.set(String(userId), name);
     const conv = conversationsCache.find((c) => String(c.other_user_id) === String(userId));
     const rowName = document.querySelector(`#convrow-${userId} .row-name`);
     const avatar = document.querySelector(`#convrow-${userId} .avatar`);

@@ -457,7 +457,7 @@
   }
 
   function isOwnListing() {
-    return currentUser && listing?.seller_id === currentUser.id;
+    return currentUser && Number(listing?.seller_id) === Number(currentUser.id);
   }
 
   function openPaySafetyModal(action) {
@@ -487,7 +487,8 @@
 
   async function fetchListing() {
     const cached = typeof zmGetCachedListing === "function" ? zmGetCachedListing(listingId) : null;
-    if (cached) {
+    const cacheIsFull = cached && cached.id && (cached.seller_account_type != null || cached.seller_phone != null || typeof cached.description === "string");
+    if (cacheIsFull) {
       listing = cached;
       updateListingMeta(listing);
       render();
@@ -500,7 +501,7 @@
       const res = await fetch(`${API_URL}/listings/${listingId}`);
       const data = await res.json();
       if (!res.ok) {
-        if (!cached) {
+        if (!cacheIsFull) {
           app.innerHTML = `<div class="center-box"><div class="error-text">${data.error || t("could_not_load_listing")}</div><button class="back-btn-flat" onclick="history.back()">${t("go_back")}</button></div>`;
         }
         return;
