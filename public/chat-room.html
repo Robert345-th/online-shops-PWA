@@ -378,8 +378,8 @@
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
   const CLOUDINARY_AUDIO_URL = "https://api.cloudinary.com/v1_1/kstg72vx/video/upload";
   const UPLOAD_PRESET = "online_shops_uploads";
-  const POLL_INTERVAL = 3000;
-  const PRESENCE_POLL_INTERVAL = 9000;
+  const POLL_INTERVAL = 4000;
+  const PRESENCE_POLL_INTERVAL = 8000;
   const QUICK_REPLIES = [
     { key: "chat_q_available", fallback: "Still available" },
     { key: "chat_q_negotiable", fallback: "Price is negotiable" },
@@ -576,10 +576,15 @@
     }
     if (live) {
       const prevSeen = lastLivePresence.last_seen;
-      lastLivePresence = { ...lastLivePresence, ...live };
+      const hasPresence = !!(live.online || live.last_seen);
+      if (hasPresence) {
+        lastLivePresence = { ...lastLivePresence, ...live };
+        if (typeof live.online === "boolean" && otherUser) otherUser.online = live.online;
+        if (live.last_seen && otherUser) otherUser.last_seen = live.last_seen;
+      }
+      if (typeof live.typing === "boolean") lastLivePresence.typing = live.typing;
+      if (live.hide_online) lastLivePresence.hide_online = true;
       if (!lastLivePresence.last_seen && prevSeen) lastLivePresence.last_seen = prevSeen;
-      if (live.last_seen && otherUser) otherUser.last_seen = live.last_seen;
-      if (typeof live.online === "boolean" && live.online && otherUser) otherUser.online = true;
     }
     const persisted = persistedPresence();
     const merged = {
@@ -688,7 +693,7 @@
     if (!latestReadId || !currentUser) return false;
     let changed = false;
     for (const m of messages) {
-      if (m.sender_id === currentUser.id && Number(m.id) <= latestReadId && !m.read_at && !m.pending) {
+      if (Number(m.sender_id) === Number(currentUser.id) && Number(m.id) <= latestReadId && !m.read_at && !m.pending) {
         m.read_at = m.read_at || new Date().toISOString();
         changed = true;
       }
@@ -779,10 +784,35 @@
     updateBlockButtonLabel();
   }
 
-  function messagesFingerprint() {
+  function messagesContentKey() {
     return messages.map((m) =>
-      `${m.id}:${m.read_at || ""}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${m.offer_status || ""}:${playingId === m.id ? 1 : 0}`
+      `${m.id}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${m.offer_status || ""}:${playingId === m.id ? 1 : 0}:${m.content || ""}:${m.photo_url || ""}:${m.audio_url || ""}`
     ).join("|");
+  }
+
+  function isNearBottom() {
+    return messagesList.scrollHeight - messagesList.scrollTop - messagesList.clientHeight < 140;
+  }
+
+  function applyTickStyles() {
+    if (!currentUser) return;
+    for (const m of messages) {
+      if (Number(m.sender_id) !== Number(currentUser.id)) continue;
+      const tick = document.querySelector(`#msg-${m.id} .tick`);
+      if (!tick) continue;
+      if (m.pending) {
+        if (!tick.classList.contains("sending")) {
+          tick.className = "tick sending";
+          tick.innerHTML = chatReceiptInner("sending");
+        }
+        continue;
+      }
+      const next = m.read_at ? "read" : "sent";
+      if (!tick.classList.contains(next)) {
+        tick.className = `tick ${next}`;
+        tick.innerHTML = chatReceiptInner(next);
+      }
+    }
   }
 
   function renderMessages(force) {
@@ -791,11 +821,15 @@
       lastMessagesKey = "";
       return;
     }
-    const key = messagesFingerprint();
-    if (!force && key === lastMessagesKey && messagesList.querySelector(".bubble-row")) return;
+    const key = messagesContentKey();
+    if (!force && key === lastMessagesKey && messagesList.querySelector(".bubble-row")) {
+      applyTickStyles();
+      return;
+    }
+    const pinToBottom = force || !messagesList.querySelector(".bubble-row") || isNearBottom();
     lastMessagesKey = key;
     messagesList.innerHTML = messages.map(renderBubble).join("");
-    messagesList.scrollTop = messagesList.scrollHeight;
+    if (pinToBottom) messagesList.scrollTop = messagesList.scrollHeight;
 
     messages.forEach(msg => {
       if (msg.pending) return;
@@ -813,7 +847,7 @@
   }
 
   function renderBubble(msg) {
-    const isMine = currentUser && msg.sender_id === currentUser.id;
+    const isMine = currentUser && Number(msg.sender_id) === Number(currentUser.id);
     const rowClass = isMine ? "mine" : "theirs";
 
     if (msg.deleted_for_everyone) {
@@ -1307,7 +1341,11 @@
 
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) stopPollers();
-      else startPollers();
+      else {
+        loadMessages(false);
+        refreshPresence();
+        startPollers();
+      }
     });
 
     window.addEventListener("pagehide", () => {
