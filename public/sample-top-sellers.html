@@ -54,88 +54,82 @@
   .fake-price { font-size: 13px; font-weight: 800; color: var(--price-red); }
   .fake-title { font-size: 12px; margin-top: 2px; }
 
-  /* A — current */
-  .a-wrap { padding: 10px 0 4px; border-bottom: 1px solid var(--border); }
-  .a-head { padding: 0 12px 8px; }
-  .a-title { font-size: 15px; font-weight: 700; }
+  /* A — circles, no cards */
+  .a-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
+  .a-head { padding: 0 14px 10px; }
+  .a-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .a-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .a-row { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 8px; }
-  .a-card {
-    flex-shrink: 0; width: 118px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 10px; text-align: center;
+  .a-row { display: flex; gap: 16px; overflow-x: auto; padding: 0 14px 4px; }
+  .a-item { flex-shrink: 0; width: 72px; text-align: center; }
+  .a-ring {
+    width: 56px; height: 56px; border-radius: 28px; padding: 2px;
+    background: var(--border); margin: 0 auto 6px;
   }
+  .a-item.top .a-ring { background: var(--gold); }
   .a-av {
-    width: 40px; height: 40px; border-radius: 20px; background: #E01B27; color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 8px;
+    width: 100%; height: 100%; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;
+    border: 2px solid var(--bg);
   }
-  .a-name { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
-  .a-rate { font-size: 11px; color: var(--price-red); font-weight: 600; }
+  .a-name { font-size: 11px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .a-rate { font-size: 10px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
 
-  /* B — rank strip, black + gold */
-  .b-wrap { padding: 12px 0 10px; background: var(--black); }
+  /* B — open pills, no boxes */
+  .b-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
   .b-head { padding: 0 14px 10px; }
-  .b-title { font-size: 13px; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 0.06em; }
-  .b-sub { font-size: 11px; color: #A8A29B; margin-top: 3px; }
-  .b-row { display: flex; gap: 10px; overflow-x: auto; padding: 0 14px 4px; }
-  .b-card {
-    flex-shrink: 0; width: 132px; background: #1A1A1A; border: 1.5px solid #333;
-    padding: 12px 10px 14px; text-align: center; position: relative;
-  }
-  .b-rank {
-    position: absolute; top: 8px; left: 8px; background: var(--gold); color: var(--black);
-    font-size: 10px; font-weight: 900; width: 18px; height: 18px;
-    display: flex; align-items: center; justify-content: center;
+  .b-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .b-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+  .b-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 6px; }
+  .b-pill {
+    flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 6px; background: transparent;
   }
   .b-av {
-    width: 48px; height: 48px; border-radius: 0; background: var(--gold); color: var(--black);
-    display: flex; align-items: center; justify-content: center; font-weight: 900; margin: 8px auto 8px; font-size: 18px;
+    width: 32px; height: 32px; border-radius: 16px; background: var(--black); color: var(--gold);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;
   }
-  .b-name { font-size: 12px; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: 6px; min-height: 32px; }
-  .b-rate { font-size: 11px; color: var(--gold); font-weight: 700; }
+  .b-meta { line-height: 1.2; }
+  .b-name { font-size: 12px; font-weight: 800; }
+  .b-rate { font-size: 10px; color: var(--price-red); font-weight: 700; }
 
-  /* C — people rows */
-  .c-wrap { padding: 12px 12px 8px; }
-  .c-head { margin-bottom: 10px; }
-  .c-title { font-size: 15px; font-weight: 800; }
+  /* C — numbered lines, no boxes */
+  .c-wrap { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
+  .c-head { margin-bottom: 6px; }
+  .c-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .c-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .c-list { display: flex; flex-direction: column; gap: 8px; }
-  .c-row {
+  .c-line {
     display: flex; align-items: center; gap: 10px;
-    background: var(--card); border: 1.5px solid var(--text); padding: 10px 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
   }
+  .c-line:last-child { border-bottom: none; }
+  .c-num { width: 18px; font-size: 12px; font-weight: 900; color: var(--subtext); }
+  .c-line.top .c-num { color: var(--price-red); }
   .c-av {
-    width: 40px; height: 40px; background: var(--red-btn); color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 14px; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0;
   }
-  .c-info { flex: 1; min-width: 0; }
-  .c-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .c-rate { font-size: 11px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
-  .c-go {
-    background: var(--black); color: var(--gold); border: none;
-    padding: 8px 12px; font-size: 10px; font-weight: 800; text-transform: uppercase;
-  }
+  .c-name { flex: 1; font-size: 13px; font-weight: 700; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-rate { font-size: 12px; font-weight: 800; color: var(--price-red); }
 
-  /* D — boxed cards like Wanted C */
-  .d-wrap { padding: 12px 0 8px; }
-  .d-head { padding: 0 12px 10px; }
-  .d-title { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
+  /* D — one featured + small faces */
+  .d-wrap { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); }
+  .d-head { margin-bottom: 10px; }
+  .d-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
   .d-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .d-row { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 6px; }
-  .d-card {
-    flex-shrink: 0; width: 140px; background: var(--card); border: 1.5px solid var(--text);
-    padding: 14px 12px 12px; text-align: left;
+  .d-feat { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .d-av-lg {
+    width: 52px; height: 52px; border-radius: 26px; background: var(--gold); color: var(--black);
+    display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; flex-shrink: 0;
   }
-  .d-top {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  .d-feat-name { font-size: 15px; font-weight: 800; }
+  .d-feat-rate { font-size: 12px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .d-more { display: flex; gap: 14px; overflow-x: auto; }
+  .d-face { flex-shrink: 0; text-align: center; width: 52px; }
+  .d-av-sm {
+    width: 40px; height: 40px; border-radius: 20px; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; margin: 0 auto 4px;
   }
-  .d-av {
-    width: 36px; height: 36px; background: var(--black); color: var(--gold);
-    display: flex; align-items: center; justify-content: center; font-weight: 900;
-  }
-  .d-badge { background: var(--black); color: var(--gold); font-size: 9px; font-weight: 800; padding: 3px 6px; text-transform: uppercase; }
-  .d-name { font-size: 13px; font-weight: 800; line-height: 1.3; margin-bottom: 8px; min-height: 34px; }
-  .d-rate { font-size: 11px; font-weight: 800; color: var(--text); }
-  .d-rate span { color: var(--price-red); }
+  .d-face-name { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body data-nav-active="home">
@@ -144,10 +138,10 @@
 <div class="picker">
   <div class="picker-label">Top Sellers samples — pick one, then tell me A, B, C or D</div>
   <div class="picker-row">
-    <button class="pick on" type="button" data-id="a">A Now</button>
-    <button class="pick" type="button" data-id="b">B Rank</button>
-    <button class="pick" type="button" data-id="c">C List</button>
-    <button class="pick" type="button" data-id="d">D Box</button>
+    <button class="pick on" type="button" data-id="a">A Faces</button>
+    <button class="pick" type="button" data-id="b">B Pills</button>
+    <button class="pick" type="button" data-id="c">C Rank</button>
+    <button class="pick" type="button" data-id="d">D Star</button>
   </div>
 </div>
 
@@ -160,9 +154,9 @@
       <div class="a-sub">Highly rated on ZedMarket</div>
     </div>
     <div class="a-row">
-      <div class="a-card"><div class="a-av">K</div><div class="a-name">Kisha's online store</div><div class="a-rate">★ 5.0 (1)</div></div>
-      <div class="a-card"><div class="a-av">R</div><div class="a-name">Rodert</div><div class="a-rate">★ 5.0 (1)</div></div>
-      <div class="a-card"><div class="a-av">J</div><div class="a-name">JOEL</div><div class="a-rate">★ 4.9 (12)</div></div>
+      <div class="a-item top"><div class="a-ring"><div class="a-av">K</div></div><div class="a-name">Kisha</div><div class="a-rate">5.0</div></div>
+      <div class="a-item"><div class="a-ring"><div class="a-av">R</div></div><div class="a-name">Rodert</div><div class="a-rate">5.0</div></div>
+      <div class="a-item"><div class="a-ring"><div class="a-av">J</div></div><div class="a-name">JOEL</div><div class="a-rate">4.9</div></div>
     </div>
   </div>
 </section>
@@ -171,12 +165,12 @@
   <div class="b-wrap">
     <div class="b-head">
       <div class="b-title">Top Sellers</div>
-      <div class="b-sub">Highest rated shops this week</div>
+      <div class="b-sub">Highly rated on ZedMarket</div>
     </div>
     <div class="b-row">
-      <div class="b-card"><div class="b-rank">1</div><div class="b-av">K</div><div class="b-name">Kisha's online store</div><div class="b-rate">★ 5.0 · 1 review</div></div>
-      <div class="b-card"><div class="b-rank">2</div><div class="b-av">R</div><div class="b-name">Rodert</div><div class="b-rate">★ 5.0 · 1 review</div></div>
-      <div class="b-card"><div class="b-rank">3</div><div class="b-av">J</div><div class="b-name">JOEL</div><div class="b-rate">★ 4.9 · 12 reviews</div></div>
+      <div class="b-pill"><div class="b-av">K</div><div class="b-meta"><div class="b-name">Kisha's store</div><div class="b-rate">★ 5.0</div></div></div>
+      <div class="b-pill"><div class="b-av">R</div><div class="b-meta"><div class="b-name">Rodert</div><div class="b-rate">★ 5.0</div></div></div>
+      <div class="b-pill"><div class="b-av">J</div><div class="b-meta"><div class="b-name">JOEL</div><div class="b-rate">★ 4.9</div></div></div>
     </div>
   </div>
 </section>
@@ -187,11 +181,9 @@
       <div class="c-title">Top Sellers</div>
       <div class="c-sub">Highly rated on ZedMarket</div>
     </div>
-    <div class="c-list">
-      <div class="c-row"><div class="c-av">K</div><div class="c-info"><div class="c-name">Kisha's online store</div><div class="c-rate">★ 5.0 (1)</div></div><button class="c-go" type="button">View</button></div>
-      <div class="c-row"><div class="c-av">R</div><div class="c-info"><div class="c-name">Rodert</div><div class="c-rate">★ 5.0 (1)</div></div><button class="c-go" type="button">View</button></div>
-      <div class="c-row"><div class="c-av">J</div><div class="c-info"><div class="c-name">JOEL</div><div class="c-rate">★ 4.9 (12)</div></div><button class="c-go" type="button">View</button></div>
-    </div>
+    <div class="c-line top"><div class="c-num">1</div><div class="c-av">K</div><div class="c-name">Kisha's online store</div><div class="c-rate">5.0</div></div>
+    <div class="c-line"><div class="c-num">2</div><div class="c-av">R</div><div class="c-name">Rodert</div><div class="c-rate">5.0</div></div>
+    <div class="c-line"><div class="c-num">3</div><div class="c-av">J</div><div class="c-name">JOEL</div><div class="c-rate">4.9</div></div>
   </div>
 </section>
 
@@ -201,10 +193,16 @@
       <div class="d-title">Top Sellers</div>
       <div class="d-sub">Highly rated on ZedMarket</div>
     </div>
-    <div class="d-row">
-      <div class="d-card"><div class="d-top"><div class="d-av">K</div><div class="d-badge">No. 1</div></div><div class="d-name">Kisha's online store</div><div class="d-rate"><span>★ 5.0</span> · 1 review</div></div>
-      <div class="d-card"><div class="d-top"><div class="d-av">R</div><div class="d-badge">No. 2</div></div><div class="d-name">Rodert</div><div class="d-rate"><span>★ 5.0</span> · 1 review</div></div>
-      <div class="d-card"><div class="d-top"><div class="d-av">J</div><div class="d-badge">No. 3</div></div><div class="d-name">JOEL</div><div class="d-rate"><span>★ 4.9</span> · 12 reviews</div></div>
+    <div class="d-feat">
+      <div class="d-av-lg">K</div>
+      <div>
+        <div class="d-feat-name">Kisha's online store</div>
+        <div class="d-feat-rate">★ 5.0 · top rated</div>
+      </div>
+    </div>
+    <div class="d-more">
+      <div class="d-face"><div class="d-av-sm">R</div><div class="d-face-name">Rodert</div></div>
+      <div class="d-face"><div class="d-av-sm">J</div><div class="d-face-name">JOEL</div></div>
     </div>
   </div>
 </section>
