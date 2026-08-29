@@ -45,17 +45,21 @@
   .top-strip { background: var(--black); height: calc(16px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
   .hero-wrap {
     position: relative;
-    flex: 1 1 280px;
-    height: min(52vw, 420px);
+    flex: 0 0 min(56dvh, 420px);
+    height: min(56dvh, 420px);
+    min-height: 300px;
     max-height: 420px;
-    min-height: 220px;
     overflow: hidden;
     background: var(--thumb-bg);
   }
   .hero-photo, .hero-photo-empty {
     position: absolute; inset: 0; width: 100%; height: 100%;
   }
-  .hero-photo { object-fit: cover; display: block; cursor: pointer; }
+  .hero-photo {
+    object-fit: cover; display: block; cursor: pointer;
+    opacity: 0; pointer-events: none;
+  }
+  .hero-photo.on { opacity: 1; pointer-events: auto; }
   .hero-photo-empty { display: flex; align-items: center; justify-content: center; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
@@ -93,8 +97,9 @@
   .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 
   .listing-bottom {
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--bg);
@@ -214,7 +219,7 @@
   .sms-btn svg { fill: #fff; stroke: none; }
   .call-btn svg { fill: none; stroke: var(--red-btn); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; }
+  .viewer-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 300; overflow: hidden; }
   .viewer-overlay.open { display: block; }
   .viewer-back { position: absolute; top: 40px; left: 18px; z-index: 10; }
   .viewer-nav-btn {
@@ -228,7 +233,7 @@
     position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
     color: #fff; font-size: 13px; font-weight: 600; z-index: 10;
   }
-  .viewer-img { width: 100%; height: 100%; object-fit: contain; }
+  .viewer-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
@@ -562,7 +567,8 @@
         <button class="round-btn favorite-button" id="favoriteBtn" type="button" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
         <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>
         ${photos.length > 0
-          ? `<img class="hero-photo" id="heroPhoto" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" />`
+          ? `<img class="hero-photo on" id="heroPhotoA" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" alt="" />
+             <img class="hero-photo" id="heroPhotoB" alt="" />`
           : `<div class="hero-photo-empty">${photoPlaceholder(56)}</div>`}
         ${photos.length > 1 ? `
           <div class="thumb-row" id="thumbRow">
@@ -789,28 +795,37 @@
       handleShareMeetup();
     });
 
-    const heroPhoto = document.getElementById("heroPhoto");
-    if (heroPhoto) {
-      heroPhoto.dataset.shown = heroPhoto.getAttribute("src") || "";
-      heroPhoto.addEventListener("click", () => openViewer(mainPhotoIndex, photos));
-    }
+    const heroA = document.getElementById("heroPhotoA");
+    const heroB = document.getElementById("heroPhotoB");
+    if (heroA) heroA.dataset.shown = heroA.getAttribute("src") || "";
+    let heroFront = "A";
+
+    document.querySelector(".hero-wrap")?.addEventListener("click", (e) => {
+      if (e.target.closest(".round-btn, .thumb-row, .thumb-box")) return;
+      if (e.target.closest(".hero-photo")) openViewer(mainPhotoIndex, photos);
+    });
 
     function showHeroAt(index) {
-      if (!photos[index]) return;
+      if (!photos[index] || !heroA || !heroB) return;
       mainPhotoIndex = index;
       document.querySelectorAll("#thumbRow .thumb-box").forEach((t) => {
         t.classList.toggle("active", parseInt(t.dataset.idx, 10) === index);
       });
-      const hero = document.getElementById("heroPhoto");
-      if (!hero) return;
       const next = optimizeImageUrl(photos[index], "hero");
-      if (hero.dataset.shown === next) return;
-      const ready = new Image();
+      const front = heroFront === "A" ? heroA : heroB;
+      const back = heroFront === "A" ? heroB : heroA;
+      if (front.dataset.shown === next) return;
+      let applied = false;
       const apply = () => {
-        if (mainPhotoIndex !== index) return;
-        hero.src = next;
-        hero.dataset.shown = next;
+        if (applied || mainPhotoIndex !== index) return;
+        applied = true;
+        back.src = next;
+        back.dataset.shown = next;
+        back.classList.add("on");
+        front.classList.remove("on");
+        heroFront = heroFront === "A" ? "B" : "A";
       };
+      const ready = new Image();
       ready.onload = apply;
       ready.onerror = apply;
       ready.src = next;
@@ -847,7 +862,19 @@
   }
 
   function updateViewerImage() {
-    document.getElementById("viewerImg").src = optimizeImageUrl(viewerPhotos[viewerIndex], "full");
+    const img = document.getElementById("viewerImg");
+    const next = optimizeImageUrl(viewerPhotos[viewerIndex], "full");
+    let applied = false;
+    const ready = new Image();
+    const apply = () => {
+      if (applied) return;
+      applied = true;
+      img.src = next;
+    };
+    ready.onload = apply;
+    ready.onerror = apply;
+    ready.src = next;
+    if (ready.complete) apply();
     const prevBtn = document.getElementById("viewerPrevBtn");
     const nextBtn = document.getElementById("viewerNextBtn");
     const counter = document.getElementById("viewerCounter");
