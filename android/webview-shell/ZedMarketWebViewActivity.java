@@ -11,11 +11,15 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -80,6 +84,9 @@ public class ZedMarketWebViewActivity extends Activity {
     private static final String KEY_LOC_ASKED = "asked";
     private static final String KEY_LOC_DENY_COUNT = "deny_count";
     private static final String KEY_NOTIFY_ASKED = "notify_asked";
+    private static final String KEY_NOTIFY_WELCOME = "notify_welcome_shown";
+    private static final String CHANNEL_MESSAGES = "zedmarket_messages";
+    private static final int NOTIFY_ID_BASE = 7100;
     private static final long SILENT_PERM_DENY_MS = 400L;
     private static final int FALLBACK_COLOR = Color.parseColor("#111111");
 
@@ -124,6 +131,7 @@ public class ZedMarketWebViewActivity extends Activity {
     private long mLastNotifyAskAt;
     private long mStoppedAt;
     private boolean mAskedNotifyThisOpen;
+    private int mNextNotifyId = NOTIFY_ID_BASE;
     private long mLastBackAt;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private final Runnable mAskNotifyRunnable = this::maybeAskNotificationPermission;
@@ -161,6 +169,10 @@ public class ZedMarketWebViewActivity extends Activity {
 
         try {
             mLaunchUrl = getIntent().getParcelableExtra(KEY_LAUNCH_URI);
+            Uri notifyData = getIntent().getData();
+            if (notifyData != null && isZedMarketHost(notifyData)) {
+                mLaunchUrl = notifyData;
+            }
             if (mLaunchUrl == null || mLaunchUrl.getScheme() == null
                     || !"https".equalsIgnoreCase(mLaunchUrl.getScheme())) {
                 mLaunchUrl = Uri.parse("https://zedmarket.app/?utm_source=android");
@@ -230,6 +242,7 @@ public class ZedMarketWebViewActivity extends Activity {
             mWebView.onResume();
         }
         hideSystemNavigation();
+        openNotificationUrl(getIntent());
         if (mRetryLocationAfterSettings) {
             if (mOpenedAppSettingsAt > 0
                     && SystemClock.elapsedRealtime() - mOpenedAppSettingsAt < 800L) {
@@ -295,6 +308,13 @@ public class ZedMarketWebViewActivity extends Activity {
             mAskedNotifyThisOpen = false;
             maybeAskNotificationPermission();
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        openNotificationUrl(intent);
     }
 
     @Override
@@ -524,6 +544,7 @@ public class ZedMarketWebViewActivity extends Activity {
             }
             if (notifyGranted) {
                 notifyWebSubscribePush();
+                showWelcomeNotification();
             } else {
                 markNotifyAsked();
             }
@@ -1181,6 +1202,90 @@ public class ZedMarketWebViewActivity extends Activity {
         }
     }
 
+    private void showWelcomeNotification() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_LOC, MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_NOTIFY_WELCOME, false)) return;
+        prefs.edit().putBoolean(KEY_NOTIFY_WELCOME, true).apply();
+        showAppNotification(
+                getString(R.string.notify_on_title),
+                getString(R.string.notify_on_body),
+                "/chat-list.html");
+    }
+
+    private void openNotificationUrl(Intent intent) {
+        if (intent == null || mWebView == null) return;
+        Uri data = intent.getData();
+        if (data == null || !isZedMarketHost(data)) return;
+        mWebView.loadUrl(data.toString());
+    }
+
+    private Uri resolveNotifyUrl(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            return Uri.parse("https://zedmarket.app/chat-list.html");
+        }
+        String trimmed = url.trim();
+        if (trimmed.startsWith("/")) {
+            return Uri.parse("https://zedmarket.app" + trimmed);
+        }
+        Uri parsed = Uri.parse(trimmed);
+        if (isZedMarketHost(parsed) && parsed.getScheme() != null) return parsed;
+        return Uri.parse("https://zedmarket.app/chat-list.html");
+    }
+
+    private void ensureNotifyChannel() {
+        if (Build.VERSION.SDK_INT < 26) return;
+        NotificationManager manager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_MESSAGES,
+                "Messages",
+                NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("New chat messages and listing alerts");
+        channel.enableVibration(true);
+        manager.createNotificationChannel(channel);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void showAppNotification(String title, String body, String url) {
+        if (!hasNotificationPermission()) return;
+        ensureNotifyChannel();
+        Uri target = resolveNotifyUrl(url);
+        Intent tap = new Intent(this, ZedMarketWebViewActivity.class);
+        tap.setAction(Intent.ACTION_VIEW);
+        tap.setData(target);
+        tap.putExtra(KEY_LAUNCH_URI, target);
+        tap.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= 23) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        int notifyId = mNextNotifyId++;
+        PendingIntent pending = PendingIntent.getActivity(this, notifyId, tap, flags);
+
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= 26) {
+            builder = new Notification.Builder(this, CHANNEL_MESSAGES);
+        } else {
+            builder = new Notification.Builder(this);
+            builder.setPriority(Notification.PRIORITY_HIGH);
+            builder.setDefaults(Notification.DEFAULT_ALL);
+        }
+        Notification notification = builder
+                .setSmallIcon(android.R.drawable.stat_notify_chat)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(new Notification.BigTextStyle().bigText(body))
+                .setAutoCancel(true)
+                .setContentIntent(pending)
+                .build();
+        NotificationManager manager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(notifyId, notification);
+        }
+    }
+
     private boolean hasNotificationPermission() {
         if (Build.VERSION.SDK_INT >= 33) {
             return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -1245,7 +1350,12 @@ public class ZedMarketWebViewActivity extends Activity {
     }
 
     private void maybeAskNotificationPermission() {
-        if (isFinishing() || hasNotificationPermission()) {
+        if (isFinishing()) {
+            return;
+        }
+        if (hasNotificationPermission()) {
+            notifyWebSubscribePush();
+            showWelcomeNotification();
             return;
         }
         if (mUserLocRequestActive
@@ -1354,6 +1464,19 @@ public class ZedMarketWebViewActivity extends Activity {
         @JavascriptInterface
         public void requestNotificationPermission() {
             runOnUiThread(() -> maybeAskNotificationPermission());
+        }
+
+        @JavascriptInterface
+        public boolean hasNotificationPermission() {
+            return ZedMarketWebViewActivity.this.hasNotificationPermission();
+        }
+
+        @JavascriptInterface
+        public void showNotification(String title, String body, String url) {
+            final String safeTitle = title == null || title.trim().isEmpty() ? "ZedMarket" : title.trim();
+            final String safeBody = body == null ? "" : body.trim();
+            final String safeUrl = url == null ? "/chat-list.html" : url.trim();
+            runOnUiThread(() -> showAppNotification(safeTitle, safeBody, safeUrl));
         }
 
         @JavascriptInterface

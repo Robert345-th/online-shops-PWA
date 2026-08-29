@@ -23,8 +23,58 @@
     localStorage.setItem(PUSH_ENABLED_KEY, value ? "true" : "false");
   }
 
-  function isPushSupported() {
-    return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  function getNativeBridge() {
+    return window.ZedMarketLocation || null;
+  }
+
+  function nativeHasNotifyPermission() {
+    const bridge = getNativeBridge();
+    if (!bridge || typeof bridge.hasNotificationPermission !== "function") return false;
+    try {
+      return !!bridge.hasNotificationPermission();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function nativeShowNotification(title, body, url) {
+    const bridge = getNativeBridge();
+    if (!bridge || typeof bridge.showNotification !== "function") return false;
+    try {
+      bridge.showNotification(String(title || "ZedMarket"), String(body || ""), String(url || "/chat-list.html"));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function notificationsAllowed() {
+    if (nativeHasNotifyPermission()) return true;
+    return typeof Notification !== "undefined" && Notification.permission === "granted";
+  }
+
+  async function sendTestPushNotification() {
+    if (nativeShowNotification("ZedMarket", typeof t === "function" ? t("push_on_body") : "Notifications are on. You will get a ping for new messages.", "/chat-list.html")) {
+      return true;
+    }
+    const token = getToken();
+    if (token) {
+      try {
+        const res = await fetch("/api/push/test-self", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.sent > 0) return true;
+        }
+      } catch (e) {}
+    }
+    if (notificationsAllowed()) {
+      await showLocalMessageNotification("ZedMarket", typeof t === "function" ? t("push_on_body") : "Notifications are on.", "/chat-list.html");
+      return true;
+    }
+    return false;
   }
 
   function urlBase64ToUint8Array(base64String) {
@@ -103,6 +153,21 @@
   }
 
   async function enablePushNotifications() {
+    if (nativeHasNotifyPermission()) {
+      setPushEnabled(true);
+      setPushOptOut(false);
+      if (isPushSupported()) {
+        try { await subscribeToPush(); } catch (e) { /* WebView often cannot use web push */ }
+      }
+      return true;
+    }
+
+    const bridge = getNativeBridge();
+    if (bridge && typeof bridge.requestNotificationPermission === "function" && !isPushSupported()) {
+      try { bridge.requestNotificationPermission(); } catch (e) {}
+      return false;
+    }
+
     if (!isPushSupported()) throw new Error("unsupported");
 
     let permission = Notification.permission;
@@ -112,13 +177,19 @@
     if (permission !== "granted") throw new Error("denied");
 
     await subscribeToPush();
+    try { await sendTestPushNotification(); } catch (e) {}
     return true;
   }
 
   async function syncPushSubscription() {
-    if (!getToken() || !isPushSupported()) return;
+    if (!getToken()) return;
+    if (nativeHasNotifyPermission()) {
+      setPushOptOut(false);
+      setPushEnabled(true);
+    }
+    if (!isPushSupported()) return;
     if (Notification.permission === "granted") setPushOptOut(false);
-    if (Notification.permission !== "granted") {
+    if (Notification.permission !== "granted" && !nativeHasNotifyPermission()) {
       setPushEnabled(false);
       return;
     }
@@ -139,34 +210,36 @@
         },
         body: JSON.stringify({ subscription: subscription.toJSON() }),
       });
-      if (!res.ok) setPushEnabled(false);
+      if (!res.ok && !nativeHasNotifyPermission()) setPushEnabled(false);
     } catch (e) {
-      setPushEnabled(false);
+      if (!nativeHasNotifyPermission()) setPushEnabled(false);
     }
   }
 
   async function autoEnablePushNotifications() {
-    if (isPushSupported() && typeof Notification !== "undefined" && Notification.permission === "granted") {
+    if (notificationsAllowed()) {
       setPushOptOut(false);
     }
 
-    const bridge = window.ZedMarketLocation;
+    const bridge = getNativeBridge();
     if (bridge && typeof bridge.requestNotificationPermission === "function") {
       try {
         bridge.requestNotificationPermission();
       } catch (e) { /* native ask is best-effort */ }
     }
 
-    if (!getToken() || !isPushSupported()) return false;
+    if (!getToken()) return false;
 
     try {
-      if (Notification.permission === "granted") {
+      if (notificationsAllowed()) {
         setPushEnabled(true);
         await syncPushSubscription();
         return true;
       }
 
-      if (Notification.permission === "denied") return false;
+      if (typeof Notification !== "undefined" && Notification.permission === "denied" && !nativeHasNotifyPermission()) {
+        return false;
+      }
       if (sessionStorage.getItem("zm_push_auto_tried") === "1") return false;
       sessionStorage.setItem("zm_push_auto_tried", "1");
       await enablePushNotifications();
@@ -189,11 +262,11 @@
       return;
     }
     toggleEl.checked = true;
-    if (Notification.permission === "granted") {
+    if (notificationsAllowed()) {
       setPushEnabled(true);
       return;
     }
-    if (Notification.permission !== "granted") {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
       toggleEl.checked = !isPushOptOut();
     }
     try {
@@ -235,7 +308,9 @@
   }
 
   async function showLocalMessageNotification(title, body, url) {
-    if (isPushOptOut() || Notification.permission !== "granted") return;
+    if (isPushOptOut()) return;
+    if (nativeShowNotification(title, body, url)) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     const options = {
       body,
       icon: ICON_URL,
@@ -311,6 +386,8 @@
   window.refreshPushToggle = refreshPushToggle;
   window.notifyMessagePush = notifyMessagePush;
   window.messagePreview = messagePreview;
+  window.sendTestPushNotification = sendTestPushNotification;
+  window.notificationsAllowed = notificationsAllowed;
   window.showLocalMessageNotification = showLocalMessageNotification;
   window.startMessageNotificationPoll = startMessageNotificationPoll;
   window.stopMessageNotificationPoll = stopMessageNotificationPoll;
