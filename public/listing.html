@@ -189,6 +189,7 @@
   .seller-info { flex: 1; min-width: 0; }
   .seller-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .seller-name { font-size: 14px; font-weight: 800; }
+  .seller-registered { font-size: 10px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; }
   .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
   .seller-actions {
@@ -426,6 +427,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/seller-badge.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -806,13 +808,13 @@
   }
 
   function sellerTrustBadge() {
-    if (listing.seller_account_type === "shop") {
-      return verifiedStamp(t("verified_shop"));
+    const kind = typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(listing) : "";
+    const label = typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
+    if (!label) return "";
+    if (kind === "registered_shop") {
+      return `<span class="seller-registered">${label}</span>`;
     }
-    if (listing.seller_nrc_verified) {
-      return verifiedStamp(t("seller_id_verified", "ID Verified"));
-    }
-    return "";
+    return verifiedStamp(label);
   }
 
   function replyLabel() {

@@ -367,6 +367,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/seller-badge.js"></script>
 <script src="/js/bottom-nav.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/data-saver.js"></script>
@@ -906,7 +907,12 @@
           <div class="price">K${escHtml(item.price)}</div>
           <div class="title">${escHtml(item.title)}</div>
           <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
-          ${item.seller_nrc_verified ? `<div class="verified-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${t("seller_id_verified", "ID Verified")}</div>` : ""}
+          ${(() => {
+            const kind = typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(item) : (item.seller_nrc_verified ? "id_verified" : "");
+            if (kind !== "verified_shop" && kind !== "id_verified") return "";
+            const label = typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : t("seller_id_verified", "ID Verified");
+            return `<div class="verified-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</div>`;
+          })()}
         </div>
       </div>`;
   }

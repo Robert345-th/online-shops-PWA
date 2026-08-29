@@ -94,7 +94,12 @@
 
   .grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
   .card { width: calc(47% - 5px); background: var(--card); border: 2px solid var(--border); border-radius: 0; overflow: hidden; cursor: pointer; }
-  .thumb { height: 110px; background: #E9E2D3; display: flex; align-items: center; justify-content: center; }
+  .thumb { position: relative; height: 110px; background: #E9E2D3; display: flex; align-items: center; justify-content: center; }
+  .status-chip {
+    position: absolute; top: 6px; left: 6px;
+    background: #7A3E00; color: #fff; font-size: 9px; font-weight: 800;
+    padding: 3px 6px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
   body.dark .thumb { background: #2A2A2A; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -134,6 +139,7 @@
 <div id="app"><div class="center-box"><div class="spinner"></div></div></div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/seller-badge.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
@@ -187,6 +193,7 @@
       <div class="card" id="listing-${item.id}">
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(28)}
+          ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>` : ""}
         </div>
         <div class="card-info">
           <div class="card-price">K${item.price}</div>
@@ -210,24 +217,13 @@
   }
 
   function shopBadgeHtml(profile) {
-    const subscribed = profile.subscription_active === true
-      || profile.payment_status === "active"
-      || profile.has_active_subscription === true;
-    const approved = profile.account_type === "shop" && profile.shop_status === "approved";
-
-    if (subscribed) {
-      return verifiedStamp(t("verified_shop"));
+    const kind = typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(profile) : "";
+    const label = typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
+    if (!kind || !label) return "";
+    if (kind === "registered_shop") {
+      return `<div class="member-since">${label}</div>`;
     }
-    if (profile.nrc_verified) {
-      return verifiedStamp(t("seller_id_verified", "ID Verified"));
-    }
-    if (approved) {
-      return verifiedStamp(t("approved_shop"));
-    }
-    if (profile.account_type === "shop") {
-      return `<div class="member-since">${t("registered_shop")}</div>`;
-    }
-    return "";
+    return verifiedStamp(label);
   }
 
   async function loadFollowStatus() {
