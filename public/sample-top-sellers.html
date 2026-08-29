@@ -54,82 +54,85 @@
   .fake-price { font-size: 13px; font-weight: 800; color: var(--price-red); }
   .fake-title { font-size: 12px; margin-top: 2px; }
 
-  /* A — circles, no cards */
-  .a-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
-  .a-head { padding: 0 14px 10px; }
-  .a-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .a-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .a-row { display: flex; gap: 16px; overflow-x: auto; padding: 0 14px 4px; }
-  .a-item { flex-shrink: 0; width: 72px; text-align: center; }
-  .a-ring {
-    width: 56px; height: 56px; border-radius: 28px; padding: 2px;
-    background: var(--border); margin: 0 auto 6px;
-  }
-  .a-item.top .a-ring { background: var(--gold); }
+  .sec { padding: 14px 0 12px; border-bottom: 1px solid var(--border); }
+  .sec-head { padding: 0 14px 12px; }
+  .sec-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sec-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
+
+  /* A — medal on the face: 1 2 3 badge */
+  .a-row { display: flex; gap: 18px; overflow-x: auto; padding: 0 14px 4px; }
+  .a-item { flex-shrink: 0; width: 76px; text-align: center; }
+  .a-pic { position: relative; width: 56px; height: 56px; margin: 0 auto 10px; }
   .a-av {
-    width: 100%; height: 100%; border-radius: 50%; background: var(--red-btn); color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;
-    border: 2px solid var(--bg);
+    width: 56px; height: 56px; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;
   }
+  .a-item.r2 .a-av { background: var(--black); color: var(--gold); }
+  .a-item.r3 .a-av { background: #5C5955; color: #fff; }
+  .a-badge {
+    position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+    min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
+    background: var(--gold); color: var(--black);
+    font-size: 12px; font-weight: 900; line-height: 22px; text-align: center;
+  }
+  .a-item.r2 .a-badge { background: #C0C0C0; color: var(--black); }
+  .a-item.r3 .a-badge { background: #C47A3A; color: #fff; }
   .a-name { font-size: 11px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .a-rate { font-size: 10px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
 
-  /* B — open pills, no boxes */
-  .b-wrap { padding: 12px 0 10px; border-bottom: 1px solid var(--border); }
-  .b-head { padding: 0 14px 10px; }
-  .b-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .b-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .b-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 6px; }
-  .b-pill {
-    flex-shrink: 0; display: flex; align-items: center; gap: 8px;
-    padding: 6px 12px 6px 6px; background: transparent;
-  }
+  /* B — big rank number beside each seller */
+  .b-row { display: flex; gap: 20px; overflow-x: auto; padding: 0 14px 4px; align-items: center; }
+  .b-item { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .b-num { font-size: 28px; font-weight: 900; line-height: 1; color: var(--price-red); width: 22px; text-align: center; }
+  .b-item.r2 .b-num, .b-item.r3 .b-num { color: var(--text); }
   .b-av {
-    width: 32px; height: 32px; border-radius: 16px; background: var(--black); color: var(--gold);
-    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;
+    width: 40px; height: 40px; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex-shrink: 0;
   }
-  .b-meta { line-height: 1.2; }
-  .b-name { font-size: 12px; font-weight: 800; }
-  .b-rate { font-size: 10px; color: var(--price-red); font-weight: 700; }
+  .b-item.r2 .b-av { background: var(--black); color: var(--gold); }
+  .b-item.r3 .b-av { background: #5C5955; color: #fff; }
+  .b-meta { min-width: 0; }
+  .b-name { font-size: 13px; font-weight: 800; white-space: nowrap; }
+  .b-rate { font-size: 11px; color: var(--price-red); font-weight: 700; }
 
-  /* C — numbered lines, no boxes */
-  .c-wrap { padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
-  .c-head { margin-bottom: 6px; }
-  .c-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .c-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .c-line {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .c-line:last-child { border-bottom: none; }
-  .c-num { width: 18px; font-size: 12px; font-weight: 900; color: var(--subtext); }
-  .c-line.top .c-num { color: var(--price-red); }
+  /* C — full leaderboard, huge 1 2 3 */
+  .c-wrap { padding: 0 14px; }
+  .c-line { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .c-num { font-size: 26px; font-weight: 900; width: 28px; color: var(--price-red); line-height: 1; }
+  .c-line.r2 .c-num, .c-line.r3 .c-num { color: var(--text); }
   .c-av {
-    width: 28px; height: 28px; border-radius: 14px; background: var(--red-btn); color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%; background: var(--red-btn); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0;
   }
-  .c-name { flex: 1; font-size: 13px; font-weight: 700; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .c-rate { font-size: 12px; font-weight: 800; color: var(--price-red); }
+  .c-line.r2 .c-av { background: var(--black); color: var(--gold); }
+  .c-line.r3 .c-av { background: #5C5955; color: #fff; }
+  .c-name { flex: 1; font-size: 14px; font-weight: 800; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-rate { font-size: 13px; font-weight: 800; color: var(--price-red); }
 
-  /* D — one featured + small faces */
-  .d-wrap { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); }
-  .d-head { margin-bottom: 10px; }
-  .d-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-  .d-sub { font-size: 11px; color: var(--subtext); margin-top: 2px; }
-  .d-feat { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .d-av-lg {
-    width: 52px; height: 52px; border-radius: 26px; background: var(--gold); color: var(--black);
-    display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; flex-shrink: 0;
+  /* D — podium: 2  1  3 */
+  .d-podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; padding: 4px 14px 0; }
+  .d-spot { text-align: center; width: 90px; }
+  .d-spot.mid { width: 108px; }
+  .d-rank {
+    font-size: 11px; font-weight: 900; letter-spacing: 0.04em;
+    margin-bottom: 6px; color: var(--subtext);
   }
-  .d-feat-name { font-size: 15px; font-weight: 800; }
-  .d-feat-rate { font-size: 12px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
-  .d-more { display: flex; gap: 14px; overflow-x: auto; }
-  .d-face { flex-shrink: 0; text-align: center; width: 52px; }
-  .d-av-sm {
-    width: 40px; height: 40px; border-radius: 20px; background: var(--red-btn); color: #fff;
-    display: flex; align-items: center; justify-content: center; font-weight: 800; margin: 0 auto 4px;
+  .d-spot.mid .d-rank { color: var(--price-red); font-size: 12px; }
+  .d-av {
+    margin: 0 auto 6px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; color: #fff;
   }
-  .d-face-name { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d-spot.left .d-av, .d-spot.right .d-av {
+    width: 48px; height: 48px; font-size: 18px; background: #5C5955;
+  }
+  .d-spot.left .d-av { background: var(--black); color: var(--gold); }
+  .d-spot.mid .d-av {
+    width: 72px; height: 72px; font-size: 26px; background: var(--gold); color: var(--black);
+  }
+  .d-name { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d-spot.mid .d-name { font-size: 14px; }
+  .d-rate { font-size: 11px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
 </style>
 </head>
 <body data-nav-active="home">
@@ -138,71 +141,121 @@
 <div class="picker">
   <div class="picker-label">Top Sellers samples — pick one, then tell me A, B, C or D</div>
   <div class="picker-row">
-    <button class="pick on" type="button" data-id="a">A Faces</button>
-    <button class="pick" type="button" data-id="b">B Pills</button>
-    <button class="pick" type="button" data-id="c">C Rank</button>
-    <button class="pick" type="button" data-id="d">D Star</button>
+    <button class="pick on" type="button" data-id="a">A Medal</button>
+    <button class="pick" type="button" data-id="b">B Number</button>
+    <button class="pick" type="button" data-id="c">C List</button>
+    <button class="pick" type="button" data-id="d">D Podium</button>
   </div>
 </div>
 
 <div class="home-bar"><div class="search">Search listings...</div></div>
 
 <section class="layout on" id="layout-a">
-  <div class="a-wrap">
-    <div class="a-head">
-      <div class="a-title">Top Sellers</div>
-      <div class="a-sub">Highly rated on ZedMarket</div>
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Top Sellers</div>
+      <div class="sec-sub">Ranked by rating</div>
     </div>
     <div class="a-row">
-      <div class="a-item top"><div class="a-ring"><div class="a-av">K</div></div><div class="a-name">Kisha</div><div class="a-rate">5.0</div></div>
-      <div class="a-item"><div class="a-ring"><div class="a-av">R</div></div><div class="a-name">Rodert</div><div class="a-rate">5.0</div></div>
-      <div class="a-item"><div class="a-ring"><div class="a-av">J</div></div><div class="a-name">JOEL</div><div class="a-rate">4.9</div></div>
+      <div class="a-item r1">
+        <div class="a-pic"><div class="a-av">K</div><div class="a-badge">1</div></div>
+        <div class="a-name">Kisha</div>
+        <div class="a-rate">★ 5.0</div>
+      </div>
+      <div class="a-item r2">
+        <div class="a-pic"><div class="a-av">R</div><div class="a-badge">2</div></div>
+        <div class="a-name">Rodert</div>
+        <div class="a-rate">★ 5.0</div>
+      </div>
+      <div class="a-item r3">
+        <div class="a-pic"><div class="a-av">J</div><div class="a-badge">3</div></div>
+        <div class="a-name">JOEL</div>
+        <div class="a-rate">★ 4.9</div>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="layout" id="layout-b">
-  <div class="b-wrap">
-    <div class="b-head">
-      <div class="b-title">Top Sellers</div>
-      <div class="b-sub">Highly rated on ZedMarket</div>
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Top Sellers</div>
+      <div class="sec-sub">Ranked by rating</div>
     </div>
     <div class="b-row">
-      <div class="b-pill"><div class="b-av">K</div><div class="b-meta"><div class="b-name">Kisha's store</div><div class="b-rate">★ 5.0</div></div></div>
-      <div class="b-pill"><div class="b-av">R</div><div class="b-meta"><div class="b-name">Rodert</div><div class="b-rate">★ 5.0</div></div></div>
-      <div class="b-pill"><div class="b-av">J</div><div class="b-meta"><div class="b-name">JOEL</div><div class="b-rate">★ 4.9</div></div></div>
+      <div class="b-item r1">
+        <div class="b-num">1</div>
+        <div class="b-av">K</div>
+        <div class="b-meta"><div class="b-name">Kisha</div><div class="b-rate">★ 5.0</div></div>
+      </div>
+      <div class="b-item r2">
+        <div class="b-num">2</div>
+        <div class="b-av">R</div>
+        <div class="b-meta"><div class="b-name">Rodert</div><div class="b-rate">★ 5.0</div></div>
+      </div>
+      <div class="b-item r3">
+        <div class="b-num">3</div>
+        <div class="b-av">J</div>
+        <div class="b-meta"><div class="b-name">JOEL</div><div class="b-rate">★ 4.9</div></div>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="layout" id="layout-c">
-  <div class="c-wrap">
-    <div class="c-head">
-      <div class="c-title">Top Sellers</div>
-      <div class="c-sub">Highly rated on ZedMarket</div>
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Top Sellers</div>
+      <div class="sec-sub">Ranked by rating</div>
     </div>
-    <div class="c-line top"><div class="c-num">1</div><div class="c-av">K</div><div class="c-name">Kisha's online store</div><div class="c-rate">5.0</div></div>
-    <div class="c-line"><div class="c-num">2</div><div class="c-av">R</div><div class="c-name">Rodert</div><div class="c-rate">5.0</div></div>
-    <div class="c-line"><div class="c-num">3</div><div class="c-av">J</div><div class="c-name">JOEL</div><div class="c-rate">4.9</div></div>
+    <div class="c-wrap">
+      <div class="c-line r1">
+        <div class="c-num">1</div>
+        <div class="c-av">K</div>
+        <div class="c-name">Kisha's online store</div>
+        <div class="c-rate">5.0</div>
+      </div>
+      <div class="c-line r2">
+        <div class="c-num">2</div>
+        <div class="c-av">R</div>
+        <div class="c-name">Rodert</div>
+        <div class="c-rate">5.0</div>
+      </div>
+      <div class="c-line r3">
+        <div class="c-num">3</div>
+        <div class="c-av">J</div>
+        <div class="c-name">JOEL</div>
+        <div class="c-rate">4.9</div>
+      </div>
+    </div>
   </div>
 </section>
 
 <section class="layout" id="layout-d">
-  <div class="d-wrap">
-    <div class="d-head">
-      <div class="d-title">Top Sellers</div>
-      <div class="d-sub">Highly rated on ZedMarket</div>
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-title">Top Sellers</div>
+      <div class="sec-sub">Ranked by rating</div>
     </div>
-    <div class="d-feat">
-      <div class="d-av-lg">K</div>
-      <div>
-        <div class="d-feat-name">Kisha's online store</div>
-        <div class="d-feat-rate">★ 5.0 · top rated</div>
+    <div class="d-podium">
+      <div class="d-spot left">
+        <div class="d-rank">2</div>
+        <div class="d-av">R</div>
+        <div class="d-name">Rodert</div>
+        <div class="d-rate">★ 5.0</div>
       </div>
-    </div>
-    <div class="d-more">
-      <div class="d-face"><div class="d-av-sm">R</div><div class="d-face-name">Rodert</div></div>
-      <div class="d-face"><div class="d-av-sm">J</div><div class="d-face-name">JOEL</div></div>
+      <div class="d-spot mid">
+        <div class="d-rank">1</div>
+        <div class="d-av">K</div>
+        <div class="d-name">Kisha</div>
+        <div class="d-rate">★ 5.0</div>
+      </div>
+      <div class="d-spot right">
+        <div class="d-rank">3</div>
+        <div class="d-av">J</div>
+        <div class="d-name">JOEL</div>
+        <div class="d-rate">★ 4.9</div>
+      </div>
     </div>
   </div>
 </section>
