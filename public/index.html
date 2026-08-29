@@ -164,11 +164,6 @@
     display: flex; align-items: center; justify-content: center; padding: 0 3px;
   }
   .sticky-header { position: sticky; top: 0; z-index: 100; background: var(--bg); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-  .toggle-tab {
-    background: var(--black); display: flex; align-items: center; justify-content: center;
-    padding: 4px 0 7px; cursor: pointer;
-  }
-  .collapsible-filters { overflow: hidden; transition: max-height 0.25s ease; }
   .search-row { padding: 12px; background: var(--bg); }
   .search-input {
     width: 100%; background: var(--card); border: 1px solid var(--border);
@@ -331,18 +326,12 @@
     </div>
   </div>
 
-  <div class="toggle-tab" id="filtersToggle">
-    <svg id="toggleChevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.25s ease;"><polyline points="6 9 12 15 18 9"/></svg>
-  </div>
-
-  <div class="collapsible-filters" id="collapsibleFilters">
   <div class="search-row">
     <input class="search-input" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="Search listings..." />
   </div>
 
   <div class="chips-row" id="sortRow"></div>
   <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
-  </div>
 </div>
 
 <div class="map-loc-needed" id="mapLocNeeded">
@@ -447,25 +436,6 @@
   const sortRow = document.getElementById("sortRow");
   const categoryRow = document.getElementById("categoryRow");
 
-  const filtersPanel = document.getElementById("collapsibleFilters");
-  const filtersToggle = document.getElementById("filtersToggle");
-  const toggleChevron = document.getElementById("toggleChevron");
-  let filtersExpanded = true;
-  filtersToggle.addEventListener("click", () => {
-    if (filtersExpanded) {
-      filtersPanel.style.maxHeight = filtersPanel.scrollHeight + "px";
-      requestAnimationFrame(() => { filtersPanel.style.maxHeight = "0px"; });
-      toggleChevron.style.transform = "rotate(-90deg)";
-    } else {
-      filtersPanel.style.maxHeight = filtersPanel.scrollHeight + "px";
-      filtersPanel.addEventListener("transitionend", function clear() {
-        filtersPanel.style.maxHeight = "none";
-        filtersPanel.removeEventListener("transitionend", clear);
-      });
-      toggleChevron.style.transform = "rotate(0deg)";
-    }
-    filtersExpanded = !filtersExpanded;
-  });
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
   const authBtnText = document.getElementById("authBtnText");
