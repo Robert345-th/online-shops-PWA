@@ -164,10 +164,15 @@
     const btn = document.getElementById(`deny-${id}`);
     btn.disabled = true;
     try {
-      await fetch(`${API_URL}/sale-confirmations/${id}/deny`, {
+      const res = await fetch(`${API_URL}/sale-confirmations/${id}/deny`, {
         method: "PUT",
         headers: authHeaders()
       });
+      if (!res.ok) {
+        alert(t("sale_confirm_fail"));
+        btn.disabled = false;
+        return;
+      }
       confirmations = confirmations.filter(c => c.id !== id);
       render();
     } catch (e) {

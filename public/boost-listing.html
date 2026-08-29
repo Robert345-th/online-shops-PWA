@@ -150,14 +150,14 @@
         showBlocked(listing.error || "Listing not found.");
         return;
       }
-      if (listing.seller_id !== user?.id) {
+      if (Number(listing.seller_id) !== Number(user?.id)) {
         showBlocked("You can only boost your own listings.");
         return;
       }
 
       render();
     } catch (e) {
-      render();
+      showBlocked("Could not load this listing.");
     }
   }
 

@@ -286,7 +286,7 @@
       const [profileRes, reviewsRes, listingsRes, soldRes] = await Promise.all([
         fetch(`${API_URL}/reviews/seller/${sellerId}/profile`),
         fetch(`${API_URL}/reviews/seller/${sellerId}`),
-        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=20`),
+        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=50`),
         fetch(`${API_URL}/sale-confirmations/seller/${sellerId}/history`),
         loadFollowStatus(),
       ]);

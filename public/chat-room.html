@@ -1088,14 +1088,6 @@
       }
       renderMessages(true);
       cacheMessages();
-      if (window.notifyMessagePush && currentUser) {
-        const senderName = currentUser.display_name || currentUser.name || currentUser.shop_name || "Someone";
-        notifyMessagePush(userId, {
-          sender_name: senderName,
-          body: messagePreview(payload),
-          url: `/chat-room.html?userId=${currentUser.id}&name=${encodeURIComponent(senderName)}`,
-        });
-      }
     } catch (e) {
       messages = messages.filter((m) => m.id !== tempId);
       renderMessages(true);

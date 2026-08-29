@@ -155,6 +155,9 @@
       initMap();
       renderAll();
     } catch (e) {
+      allListings = [];
+      const el = document.getElementById("mapCount");
+      if (el) el.textContent = t("map_load_fail");
       initMap();
     }
   }

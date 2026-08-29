@@ -465,6 +465,10 @@
         return;
       }
 
+      if (data.sms_sent === false) {
+        sessionStorage.setItem("zm_otp_sms_failed", "1");
+      }
+
       window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
     } catch {
       showError(t("chat_server_fail"));

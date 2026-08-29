@@ -170,7 +170,7 @@
         return;
       }
 
-      if (data.seller_id !== user.id) {
+      if (Number(data.seller_id) !== Number(user.id)) {
         showError("You can only edit your own listings.");
         return;
       }

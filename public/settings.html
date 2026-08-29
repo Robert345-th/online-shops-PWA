@@ -317,6 +317,7 @@
     if (!user) return;
     try {
       const res = await fetch(`${API_URL}/auth/digest-settings`, { headers: authHeaders() });
+      if (!res.ok) return;
       const data = await res.json();
       digestToggle.checked = data.digest_enabled !== false;
     } catch (e) {}
@@ -324,11 +325,15 @@
   digestToggle.addEventListener("change", async () => {
     const value = digestToggle.checked;
     try {
-      await fetch(`${API_URL}/auth/digest-settings`, {
+      const res = await fetch(`${API_URL}/auth/digest-settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ enabled: value })
       });
+      if (!res.ok) {
+        digestToggle.checked = !value;
+        alert(t("digest_update_fail"));
+      }
     } catch (e) {
       digestToggle.checked = !value;
       alert(t("digest_update_fail"));
@@ -495,8 +500,12 @@
       if (res.ok) {
         const data = await res.json();
         window.location.href = `/chat-room.html?userId=${data.id}&support=1`;
+        return;
       }
-    } catch (e) {}
+      alert(t("support_unavailable"));
+    } catch (e) {
+      alert(t("support_unavailable"));
+    }
   });
 
   document.getElementById("privacyRow").addEventListener("click", () => {

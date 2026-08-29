@@ -99,7 +99,9 @@
       const res = await fetch(`${API_URL}/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      if (!res.ok) throw new Error("favorites");
       const favorites = await res.json();
+      if (!Array.isArray(favorites)) throw new Error("favorites");
 
       if (!favorites.length) {
         content.innerHTML = `

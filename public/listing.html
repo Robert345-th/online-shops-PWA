@@ -169,10 +169,15 @@
   .notify-btn.on { background: var(--black); color: var(--gold); border-color: var(--black); }
   .similar-head { font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 8px 0 10px; }
   .similar-row { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
-  .similar-card { width: 120px; flex-shrink: 0; cursor: pointer; }
+  .similar-card { width: 120px; flex-shrink: 0; cursor: pointer; position: relative; }
   .similar-card img { width: 120px; height: 90px; object-fit: cover; border-radius: 10px; display: block; background: var(--border); }
   .similar-card .p { font-size: 12px; font-weight: 800; color: var(--price-red); margin-top: 4px; }
   .similar-card .n { font-size: 11px; }
+  .similar-chip {
+    position: absolute; left: 6px; top: 6px; z-index: 2;
+    background: var(--black); color: var(--gold); font-size: 8px; font-weight: 800;
+    padding: 2px 6px; text-transform: uppercase; border-radius: 4px;
+  }
   .seller-row {
     display: flex; flex-direction: column; gap: 12px;
     background: var(--card); border: 1.5px solid var(--text);
@@ -613,7 +618,10 @@
   function render() {
     const items = galleryItems();
     const photos = listing.photos && listing.photos.length > 0 ? listing.photos : [];
-    const metaRest = [listing.category, listing.location_label].filter(Boolean).join(" · ");
+    const conditionLabel = listing.condition === "New"
+      ? t("listing_condition_new")
+      : (listing.condition === "Pre-owned" ? t("listing_condition_preowned") : (listing.condition || ""));
+    const metaRest = [conditionLabel, listing.category, listing.location_label].filter(Boolean).join(" · ");
     const viewsHidden = !(listing.view_count > 0);
     if (mainPhotoIndex >= items.length) mainPhotoIndex = 0;
     const first = items[0];
@@ -1039,7 +1047,10 @@
 
   function handleWhatsApp() {
     requireContactSafety(() => {
-      if (!listing.seller_phone) return;
+      if (!listing.seller_phone) {
+        alert(t("seller_phone_unavailable"));
+        return;
+      }
       const phone = listing.seller_phone.replace(/^0/, "260");
       const message = encodeURIComponent(`Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`);
       window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
@@ -1056,7 +1067,10 @@
   }
   function handleSMS() {
     requireContactSafety(() => {
-      if (!listing.seller_phone) return;
+      if (!listing.seller_phone) {
+        alert(t("seller_phone_unavailable"));
+        return;
+      }
       const message = `Hi, I'm interested in your listing "${listing.title}" on ZedMarket.`;
       window.location.href = `sms:${listing.seller_phone}?body=${encodeURIComponent(message)}`;
     });
@@ -1085,6 +1099,7 @@
             : (item.video_url && window.videoPosterUrl ? videoPosterUrl(item.video_url) : "");
           return `<div class="similar-card" data-id="${item.id}">
             ${photo ? `<img src="${photo}" alt="">` : `<div style="height:90px;background:var(--border);border-radius:10px;"></div>`}
+            ${item.status === "reserved" ? `<div class="similar-chip">${t("listing_reserved")}</div>` : ""}
             <div class="p">K${item.price}</div>
             <div class="n">${item.title || ""}</div>
           </div>`;

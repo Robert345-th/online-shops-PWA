@@ -279,6 +279,7 @@
     background: var(--black); color: var(--gold); font-size: 9px; font-weight: 800;
     padding: 3px 7px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px;
   }
+  .status-chip.boost-chip { background: var(--gold); color: var(--black); }
   .recent-wrap { padding: 4px 0 12px; }
   .recent-head { font-size: 12px; font-weight: 800; padding: 0 16px 8px; text-transform: uppercase; letter-spacing: 0.03em; }
   .recent-scroller { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
@@ -419,6 +420,7 @@
   }
 
   function saveFeedCache() {
+    if ((searchInput && searchInput.value.trim()) || (activeCategory && activeCategory !== "All")) return;
     const payload = JSON.stringify({
       ts: Date.now(),
       items: listings.slice(0, PAGE_SIZE),
@@ -604,7 +606,7 @@
       el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
     );
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
-      el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); renderFeed(); })
+      el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); loadListings(true); })
     );
   }
 
@@ -672,7 +674,14 @@
       loadMoreBtn.textContent = t("loading");
     }
     try {
-      const res = await fetchListingsPage(`${API_URL}/listings?limit=${PAGE_SIZE}&offset=${serverOffset}`);
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(serverOffset),
+      });
+      const q = searchInput.value.trim();
+      if (q) params.set("q", q);
+      if (activeCategory && activeCategory !== "All") params.set("category", activeCategory);
+      const res = await fetchListingsPage(`${API_URL}/listings?${params.toString()}`);
       if (!res.ok) throw new Error("Server error " + res.status);
       const batch = await res.json();
       if (!Array.isArray(batch)) throw new Error("Bad listings response");
@@ -712,15 +721,7 @@
   }
 
   function renderFeed() {
-    let items = listings.filter(item => activeCategory === "All" || item.category === activeCategory);
-
-    const q = searchInput.value.trim().toLowerCase();
-    if (q) {
-      items = items.filter(item =>
-        item.title?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q)
-      );
-    }
+    let items = listings.slice();
 
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
 
@@ -754,6 +755,7 @@
         window.location.href = "/post-listing.html";
       });
       updateLoadMoreButton();
+      updateSaveSearchBar();
       return;
     }
 
@@ -878,14 +880,19 @@
         window.location.href = "/login.html";
         return;
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        alert(t("cant_update_favorite"));
+        return;
+      }
       if (wasFav) favoriteIds.delete(id);
       else favoriteIds.add(id);
       const saved = favoriteIds.has(id);
       btn.innerHTML = heartIcon(saved);
       btn.setAttribute("aria-pressed", saved ? "true" : "false");
       btn.setAttribute("aria-label", saved ? t("saved_listing") : t("save_listing"));
-    } catch (e) {}
+    } catch (e) {
+      alert(t("cant_update_favorite"));
+    }
   }
 
   function renderCard(item) {
@@ -900,7 +907,9 @@
       <div class="card" id="card-${item.id}">
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(40)}
-          ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>` : ""}
+          ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>`
+            : (item.boosted_until && new Date(item.boosted_until) > new Date()
+              ? `<div class="status-chip boost-chip">${t("boosted_label")}</div>` : "")}
           <button type="button" class="fav-btn" data-id="${item.id}" aria-label="${isFav ? t("saved_listing") : t("save_listing")}" aria-pressed="${isFav ? "true" : "false"}">${heartIcon(isFav)}</button>
         </div>
         <div class="card-info">
@@ -920,7 +929,7 @@
   let searchRenderTimer = null;
   searchInput.addEventListener("input", () => {
     clearTimeout(searchRenderTimer);
-    searchRenderTimer = setTimeout(renderFeed, 250);
+    searchRenderTimer = setTimeout(() => loadListings(true), 250);
   });
 
   initPwaInstall({ showBanner: true });

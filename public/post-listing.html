@@ -482,6 +482,7 @@
       const res = await fetch(`${API_URL}/listings/${copyId}`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const data = await res.json();
+      if (Number(data.seller_id) !== Number(user?.id)) return;
       if (data.latitude && data.longitude) {
         coords = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
       }

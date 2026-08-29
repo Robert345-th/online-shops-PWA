@@ -135,7 +135,9 @@
   async function loadPosts() {
     try {
       const res = await fetch(`${API_URL}/wanted`);
-      posts = await res.json();
+      if (!res.ok) throw new Error("wanted");
+      const data = await res.json();
+      posts = Array.isArray(data) ? data : [];
       render();
     } catch (e) {
       content.innerHTML = `<div class="center-box"><div class="empty-text">${t("wanted_load_fail")}</div></div>`;
@@ -202,11 +204,17 @@
     btn.disabled = true;
     btn.textContent = t("wanted_updating");
     try {
-      await fetch(`${API_URL}/wanted/${postId}/close`, {
+      const res = await fetch(`${API_URL}/wanted/${postId}/close`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }
       });
-      posts = posts.filter(p => p.id !== postId);
+      if (!res.ok) {
+        alert(t("wanted_update_fail"));
+        btn.disabled = false;
+        btn.textContent = t("mark_found");
+        return;
+      }
+      posts = posts.filter(p => String(p.id) !== String(postId));
       render();
     } catch (e) {
       alert(t("wanted_update_fail"));

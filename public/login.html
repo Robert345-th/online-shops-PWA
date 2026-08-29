@@ -182,6 +182,10 @@
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.needsVerification) {
+          window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
+          return;
+        }
         showError(data.error || "Something went wrong.");
         return;
       }

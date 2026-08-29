@@ -378,7 +378,7 @@
       ["NRC number", u.nrc_number],
       ["NRC status", u.nrc_status],
       ["Referral code", u.referral_code],
-      ["Joined", formatDate(u.created_at)],
+      ["Joined", formatDate(u.date_joined || u.created_at)],
     ].filter(([, value]) => value);
 
     let html = `<div class="status-pill ${u.is_suspended ? "suspended" : "active"}">${u.is_suspended ? "Suspended" : "Active"}</div>`;
@@ -808,14 +808,16 @@
 
   async function approveSubscription(id) {
     try {
-      await fetch(`${API_URL}/subscriptions/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      const res = await fetch(`${API_URL}/subscriptions/${id}/approve`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not approve."); return; }
       pending = pending.filter(s => s.id != id);
       renderTabContent();
     } catch (e) { alert("Could not approve."); }
   }
   async function rejectSubscription(id) {
     try {
-      await fetch(`${API_URL}/subscriptions/${id}/reject`, { method: "PUT", headers: authHeaders() });
+      const res = await fetch(`${API_URL}/subscriptions/${id}/reject`, { method: "PUT", headers: authHeaders() });
+      if (!res.ok) { alert("Could not reject."); return; }
       pending = pending.filter(s => s.id != id);
       renderTabContent();
     } catch (e) { alert("Could not reject."); }

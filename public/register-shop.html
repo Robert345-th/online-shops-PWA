@@ -197,10 +197,13 @@
   const token = localStorage.getItem("zm_token");
   if (!token) window.location.href = "/login.html";
 
+  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
+  if (user?.shop_status === "approved") {
+    window.location.href = "/my-shop.html";
+  }
+
   let step = 1;
   let sellingType = "";
-
-  const user = JSON.parse(localStorage.getItem("zm_user") || "null");
   document.getElementById("fullNameInput").value = user?.name || user?.display_name || "";
   document.getElementById("provinceInput").innerHTML =
     `<option value="">Select province</option>${PROVINCES.map((p) => `<option value="${p}">${p}</option>`).join("")}`;

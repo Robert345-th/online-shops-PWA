@@ -125,6 +125,11 @@
     successBanner.classList.remove("show");
   }
 
+  if (sessionStorage.getItem("zm_otp_sms_failed") === "1") {
+    sessionStorage.removeItem("zm_otp_sms_failed");
+    showError(t("sms_code_send_fail"));
+  }
+
   // Persistent resend cooldown — stores the timestamp resend becomes available
   // again in localStorage, so closing/reloading the page (or trying to cheat
   // the timer) doesn't reset it. The countdown always resumes from the real
