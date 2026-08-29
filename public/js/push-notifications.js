@@ -65,44 +65,53 @@
     const apiUrl = window.ZM_API_URL;
     if (!auth || !apiUrl) return false;
     const bridge = getNativeBridge();
-    let fcm = "";
-    if (window.__zmFcmToken) fcm = String(window.__zmFcmToken);
-    if (!fcm && bridge && typeof bridge.getFcmToken === "function") {
-      try { fcm = String(bridge.getFcmToken() || ""); } catch (e) { fcm = ""; }
+    for (let i = 0; i < 12; i++) {
+      let fcm = "";
+      if (window.__zmFcmToken) fcm = String(window.__zmFcmToken);
+      if (!fcm && bridge && typeof bridge.getFcmToken === "function") {
+        try { fcm = String(bridge.getFcmToken() || ""); } catch (e) { fcm = ""; }
+      }
+      if (fcm) {
+        try {
+          const res = await fetch(`${apiUrl}/notifications/save-token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${auth}`,
+            },
+            body: JSON.stringify({ token: fcm }),
+          });
+          if (res.ok) return true;
+        } catch (e) {}
+      }
+      await new Promise((r) => setTimeout(r, 1500));
     }
-    if (!fcm) return false;
-    try {
-      const res = await fetch(`${apiUrl}/notifications/save-token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth}`,
-        },
-        body: JSON.stringify({ token: fcm }),
-      });
-      return res.ok;
-    } catch (e) {
-      return false;
-    }
+    return false;
   }
 
   async function sendTestPushNotification() {
-    if (nativeShowNotification("ZedMarket", typeof t === "function" ? t("push_on_body") : "Notifications are on. You will get a ping for new messages.", "/chat-list.html")) {
-      return true;
-    }
+    try { await registerNativeFcmToken(); } catch (e) {}
     const token = getToken();
-    if (token) {
+    const apiUrl = window.ZM_API_URL;
+    let fcmSent = false;
+    if (token && apiUrl) {
       try {
-        const res = await fetch("/api/push/test-self", {
+        const res = await fetch(`${apiUrl}/notifications/test-self`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.sent > 0) return true;
+          fcmSent = data.sent > 0;
         }
       } catch (e) {}
     }
+    nativeShowNotification(
+      "ZedMarket",
+      typeof t === "function" ? t("push_on_body") : "Notifications are on. You will get a ping for new messages.",
+      "/chat-list.html"
+    );
+    if (fcmSent) return true;
     if (notificationsAllowed()) {
       await showLocalMessageNotification("ZedMarket", typeof t === "function" ? t("push_on_body") : "Notifications are on.", "/chat-list.html");
       return true;
