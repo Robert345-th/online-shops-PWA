@@ -496,10 +496,6 @@
   let supportContactId = null;
   const displayNameCache = new Map();
 
-  function myDisplayName() {
-    return user?.display_name || user?.name || user?.shop_name || "";
-  }
-
   async function loadSupportContactId() {
     if (supportContactId) return supportContactId;
     try {
@@ -518,8 +514,6 @@
     if (conv.other_user_is_admin || conv.other_is_admin) return true;
     const apiName = (conv.other_user_name || "").trim();
     if (/^customer support$/i.test(apiName) || /^zedmarket support$/i.test(apiName)) return true;
-    const mine = myDisplayName().trim();
-    if (mine && apiName.toLowerCase() === mine.toLowerCase()) return true;
     return false;
   }
 

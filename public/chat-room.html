@@ -495,7 +495,7 @@
   }
 
   async function loadOtherUser() {
-    const cacheKey = `zm_userinfo_${userId}`;
+    const cacheKey = `zm_userinfo_v2_${userId}`;
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -544,7 +544,7 @@
       document.getElementById("menuBtn").style.display = "none";
       return;
     }
-    const nameToShow = otherUser?.display_name || nameFromLink;
+    const nameToShow = nameFromLink || otherUser?.display_name;
     if (!nameToShow && !otherUser) return;
     document.getElementById("headerName").textContent = nameToShow || "Chat";
     const avatar = document.getElementById("headerAvatar");
