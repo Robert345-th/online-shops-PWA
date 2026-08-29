@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 <script src="/js/android-chrome.js"></script>
 <script src="/js/utils.js"></script>
 <script src="/js/app-touch.js"></script>
@@ -44,7 +44,17 @@
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
-  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); overflow: hidden; transition: background 0.2s, color 0.2s; touch-action: manipulation; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; right: 0;
+    top: var(--vv-top, 0px);
+    height: var(--vv-height, 100%);
+    overflow: hidden;
+    transition: background 0.2s, color 0.2s;
+    touch-action: manipulation;
+  }
 
   .topbar {
     background: var(--black); padding: 10px 12px 10px 4px;
@@ -169,6 +179,9 @@
     z-index: 20;
     box-shadow: 0 -4px 16px rgba(33,29,26,0.06);
   }
+  body.keyboard-open #composerDock { padding-bottom: 8px; }
+  body.keyboard-open #quickReplyWrap { display: none; }
+  body.keyboard-open .listing-context { display: none !important; }
   .quick-reply-row { display: flex; gap: 8px; overflow-x: auto; padding: 10px 12px 4px; flex-shrink: 0; }
   .quick-reply-chip {
     background: var(--card); border: 1.5px solid var(--border); border-radius: 20px;
@@ -338,16 +351,28 @@
 <script src="/js/push-notifications.js"></script>
 <script src="/js/data-saver.js"></script>
 <script>
-  function setVH() {
-    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+  let chatInputFocused = false;
+  function syncChatViewport() {
+    const vv = window.visualViewport;
+    const visH = vv && vv.height ? vv.height : window.innerHeight;
+    const top = vv ? vv.offsetTop : 0;
+    document.documentElement.style.setProperty('--vv-height', `${Math.round(visH)}px`);
+    document.documentElement.style.setProperty('--vv-top', `${Math.round(top)}px`);
+    const kbOpen = chatInputFocused || top > 24 || (window.innerHeight - visH > 80);
+    document.body.classList.toggle('keyboard-open', kbOpen);
+    if (window.scrollY || document.documentElement.scrollTop) window.scrollTo(0, 0);
   }
-  setVH();
-  window.addEventListener('resize', setVH);
-  window.addEventListener('orientationchange', setVH);
-  window.addEventListener('load', setVH);
-  window.addEventListener('pageshow', setVH);
-  setTimeout(setVH, 100);
-  setTimeout(setVH, 400);
+  syncChatViewport();
+  window.addEventListener('resize', syncChatViewport);
+  window.addEventListener('orientationchange', syncChatViewport);
+  window.addEventListener('load', syncChatViewport);
+  window.addEventListener('pageshow', syncChatViewport);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncChatViewport);
+    window.visualViewport.addEventListener('scroll', syncChatViewport);
+  }
+  setTimeout(syncChatViewport, 100);
+  setTimeout(syncChatViewport, 400);
 
   const API_URL = "https://online-shops-production.up.railway.app";
   const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/kstg72vx/image/upload";
@@ -933,8 +958,19 @@
       updateActionBtn();
       notifyTyping(userId);
     });
-    msgInput.addEventListener("blur", () => stopTyping(userId));
-    msgInput.addEventListener("focus", () => setTimeout(setVH, 300));
+    msgInput.addEventListener("blur", () => {
+      chatInputFocused = false;
+      stopTyping(userId);
+      setTimeout(syncChatViewport, 50);
+      setTimeout(syncChatViewport, 300);
+    });
+    msgInput.addEventListener("focus", () => {
+      chatInputFocused = true;
+      syncChatViewport();
+      setTimeout(syncChatViewport, 50);
+      setTimeout(syncChatViewport, 300);
+      setTimeout(() => { messagesList.scrollTop = messagesList.scrollHeight; }, 320);
+    });
 
     actionBtn.addEventListener("click", () => {
       if (msgInput.value.trim()) {

@@ -64,6 +64,9 @@
       html.play-store-webview #composerDock {
         padding-bottom: calc(12px + var(--ps-bottom-inset));
       }
+      html.play-store-webview body.keyboard-open #composerDock {
+        padding-bottom: 8px;
+      }
       html.play-store-webview .menu-box {
         padding-bottom: calc(24px + var(--ps-bottom-inset));
       }
