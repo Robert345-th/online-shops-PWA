@@ -445,6 +445,7 @@
       category_id: categoryId,
       condition,
       photos: photos.map(p => p.url).filter(Boolean),
+      video_url: listing.video_url || null,
       latitude: coords.lat,
       longitude: coords.lng,
       location_label: locationLabel,

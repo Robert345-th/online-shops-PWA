@@ -126,6 +126,16 @@
     border: 1px solid var(--border); border-bottom-left-radius: 5px;
   }
   .bubble.deleted { background: transparent; border: 1px dashed var(--border); color: var(--subtext); font-style: italic; font-size: 12px; box-shadow: none; }
+  .offer-card { min-width: 180px; }
+  .offer-amt { font-size: 20px; font-weight: 900; }
+  .offer-state { font-size: 11px; font-weight: 700; margin-top: 4px; text-transform: uppercase; }
+  .offer-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .offer-actions button {
+    flex: 1; border: none; padding: 8px 6px; font-size: 11px; font-weight: 800; cursor: pointer;
+  }
+  .offer-accept { background: var(--black); color: var(--gold); }
+  .offer-decline { background: var(--card); color: var(--text); border: 1px solid var(--border) !important; }
+  .offer-counter { background: #E01B27; color: #fff; }
   .tick { display: flex; align-items: flex-end; color: #8A8680; margin-bottom: 2px; line-height: 0; }
   .tick.read { color: #53BDEB; }
   .tick.sending { color: #8A8680; }
@@ -726,7 +736,7 @@
 
   function messagesFingerprint() {
     return messages.map((m) =>
-      `${m.id}:${m.read_at || ""}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${playingId === m.id ? 1 : 0}`
+      `${m.id}:${m.read_at || ""}:${m.pending ? 1 : 0}:${m.deleted_for_everyone ? 1 : 0}:${m.offer_status || ""}:${playingId === m.id ? 1 : 0}`
     ).join("|");
   }
 
@@ -750,6 +760,9 @@
       if (photoEl) photoEl.addEventListener("click", () => openViewer(msg.photo_url));
       const audioEl = document.getElementById(`audio-${msg.id}`);
       if (audioEl) audioEl.addEventListener("click", () => handlePlayAudio(msg.id, msg.audio_url));
+      document.querySelectorAll(`[data-offer-id="${msg.id}"]`).forEach((btn) => {
+        btn.addEventListener("click", () => respondOffer(msg.id, btn.dataset.offerAction));
+      });
     });
     observeLazyImages(messagesList);
   }
@@ -772,6 +785,19 @@
           <div class="audio-wave"></div>
           <span>${formatDuration(msg.audio_duration || 0)}</span>
         </div>`;
+    } else if (msg.offer_amount) {
+      const st = msg.offer_status || "pending";
+      const canRespond = currentUser && msg.receiver_id === currentUser.id && st === "pending" && !msg.pending;
+      inner = `<div class="bubble offer-card ${isMine ? "mine" : "theirs"}">
+        <div>${t("offer_label")}</div>
+        <div class="offer-amt">K${msg.offer_amount}</div>
+        <div class="offer-state">${t("offer_status_" + st)}</div>
+        ${canRespond ? `<div class="offer-actions">
+          <button type="button" class="offer-accept" data-offer-id="${msg.id}" data-offer-action="accept">${t("offer_accept")}</button>
+          <button type="button" class="offer-decline" data-offer-id="${msg.id}" data-offer-action="decline">${t("offer_decline")}</button>
+          <button type="button" class="offer-counter" data-offer-id="${msg.id}" data-offer-action="counter">${t("offer_counter")}</button>
+        </div>` : ""}
+      </div>`;
     } else {
       inner = `<div class="bubble ${isMine ? "mine" : "theirs"}">${escHtml(msg.content)}</div>`;
     }
@@ -781,6 +807,43 @@
       ? `<div class="tick ${tickStatus}">${chatReceiptInner(tickStatus)}</div>`
       : "";
     return `<div class="bubble-row ${rowClass}" id="msg-${msg.id}">${inner}${tick}</div>`;
+  }
+
+  async function respondOffer(id, action) {
+    let amount;
+    if (action === "counter") {
+      const raw = prompt(t("offer_counter_prompt"));
+      if (raw == null) return;
+      amount = parseFloat(raw);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        alert(t("offer_invalid"));
+        return;
+      }
+    }
+    try {
+      const res = await fetch(`${API_URL}/messages/offer/${id}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ action, amount }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || t("offer_respond_fail"));
+        return;
+      }
+      if (data.updated) {
+        messages = messages.map((m) => m.id === id ? { ...m, offer_status: data.updated.offer_status } : m);
+      }
+      if (data.message) {
+        const exists = messages.some((m) => m.id === data.message.id);
+        if (!exists) messages.push(data.message);
+        else messages = messages.map((m) => m.id === data.message.id ? data.message : m);
+      }
+      renderMessages(true);
+      cacheMessages();
+    } catch (e) {
+      alert(t("chat_server_fail"));
+    }
   }
 
   function openViewer(url) {

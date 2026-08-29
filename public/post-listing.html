@@ -166,6 +166,13 @@
         <div class="add-text">Add Photos</div>
         <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" />
       </label>
+      <div class="label">Video (optional)</div>
+      <div class="subtitle" style="margin-bottom:10px;">One short clip, up to 15 seconds. Buyers see it on the listing.</div>
+      <div id="videoBox"></div>
+      <label class="add-photo-box" id="addVideoBox" style="height:90px;">
+        <div class="add-text">Add a video</div>
+        <input type="file" id="videoInput" accept="video/*" style="display:none;" />
+      </label>
       <div class="btn-row">
         <button type="button" class="back-btn" id="back2Btn">Back</button>
         <button type="button" class="submit-btn" id="next2Btn">Next</button>
@@ -217,6 +224,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/data-saver.js"></script>
 <script src="/js/shop-gate.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/upload.js"></script>
@@ -239,6 +247,7 @@
 
   let step = 1;
   let photos = [];
+  let listingVideo = null;
   let categoryId = null;
   let condition = null;
   let landUnit = "acres";
@@ -257,6 +266,7 @@
     return {
       step,
       photos: photos.filter((p) => p.url).map((p) => ({ url: p.url })),
+      videoUrl: listingVideo && listingVideo.url ? listingVideo.url : "",
       categoryId,
       condition,
       landUnit,
@@ -300,6 +310,7 @@
       locationLabel = draft.locationLabel || "";
       listingFrom = draft.listingFrom || null;
       photos = Array.isArray(draft.photos) ? draft.photos.filter((p) => p.url) : [];
+      listingVideo = draft.videoUrl ? { url: draft.videoUrl, uploading: false } : null;
       step = draft.step || 1;
       setTimeout(() => {
         const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
@@ -316,6 +327,7 @@
         if (loc && locationLabel) loc.value = locationLabel;
         updateStepUI();
         renderPhotoGrid();
+        renderVideoBox();
         renderCategoryChips();
         updateConditionChips();
       }, 50);
@@ -598,6 +610,81 @@
 
     const addBoxEl = document.getElementById("addPhotoBox");
     if (addBoxEl) addBoxEl.style.display = photos.length < MAX_PHOTOS ? "flex" : "none";
+    renderVideoBox();
+  }
+
+  function renderVideoBox() {
+    const box = document.getElementById("videoBox");
+    const add = document.getElementById("addVideoBox");
+    if (!box || !add) return;
+    if (!listingVideo) {
+      box.innerHTML = "";
+      add.style.display = "flex";
+      return;
+    }
+    add.style.display = "none";
+    const poster = listingVideo.url && window.videoPosterUrl ? videoPosterUrl(listingVideo.url) : listingVideo.uri || "";
+    box.innerHTML = `
+      <div class="photo-thumb-wrap" style="width:100%;height:160px;margin-bottom:12px;">
+        ${listingVideo.url
+          ? `<video src="${listingVideo.url}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>`
+          : (poster ? `<img src="${poster}" alt="">` : "")}
+        ${listingVideo.uploading ? `<div class="photo-overlay">Uploading…</div>` : ""}
+        <button type="button" class="remove-btn" id="removeVideoBtn">✕</button>
+      </div>`;
+    document.getElementById("removeVideoBtn")?.addEventListener("click", () => {
+      listingVideo = null;
+      renderVideoBox();
+    });
+  }
+
+  async function handleVideoSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) {
+      showError("Video must be under 25 MB.");
+      return;
+    }
+    const duration = await new Promise((resolve) => {
+      const v = document.createElement("video");
+      v.preload = "metadata";
+      v.onloadedmetadata = () => {
+        const d = v.duration;
+        URL.revokeObjectURL(v.src);
+        resolve(d);
+      };
+      v.onerror = () => resolve(0);
+      v.src = URL.createObjectURL(file);
+    });
+    if (duration > 16) {
+      showError("Keep the video to 15 seconds or less.");
+      return;
+    }
+    listingVideo = { uri: URL.createObjectURL(file), url: null, uploading: true };
+    renderVideoBox();
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!listingVideo) return;
+      listingVideo.uploading = false;
+      listingVideo.url = data.secure_url || null;
+      if (!listingVideo.url) {
+        listingVideo = null;
+        showError("Could not upload the video. Try a shorter clip.");
+      }
+      renderVideoBox();
+    } catch (err) {
+      listingVideo = null;
+      renderVideoBox();
+      showError("Could not upload the video.");
+    }
   }
 
   function initPhotoAddControls() {
@@ -612,6 +699,8 @@
         }
       });
     }
+    const videoInput = document.getElementById("videoInput");
+    if (videoInput) videoInput.addEventListener("change", handleVideoSelect);
   }
 
   function handlePhotoSelect(e) {
@@ -760,6 +849,7 @@
       category_id: categoryId,
       condition: listingCondition,
       photos: photos.map((p) => p.url).filter(Boolean),
+      video_url: listingVideo && listingVideo.url ? listingVideo.url : null,
       location_label: locationLabel,
     };
     if (listingFrom) body.listing_from = listingFrom;
@@ -845,7 +935,7 @@
         showError("Please add at least one photo.");
         return;
       }
-      if (photos.some((p) => p.uploading)) {
+      if (photos.some((p) => p.uploading) || (listingVideo && listingVideo.uploading)) {
         showError("Photos are still uploading. Please wait a moment.");
         return;
       }

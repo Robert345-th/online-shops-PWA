@@ -24,6 +24,22 @@
     window.dispatchEvent(new Event("lowdatachange"));
   }
 
+  function videoPosterUrl(url) {
+    if (!url) return url;
+    if (!url.includes("res.cloudinary.com")) return url;
+    if (url.includes("/video/upload/")) {
+      return url.replace("/video/upload/", "/video/upload/so_0,w_640,c_fill,f_jpg,q_auto/");
+    }
+    return url;
+  }
+
+  function listingCardImage(item) {
+    if (!item) return "";
+    if (item.photos && item.photos[0]) return optimizeImageUrl(item.photos[0], "card");
+    if (item.video_url) return videoPosterUrl(item.video_url);
+    return "";
+  }
+
   function optimizeImageUrl(url, preset) {
     if (!url) return url;
     if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) return url;
@@ -99,6 +115,8 @@
   window.isLowData = isLowData;
   window.setLowData = setLowData;
   window.optimizeImageUrl = optimizeImageUrl;
+  window.videoPosterUrl = videoPosterUrl;
+  window.listingCardImage = listingCardImage;
   window.zmImg = zmImg;
   window.observeLazyImages = observeLazyImages;
   window.getPollInterval = getPollInterval;

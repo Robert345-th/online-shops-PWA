@@ -439,7 +439,8 @@
   }
 
   function renderRow(item) {
-    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const img = (item.photos && item.photos[0])
+      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null);
     let badge = `<div class="status-badge">${item.status}</div>`;
     if (item.payment_disabled) {
       badge = `<div class="disabled-badge">${t("disabled_needs_sub", { category: item.category })}</div>`;

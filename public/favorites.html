@@ -128,7 +128,8 @@
   }
 
   function renderCard(item) {
-    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const img = (item.photos && item.photos[0])
+      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null);
     return `
       <div class="card" id="fav-${item.id}">
         <div class="thumb">

@@ -888,7 +888,9 @@
   }
 
   function renderCard(item) {
-    const img = item.photos && item.photos.length > 0 ? item.photos[0] : null;
+    const img = (item.photos && item.photos[0])
+      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null)
+      || null;
     const isFav = favoriteIds.has(String(item.id));
     const distancePart = (item.distanceKm != null)
       ? `<span class="loc-dist">${escHtml(formatDistanceKm(item.distanceKm))}</span> · `

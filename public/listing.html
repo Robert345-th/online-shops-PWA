@@ -60,6 +60,23 @@
     opacity: 0; pointer-events: none;
   }
   .hero-photo.on { opacity: 1; pointer-events: auto; }
+  .hero-video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; background: #111; display: none; z-index: 1;
+  }
+  .hero-video.on { display: block; }
+  .video-mute-hint {
+    position: absolute; left: 12px; bottom: 88px; z-index: 3;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; font-weight: 800;
+    padding: 6px 10px; border-radius: 999px; pointer-events: none;
+  }
+  .thumb-box.video-thumb { position: relative; }
+  .thumb-box.video-thumb::after {
+    content: "▶"; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; text-shadow: 0 1px 3px #000;
+    pointer-events: none;
+  }
   .hero-photo-empty { display: flex; align-items: center; justify-content: center; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
@@ -138,8 +155,18 @@
   .still-btn {
     width: 100%; background: var(--card); border: 2px solid var(--text); color: var(--text);
     border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 800;
-    margin: 12px 0; cursor: pointer;
+    margin: 12px 0 0; cursor: pointer;
   }
+  .deal-row { display: flex; gap: 10px; margin: 12px 0; }
+  .deal-btn {
+    flex: 1; background: var(--black); color: var(--gold); border: none;
+    border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 800; cursor: pointer;
+  }
+  .notify-btn {
+    flex: 1; background: var(--card); border: 1.5px solid var(--text); color: var(--text);
+    border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 800; cursor: pointer;
+  }
+  .notify-btn.on { background: var(--black); color: var(--gold); border-color: var(--black); }
   .similar-head { font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 8px 0 10px; }
   .similar-row { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
   .similar-card { width: 120px; flex-shrink: 0; cursor: pointer; }
@@ -346,6 +373,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
       <span data-i18n="share_whatsapp">Share on WhatsApp</span>
     </button>
+    <button class="menu-row" type="button" id="shareStatusBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span data-i18n="share_status">Share to WhatsApp Status</span>
+    </button>
     <button class="menu-row" type="button" id="shareShopBtn">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span data-i18n="share_shop">Share shop</span>
@@ -366,6 +397,18 @@
     <div class="modal-actions">
       <button type="button" class="modal-cancel-btn" id="paySafetyCancelBtn" data-i18n="go_back">Go Back</button>
       <button type="button" class="modal-submit-btn" id="paySafetyUnderstandBtn" data-i18n="i_understand">I Understand</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="offerModal">
+  <div class="modal-box">
+    <div class="modal-title" data-i18n="make_offer">Make an offer</div>
+    <div class="modal-subtitle" id="offerHint">What will you pay?</div>
+    <input class="modal-input" id="offerAmountInput" type="number" min="1" inputmode="decimal" placeholder="e.g. 1200" style="min-height:44px;" />
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" id="offerCancelBtn" data-i18n="cancel">Cancel</button>
+      <button type="button" class="modal-submit-btn" id="offerSendBtn" data-i18n="send_offer">Send offer</button>
     </div>
   </div>
 </div>
@@ -406,6 +449,7 @@
   let selectedReason = "";
   let pendingContactAction = null;
   let isFavorited = false;
+  let watchingListing = false;
 
   function heartIcon(filled) {
     const cls = filled ? "filled" : "";
@@ -448,6 +492,7 @@
       updateListingMeta(listing);
       render();
       loadFavoriteStatus();
+      loadWatchStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
     }
 
@@ -465,6 +510,7 @@
       trackListingView();
       render();
       loadFavoriteStatus();
+      loadWatchStatus();
       if (listing.seller_id) fetchReviews(listing.seller_id);
       trackRecentlyViewed(listing);
       try {
@@ -554,10 +600,23 @@
       .catch(() => {});
   }
 
+  function galleryItems() {
+    const items = [];
+    if (listing.video_url) items.push({ type: "video", url: listing.video_url });
+    (listing.photos || []).forEach((url) => items.push({ type: "photo", url }));
+    return items;
+  }
+
   function render() {
+    const items = galleryItems();
     const photos = listing.photos && listing.photos.length > 0 ? listing.photos : [];
     const metaRest = [listing.category, listing.location_label].filter(Boolean).join(" · ");
     const viewsHidden = !(listing.view_count > 0);
+    if (mainPhotoIndex >= items.length) mainPhotoIndex = 0;
+    const first = items[0];
+    const poster = listing.video_url && window.videoPosterUrl ? videoPosterUrl(listing.video_url) : "";
+    const firstPhoto = (first && first.type === "photo") ? first.url : photos[0];
+    const hasMedia = items.length > 0;
 
     app.innerHTML = `
       <div class="listing-shell">
@@ -566,13 +625,15 @@
         <button class="round-btn back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
         <button class="round-btn favorite-button" id="favoriteBtn" type="button" aria-label="Save listing" aria-pressed="false">${heartIcon(false)}</button>
         <button class="round-btn more-button" id="moreBtn" type="button" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>
-        ${photos.length > 0
-          ? `<img class="hero-photo on" id="heroPhotoA" src="${optimizeImageUrl(photos[mainPhotoIndex], "hero")}" alt="" />
+        ${listing.video_url ? `<video class="hero-video ${first && first.type === "video" ? "on" : ""}" id="heroVideo" src="${listing.video_url}" poster="${poster || ""}" playsinline webkit-playsinline muted loop></video>
+        <div class="video-mute-hint" id="videoMuteHint" ${first && first.type === "video" ? "" : 'style="display:none"'}>Tap for sound</div>` : ""}
+        ${hasMedia && firstPhoto
+          ? `<img class="hero-photo ${!listing.video_url || (first && first.type === "photo") ? "on" : ""}" id="heroPhotoA" src="${optimizeImageUrl(firstPhoto, "hero")}" alt="" />
              <img class="hero-photo" id="heroPhotoB" alt="" />`
-          : `<div class="hero-photo-empty">${photoPlaceholder(56)}</div>`}
-        ${photos.length > 1 ? `
+          : (!listing.video_url ? `<div class="hero-photo-empty">${photoPlaceholder(56)}</div>` : "")}
+        ${items.length > 1 ? `
           <div class="thumb-row" id="thumbRow">
-            ${photos.map((url, i) => `<div class="thumb-box ${i === mainPhotoIndex ? "active" : ""}" data-idx="${i}">${zmImg(url, { preset: "thumb" })}</div>`).join("")}
+            ${items.map((item, i) => `<div class="thumb-box ${item.type === "video" ? "video-thumb" : ""} ${i === mainPhotoIndex ? "active" : ""}" data-idx="${i}">${zmImg(item.type === "video" ? poster || item.url : item.url, { preset: "thumb" })}</div>`).join("")}
           </div>` : ""}
         <div class="photo-price">
           <div class="price">K${listing.price}</div>
@@ -612,7 +673,15 @@
           <div class="safety-btn" id="safetyOpenBtn">${t("safety_tips")}</div>
           <div class="safety-btn" id="shareMeetupBtn">${t("share_meetup")}</div>
         </div>
-        ${listing.status !== "sold" && !isOwnListing() ? `<button type="button" class="still-btn" id="stillBtn">${t("still_available")}</button>` : ""}
+        ${listing.status !== "sold" && !isOwnListing() ? `
+          <div class="deal-row">
+            <button type="button" class="deal-btn" id="offerBtn">${t("make_offer")}</button>
+            <button type="button" class="notify-btn ${watchingListing ? "on" : ""}" id="notifyBtn">${watchingListing ? t("notify_on") : t("notify_me")}</button>
+          </div>
+          <button type="button" class="still-btn" id="stillBtn">${t("still_available")}</button>
+        ` : (!isOwnListing() ? `
+          <button type="button" class="notify-btn ${watchingListing ? "on" : ""}" id="notifyBtn" style="width:100%;margin:12px 0;">${watchingListing ? t("notify_on") : t("notify_me")}</button>
+        ` : "")}
         <div id="similarWrap"></div>
       </div>
 
@@ -627,8 +696,9 @@
     `;
 
     renderSellerRow();
-    wireEvents(photos);
+    wireEvents();
     updateFavoriteButton();
+    playHeroIfVideo();
   }
 
   async function loadFavoriteStatus() {
@@ -786,7 +856,17 @@
     document.getElementById("rateSellerBtn").addEventListener("click", openReviewModal);
   }
 
-  function wireEvents(photos) {
+  function playHeroIfVideo() {
+    const v = document.getElementById("heroVideo");
+    if (!v || !v.classList.contains("on")) return;
+    if (typeof isLowData === "function" && isLowData()) return;
+    v.muted = true;
+    v.play().catch(() => {});
+  }
+
+  function wireEvents() {
+    const items = galleryItems();
+    const photos = (listing.photos || []).slice();
     document.getElementById("favoriteBtn").addEventListener("click", toggleFavorite);
     document.getElementById("moreBtn").addEventListener("click", () => document.getElementById("moreMenu").classList.add("open"));
     document.getElementById("safetyOpenBtn").addEventListener("click", () => document.getElementById("safetyModal").classList.add("open"));
@@ -797,24 +877,62 @@
 
     const heroA = document.getElementById("heroPhotoA");
     const heroB = document.getElementById("heroPhotoB");
+    const heroVideo = document.getElementById("heroVideo");
+    const muteHint = document.getElementById("videoMuteHint");
     if (heroA) heroA.dataset.shown = heroA.getAttribute("src") || "";
     let heroFront = "A";
 
+    function syncMuteHint() {
+      if (!muteHint || !heroVideo) return;
+      const showingVideo = heroVideo.classList.contains("on");
+      muteHint.style.display = showingVideo ? "block" : "none";
+      muteHint.textContent = heroVideo.muted ? "Tap for sound" : "Sound on";
+    }
+
     document.querySelector(".hero-wrap")?.addEventListener("click", (e) => {
       if (e.target.closest(".round-btn, .thumb-row, .thumb-box")) return;
-      if (e.target.closest(".hero-photo")) openViewer(mainPhotoIndex, photos);
+      const item = items[mainPhotoIndex];
+      if (item && item.type === "video") {
+        if (heroVideo) {
+          heroVideo.muted = !heroVideo.muted;
+          if (heroVideo.paused) heroVideo.play().catch(() => {});
+          syncMuteHint();
+        }
+        return;
+      }
+      if (e.target.closest(".hero-photo") && photos.length) {
+        const idx = item ? photos.indexOf(item.url) : 0;
+        openViewer(Math.max(0, idx), photos);
+      }
     });
 
     function showHeroAt(index) {
-      if (!photos[index] || !heroA || !heroB) return;
+      if (!items[index]) return;
       mainPhotoIndex = index;
       document.querySelectorAll("#thumbRow .thumb-box").forEach((t) => {
         t.classList.toggle("active", parseInt(t.dataset.idx, 10) === index);
       });
-      const next = optimizeImageUrl(photos[index], "hero");
+      const item = items[index];
+      if (item.type === "video") {
+        if (heroA) heroA.classList.remove("on");
+        if (heroB) heroB.classList.remove("on");
+        if (heroVideo) {
+          heroVideo.classList.add("on");
+          playHeroIfVideo();
+          syncMuteHint();
+        }
+        return;
+      }
+      if (heroVideo) {
+        heroVideo.pause();
+        heroVideo.classList.remove("on");
+        syncMuteHint();
+      }
+      if (!heroA || !heroB) return;
+      const next = optimizeImageUrl(item.url, "hero");
       const front = heroFront === "A" ? heroA : heroB;
       const back = heroFront === "A" ? heroB : heroA;
-      if (front.dataset.shown === next) return;
+      if (front.classList.contains("on") && front.dataset.shown === next) return;
       let applied = false;
       const apply = () => {
         if (applied || mainPhotoIndex !== index) return;
@@ -848,6 +966,8 @@
     document.getElementById("smsBtn")?.addEventListener("click", handleSMS);
     document.getElementById("callBtn")?.addEventListener("click", handleCall);
     document.getElementById("stillBtn")?.addEventListener("click", handleStillAvailable);
+    document.getElementById("offerBtn")?.addEventListener("click", openOfferModal);
+    document.getElementById("notifyBtn")?.addEventListener("click", toggleNotifyMe);
     loadSimilar();
   }
 
@@ -957,7 +1077,9 @@
       if (!Array.isArray(rows) || !rows.length) return;
       wrap.innerHTML = `<div class="similar-head">${t("similar_listings")}</div>
         <div class="similar-row">${rows.map((item) => {
-          const photo = Array.isArray(item.photos) && item.photos[0] ? optimizeImageUrl(item.photos[0], "card") : "";
+          const photo = (Array.isArray(item.photos) && item.photos[0])
+            ? optimizeImageUrl(item.photos[0], "card")
+            : (item.video_url && window.videoPosterUrl ? videoPosterUrl(item.video_url) : "");
           return `<div class="similar-card" data-id="${item.id}">
             ${photo ? `<img src="${photo}" alt="">` : `<div style="height:90px;background:var(--border);border-radius:10px;"></div>`}
             <div class="p">K${item.price}</div>
@@ -973,6 +1095,144 @@
   function handleShareWhatsApp() {
     const text = encodeURIComponent(`${getListingShareText()}\n${getListingShareUrl()}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
+  }
+
+  async function handleShareStatus() {
+    const url = getListingShareUrl();
+    const text = `${getListingShareText()}\n${url}`;
+    const imgUrl = (listing.photos && listing.photos[0])
+      ? optimizeImageUrl(listing.photos[0], "hero")
+      : (listing.video_url && window.videoPosterUrl ? videoPosterUrl(listing.video_url) : "");
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#111111";
+      ctx.fillRect(0, 0, 1080, 1920);
+      if (imgUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imgUrl;
+        });
+        const scale = Math.max(1080 / img.width, 1200 / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (1080 - w) / 2, (1200 - h) / 2, w, h);
+      }
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(0, 1180, 1080, 740);
+      ctx.fillStyle = "#F5C518";
+      ctx.font = "bold 72px sans-serif";
+      ctx.fillText("K" + listing.price, 64, 1320);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 48px sans-serif";
+      const title = String(listing.title || "").slice(0, 42);
+      ctx.fillText(title, 64, 1410);
+      ctx.fillStyle = "#F5C518";
+      ctx.font = "bold 36px sans-serif";
+      ctx.fillText("ZedMarket", 64, 1820);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.88));
+      if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], "zedmarket.jpg", { type: "image/jpeg" })] })) {
+        await navigator.share({
+          files: [new File([blob], "zedmarket-status.jpg", { type: "image/jpeg" })],
+          text,
+        });
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  function openOfferModal() {
+    if (!zmRequireLogin()) return;
+    if (isOwnListing()) { alert(t("cant_message_own")); return; }
+    requireContactSafety(() => {
+      document.getElementById("offerHint").textContent = t("offer_hint", { price: listing.price });
+      document.getElementById("offerAmountInput").value = "";
+      document.getElementById("offerModal").classList.add("open");
+    });
+  }
+
+  async function sendOffer() {
+    const amount = parseFloat(document.getElementById("offerAmountInput").value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert(t("offer_invalid"));
+      return;
+    }
+    const btn = document.getElementById("offerSendBtn");
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_URL}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          receiver_id: listing.seller_id,
+          listing_id: listing.id,
+          offer_amount: amount,
+          content: `Offer: K${amount} for ${listing.title}`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || t("offer_send_fail"));
+        return;
+      }
+      document.getElementById("offerModal").classList.remove("open");
+      const sellerName = listing.shop_name || listing.seller_name || "";
+      window.location.href = `/chat-room.html?userId=${listing.seller_id}&name=${encodeURIComponent(sellerName)}&listingId=${listingId}`;
+    } catch (e) {
+      alert(t("chat_server_fail"));
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function loadWatchStatus() {
+    if (!token || !listingId || isOwnListing()) return;
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}/watch`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      watchingListing = !!data.watching;
+      const btn = document.getElementById("notifyBtn");
+      if (btn) {
+        btn.classList.toggle("on", watchingListing);
+        btn.textContent = watchingListing ? t("notify_on") : t("notify_me");
+      }
+    } catch (e) {}
+  }
+
+  async function toggleNotifyMe() {
+    if (!zmRequireLogin()) return;
+    if (isOwnListing()) return;
+    const method = watchingListing ? "DELETE" : "POST";
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}/watch`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || t("notify_fail"));
+        return;
+      }
+      watchingListing = !!data.watching;
+      const btn = document.getElementById("notifyBtn");
+      if (btn) {
+        btn.classList.toggle("on", watchingListing);
+        btn.textContent = watchingListing ? t("notify_on") : t("notify_me");
+      }
+    } catch (e) {
+      alert(t("chat_server_fail"));
+    }
   }
 
   function handleMessage() {
@@ -1073,6 +1333,10 @@
     closeMoreMenu();
     handleShareWhatsApp();
   });
+  document.getElementById("shareStatusBtn").addEventListener("click", () => {
+    closeMoreMenu();
+    handleShareStatus();
+  });
   document.getElementById("shareShopBtn").addEventListener("click", () => {
     closeMoreMenu();
     handleShareShop();
@@ -1131,6 +1395,13 @@
     const action = pendingContactAction;
     closePaySafetyModal(true);
     if (action) action();
+  });
+  document.getElementById("offerCancelBtn").addEventListener("click", () => {
+    document.getElementById("offerModal").classList.remove("open");
+  });
+  document.getElementById("offerSendBtn").addEventListener("click", sendOffer);
+  document.getElementById("offerModal").addEventListener("click", (e) => {
+    if (e.target.id === "offerModal") document.getElementById("offerModal").classList.remove("open");
   });
 </script>
 </body>
