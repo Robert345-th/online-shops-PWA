@@ -46,9 +46,16 @@
   }
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: calc(var(--vh, 1vh) * 100); overflow: hidden; transition: background 0.2s, color 0.2s; touch-action: manipulation; }
 
-  .topbar { background: var(--black); padding: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .topbar {
+    background: var(--black); padding: 10px 12px 10px 4px;
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-cluster {
+    display: flex; align-items: center; gap: 0; flex: 1; min-width: 0;
+  }
   .back-button {
-    width: 40px; height: 40px; padding: 0;
+    width: 36px; height: 40px; padding: 0;
     background: none; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
@@ -65,7 +72,7 @@
     width: 18px; height: 18px; stroke: var(--gold); fill: none;
     stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
   }
-  .header-profile { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; }
+  .header-profile { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; background: none; border: none; text-align: left; padding: 0; }
   .header-avatar-wrap { position: relative; flex-shrink: 0; }
   .header-avatar { width: 34px; height: 34px; border-radius: 17px; background: #E01B27; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; color: #fff; font-weight: 700; font-size: 14px; }
   .header-avatar .input-icon { stroke: #fff; }
@@ -250,19 +257,32 @@
 </script>
 
 <div class="topbar">
-  <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-  <button class="header-profile" id="headerProfileBtn">
-    <div class="header-avatar-wrap">
-      <div class="header-avatar" id="headerAvatar">?</div>
-      <span class="online-dot" id="headerOnlineDot"></span>
-    </div>
-    <div class="header-text">
-      <div class="header-name" id="headerName">Chat</div>
-      <div class="header-status" id="headerStatus"></div>
-    </div>
-  </button>
+  <div class="header-cluster">
+    <button class="back-button" onclick="history.back()" aria-label="Go back"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="header-profile" id="headerProfileBtn">
+      <div class="header-avatar-wrap">
+        <div class="header-avatar" id="headerAvatar">?</div>
+        <span class="online-dot" id="headerOnlineDot"></span>
+      </div>
+      <div class="header-text">
+        <div class="header-name" id="headerName">Chat</div>
+        <div class="header-status" id="headerStatus"></div>
+      </div>
+    </button>
+  </div>
   <button class="menu-button" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
 </div>
+
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (q.get("support") !== "1") return;
+  const name = document.getElementById("headerName");
+  const avatar = document.getElementById("headerAvatar");
+  if (name) name.textContent = "Customer Support";
+  if (avatar) avatar.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" class="input-icon"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>';
+})();
+</script>
 
 <div id="blockedBannerWrap"></div>
 

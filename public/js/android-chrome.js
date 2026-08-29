@@ -51,14 +51,15 @@
     style.id = "play-store-webview-insets";
     style.textContent = `
       html.play-store-webview {
-        --ps-top-inset: max(env(safe-area-inset-top, 0px), 28px);
+        --ps-top-inset: env(safe-area-inset-top, 0px);
+        --ps-overlay-top: max(env(safe-area-inset-top, 0px), 28px);
         --ps-bottom-inset: max(env(safe-area-inset-bottom, 0px), 48px);
       }
       html.play-store-webview.play-store-immersive {
         --ps-bottom-inset: env(safe-area-inset-bottom, 0px);
       }
       html.play-store-webview .topbar {
-        padding-top: calc(16px + var(--ps-top-inset));
+        padding-top: calc(12px + var(--ps-top-inset));
       }
       html.play-store-webview #composerDock {
         padding-bottom: calc(12px + var(--ps-bottom-inset));
@@ -77,13 +78,13 @@
         top: 8px;
       }
       html.play-store-webview .viewer-back {
-        top: calc(40px + var(--ps-top-inset));
+        top: calc(40px + var(--ps-overlay-top));
       }
       html.play-store-webview .camera-modal {
-        padding-top: calc(16px + var(--ps-top-inset));
+        padding-top: calc(16px + var(--ps-overlay-top));
       }
       html.play-store-webview .preview-overlay .preview-close-btn {
-        top: calc(50px + var(--ps-top-inset));
+        top: calc(50px + var(--ps-overlay-top));
       }
       html.play-store-webview .bottom-nav {
         padding-bottom: max(6px, var(--ps-bottom-inset));
@@ -241,6 +242,7 @@
   window.showInAppBrowserGuide = goToInstallHelp;
   window.goToInstallHelp = goToInstallHelp;
 
+  applyPlayStoreWebViewInsets();
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       registerPlayStoreServiceWorker();
