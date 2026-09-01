@@ -789,7 +789,7 @@
       <div class="recent-scroller">${items.map((item) => `
         <div class="recent-card" data-id="${item.id}">
           ${item.photo ? `<img src="${escHtml(item.photo)}" alt="">` : `<div class="ph"></div>`}
-          <div class="recent-price">K${escHtml(item.price)}</div>
+          <div class="recent-price">K${escHtml(item.price)}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
           <div class="recent-title">${escHtml(item.title || "")}</div>
         </div>`).join("")}</div>`;
     wrap.querySelectorAll(".recent-card").forEach((el) => {
@@ -902,9 +902,10 @@
               ? `<div class="status-chip boost-chip">${t("boosted_label")}</div>` : "")}
           <button type="button" class="share-card-btn" data-share-id="${item.id}" aria-label="${t("share")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button>
           <button type="button" class="fav-btn" data-id="${item.id}" aria-label="${isFav ? t("saved_listing") : t("save_listing")}" aria-pressed="${isFav ? "true" : "false"}">${heartIcon(isFav)}</button>
+          ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
         </div>
         <div class="card-info">
-          <div class="price">K${escHtml(item.price)}</div>
+          <div class="price">K${escHtml(item.price)}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
           <div class="title">${escHtml(item.title)}</div>
           <div class="loc">${distancePart}${escHtml(item.location_label || "")}</div>
           ${(() => {

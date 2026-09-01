@@ -20,6 +20,49 @@
       .replace(/'/g, "&#39;");
   }
 
+  function zmPriceDrop(item) {
+    const now = Number(item && item.price);
+    const was = Number(item && item.compare_at_price);
+    if (!Number.isFinite(now) || !Number.isFinite(was) || was <= 0 || now >= was) return null;
+    const pct = Math.max(1, Math.round(((was - now) / was) * 100));
+    return { pct, was };
+  }
+
+  function zmDropChipHtml(item) {
+    const drop = zmPriceDrop(item);
+    return drop ? `<div class="drop-chip">-${drop.pct}%</div>` : "";
+  }
+
+  function zmDropPriceHtml(item) {
+    const drop = zmPriceDrop(item);
+    if (!drop) return "";
+    return `<span class="drop-pct">-${drop.pct}%</span><span class="was-price">K${Math.round(drop.was)}</span>`;
+  }
+
+  if (!document.getElementById("zm-drop-css")) {
+    const dropCss = document.createElement("style");
+    dropCss.id = "zm-drop-css";
+    dropCss.textContent = `
+      .drop-chip {
+        position: absolute; right: 8px; bottom: 8px; z-index: 3;
+        background: #E01B27; color: #fff; font-size: 11px; font-weight: 800;
+        padding: 3px 7px; border-radius: 4px; letter-spacing: 0.02em; line-height: 1.2;
+      }
+      .drop-pct {
+        display: inline-block; background: #E01B27; color: #fff;
+        font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px;
+        margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
+      }
+      .was-price {
+        margin-left: 8px; font-size: 11px; font-weight: 600;
+        color: var(--subtext, #5C5955); text-decoration: line-through;
+      }
+      .photo-price .drop-pct { font-size: 14px; padding: 3px 8px; }
+      .photo-price .was-price { color: #ddd; font-size: 14px; }
+    `;
+    document.head.appendChild(dropCss);
+  }
+
   function syncNativeAuth() {
     try {
       if (window.ZedMarketLocation && typeof window.ZedMarketLocation.saveAuthToken === "function") {
@@ -197,6 +240,9 @@
 
   window.escHtml = escHtml;
   window.clearAuth = clearAuth;
+  window.zmPriceDrop = zmPriceDrop;
+  window.zmDropChipHtml = zmDropChipHtml;
+  window.zmDropPriceHtml = zmDropPriceHtml;
   window.zmIsLoggedIn = zmIsLoggedIn;
   window.zmRequireLogin = zmRequireLogin;
   window.zmLoginUrl = zmLoginUrl;

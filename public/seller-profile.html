@@ -198,9 +198,10 @@
         <div class="thumb">
           ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(28)}
           ${item.status === "reserved" ? `<div class="status-chip">${t("listing_reserved")}</div>` : ""}
+          ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
         </div>
         <div class="card-info">
-          <div class="card-price">K${item.price}</div>
+          <div class="card-price">K${item.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
           <div class="card-title">${item.title}</div>
           <div class="card-loc">${item.location_label || ""}</div>
         </div>

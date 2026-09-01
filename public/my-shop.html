@@ -477,10 +477,11 @@
           <div class="thumb">
             ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
             ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
+            ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
           </div>
           <div class="row-info">
             <div class="row-title">${item.title}</div>
-            <div class="row-price">K${item.price}</div>
+            <div class="row-price">K${item.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
             ${item.view_count > 0 ? `<div class="row-views">${t("listing_views_count", { count: item.view_count })}</div>` : ""}
             ${badge}
           </div>

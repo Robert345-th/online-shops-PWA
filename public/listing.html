@@ -180,6 +180,7 @@
     background: var(--black); color: var(--gold); font-size: 8px; font-weight: 800;
     padding: 2px 6px; text-transform: uppercase; border-radius: 4px;
   }
+  .similar-card .drop-chip { top: 58px; bottom: auto; right: 6px; }
   .seller-row {
     display: flex; flex-direction: column; gap: 12px;
     background: var(--card); border: 1.5px solid var(--text);
@@ -552,6 +553,7 @@
         id: item.id,
         title: item.title,
         price: item.price,
+        compare_at_price: item.compare_at_price,
         photo: Array.isArray(item.photos) && item.photos[0] ? item.photos[0] : null,
       };
       let items = JSON.parse(localStorage.getItem("zm_recent_listings") || "[]");
@@ -663,7 +665,7 @@
             ${items.map((item, i) => `<div class="thumb-box ${item.type === "video" ? "video-thumb" : ""} ${i === mainPhotoIndex ? "active" : ""}" data-idx="${i}">${zmImg(item.type === "video" ? poster || item.url : item.url, { preset: "thumb" })}</div>`).join("")}
           </div>` : ""}
         <div class="photo-price">
-          <div class="price">K${listing.price}</div>
+          <div class="price">K${listing.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(listing) : ""}</div>
           <div class="item-title">${listing.title}</div>
           <div class="photo-meta">
             <span id="viewCountEl" class="${viewsHidden ? "is-hidden" : ""}">${viewsHidden ? "" : t("listing_views_count", { count: listing.view_count })}</span>
@@ -1124,7 +1126,8 @@
           return `<div class="similar-card" data-id="${item.id}">
             ${photo ? `<img src="${photo}" alt="">` : `<div style="height:90px;background:var(--border);border-radius:10px;"></div>`}
             ${item.status === "reserved" ? `<div class="similar-chip">${t("listing_reserved")}</div>` : ""}
-            <div class="p">K${item.price}</div>
+            ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
+            <div class="p">K${item.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
             <div class="n">${item.title || ""}</div>
           </div>`;
         }).join("")}</div>`;
