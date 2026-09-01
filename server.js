@@ -248,7 +248,18 @@ app.get("/zedmarket.apk", (req, res) => {
   res.download(getApkPath(), "ZedMarket.apk");
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  etag: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache");
+      return;
+    }
+    if (/\.(js|css|png|webp|jpg|jpeg|svg|woff2)$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=3600");
+    }
+  },
+}));
 
 app.get("*", (req, res) => {
   if (req.path.startsWith("/api/")) {

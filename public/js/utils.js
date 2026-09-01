@@ -7,7 +7,7 @@
   }
 
   const API_URL = "https://online-shops-production.up.railway.app";
-  const SESSION_POLL_MS = 4000;
+  const SESSION_POLL_MS = 45000;
   let sessionPollTimer = null;
   let forcingLogout = false;
 

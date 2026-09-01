@@ -411,7 +411,7 @@
     pollMessageNotifications(apiUrl, token, userId);
     messagePollTimer = setInterval(() => {
       pollMessageNotifications(apiUrl, token, userId);
-    }, 12000);
+    }, 30000);
     window.addEventListener("pagehide", stopMessageNotificationPoll);
   }
 
