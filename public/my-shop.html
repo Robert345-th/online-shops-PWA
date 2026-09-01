@@ -231,6 +231,7 @@
 
   async function loadData() {
     if (!user || !token) { window.location.href = "/login.html"; return; }
+    if (window.zmPrefsReady) await window.zmPrefsReady;
 
     app.innerHTML = `
       <div class="topbar">

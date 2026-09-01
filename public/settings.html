@@ -280,19 +280,27 @@
   }
 
   const darkModeToggle = document.getElementById("darkModeToggle");
-  const savedDarkMode = localStorage.getItem("zm_dark_mode") === "true";
-  darkModeToggle.checked = savedDarkMode;
-  document.body.classList.toggle("dark", savedDarkMode);
+  const lowDataToggle = document.getElementById("lowDataToggle");
+  function refreshPrefControls() {
+    const savedDarkMode = localStorage.getItem("zm_dark_mode") === "true";
+    darkModeToggle.checked = savedDarkMode;
+    document.body.classList.toggle("dark", savedDarkMode);
+    if (typeof isLowData === "function") lowDataToggle.checked = isLowData();
+    refreshListingLocationSub();
+  }
+  darkModeToggle.checked = localStorage.getItem("zm_dark_mode") === "true";
+  document.body.classList.toggle("dark", darkModeToggle.checked);
   darkModeToggle.addEventListener("change", () => {
     localStorage.setItem("zm_dark_mode", darkModeToggle.checked);
     document.body.classList.toggle("dark", darkModeToggle.checked);
   });
 
-  const lowDataToggle = document.getElementById("lowDataToggle");
-  lowDataToggle.checked = isLowData();
+  lowDataToggle.checked = typeof isLowData === "function" ? isLowData() : false;
   lowDataToggle.addEventListener("change", () => {
     setLowData(lowDataToggle.checked);
   });
+  window.addEventListener("zmprefsapplied", refreshPrefControls);
+  if (window.zmPrefsReady) window.zmPrefsReady.then(refreshPrefControls);
 
   document.getElementById("shareLinkRow").addEventListener("click", async () => {
     const message = `${t("share_link_text", "Check out ZedMarket — Zambia's marketplace app!")} ${SHARE_URL}`;
@@ -526,8 +534,11 @@
     document.getElementById("logoutModal").classList.remove("open");
   });
   document.getElementById("logoutConfirmBtn").addEventListener("click", () => {
-    localStorage.removeItem("zm_token");
-    localStorage.removeItem("zm_user");
+    if (typeof clearAuth === "function") clearAuth();
+    else {
+      localStorage.removeItem("zm_token");
+      localStorage.removeItem("zm_user");
+    }
     window.location.href = "/index.html";
   });
 
@@ -554,8 +565,11 @@
         alert("Could not delete account.");
         return;
       }
-      localStorage.removeItem("zm_token");
-      localStorage.removeItem("zm_user");
+      if (typeof clearAuth === "function") clearAuth();
+      else {
+        localStorage.removeItem("zm_token");
+        localStorage.removeItem("zm_user");
+      }
       document.getElementById("deleteModal").classList.remove("open");
       alert("Account Deleted — your account has been permanently deleted.");
       window.location.href = "/index.html";

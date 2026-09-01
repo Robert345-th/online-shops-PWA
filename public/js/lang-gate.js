@@ -1,5 +1,8 @@
 (function () {
-  if (localStorage.getItem("zm_lang")) return;
+  function hasLang() {
+    return !!localStorage.getItem("zm_lang");
+  }
+  if (hasLang()) return;
 
   const LANGS = [
     { code: "en", name: "English", sample: "Welcome to ZedMarket" },
@@ -48,7 +51,7 @@
   `;
 
   function mount() {
-    if (document.getElementById("zmLangGate")) return;
+    if (hasLang() || document.getElementById("zmLangGate")) return;
     document.body.appendChild(overlay);
     overlay.querySelectorAll("[data-lang]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -59,9 +62,18 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mount);
+  function start() {
+    if (hasLang()) return;
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", mount);
+    } else {
+      mount();
+    }
+  }
+
+  if (localStorage.getItem("zm_token") && window.zmPrefsReady) {
+    Promise.resolve(window.zmPrefsReady).then(start).catch(start);
   } else {
-    mount();
+    start();
   }
 })();

@@ -1035,6 +1035,7 @@
       document.getElementById("wizardView").style.display = "block";
       initWizard();
       const bootParams = new URLSearchParams(window.location.search);
+      if (window.zmPrefsReady) await window.zmPrefsReady;
       if (bootParams.get("copy")) await applyListingCopy(bootParams.get("copy"));
       else if (bootParams.has("similar")) applySimilarTemplate(parseInt(bootParams.get("similar"), 10));
       else restoreDraft();

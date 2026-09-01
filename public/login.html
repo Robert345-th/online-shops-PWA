@@ -201,6 +201,7 @@
 
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
+      if (typeof zmApplyLoginPrefs === "function") zmApplyLoginPrefs(data.prefs);
       showSuccess(`Welcome back! Logged in as ${data.user.name}`);
       loginBtn.disabled = true;
       const nextUrl = nextParam || new URLSearchParams(window.location.search).get("next");

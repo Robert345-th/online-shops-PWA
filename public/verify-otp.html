@@ -202,6 +202,7 @@
 
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
+      if (typeof zmApplyLoginPrefs === "function") zmApplyLoginPrefs(data.prefs);
       showSuccess(t("otp_verified_welcome", { name: data.user.name }));
       const nextUrl = new URLSearchParams(location.search).get("next");
       const dest = (typeof zmSafeNext === "function") ? zmSafeNext(nextUrl) : (nextUrl && nextUrl.startsWith("/") ? nextUrl : "/index.html");

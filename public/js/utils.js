@@ -71,12 +71,203 @@
     } catch (e) {}
   }
 
+  const ACCOUNT_PREF_KEYS = {
+    zm_lang: "lang",
+    zm_dark_mode: "dark_mode",
+    zm_low_data: "low_data",
+    zm_home_location: "home_location",
+    zm_user_location_label: "location_label",
+    zm_listing_draft: "listing_draft",
+    zm_sold_templates: "sold_templates",
+    zm_selling_type: "selling_type",
+    zm_shop_city: "shop_city",
+    zm_shop_province: "shop_province",
+    zm_shop_location_label: "shop_location_label",
+    zm_home_selling_label: "home_selling_label",
+  };
+  const JSON_PREF_KEYS = {
+    zm_home_location: true,
+    zm_listing_draft: true,
+    zm_sold_templates: true,
+  };
+  const LOGOUT_PREF_KEYS = [
+    "zm_home_location",
+    "zm_user_location_label",
+    "zm_listing_draft",
+    "zm_sold_templates",
+    "zm_selling_type",
+    "zm_shop_city",
+    "zm_shop_province",
+    "zm_shop_location_label",
+    "zm_home_selling_label",
+  ];
+
+  let applyingAccountPrefs = false;
+  let prefsPushTimer = null;
+  let prefsPushPending = {};
+  let prefsLoadInflight = null;
+
+  function prefsAreEmpty(prefs) {
+    if (!prefs || typeof prefs !== "object") return true;
+    return !Object.keys(prefs).some((key) => prefs[key] != null && prefs[key] !== "");
+  }
+
+  function parsePrefLocalValue(lsKey, value) {
+    if (value == null) return null;
+    if (!JSON_PREF_KEYS[lsKey]) return String(value);
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function zmCollectLocalPrefs() {
+    const out = {};
+    Object.keys(ACCOUNT_PREF_KEYS).forEach((lsKey) => {
+      const raw = localStorage.getItem(lsKey);
+      if (raw == null || raw === "") return;
+      const parsed = parsePrefLocalValue(lsKey, raw);
+      if (parsed == null) return;
+      out[ACCOUNT_PREF_KEYS[lsKey]] = parsed;
+    });
+    return out;
+  }
+
+  function zmApplyAccountPrefs(prefs) {
+    if (!prefs || typeof prefs !== "object") return;
+    applyingAccountPrefs = true;
+    try {
+      if (prefs.lang) localStorage.setItem("zm_lang", prefs.lang);
+      if (prefs.dark_mode === "true" || prefs.dark_mode === "false") {
+        localStorage.setItem("zm_dark_mode", prefs.dark_mode);
+        document.body.classList.toggle("dark", prefs.dark_mode === "true");
+      }
+      if (prefs.low_data === "true" || prefs.low_data === "false") {
+        localStorage.setItem("zm_low_data", prefs.low_data);
+        document.body.classList.toggle("low-data", prefs.low_data === "true");
+      }
+      const simple = {
+        location_label: "zm_user_location_label",
+        selling_type: "zm_selling_type",
+        shop_city: "zm_shop_city",
+        shop_province: "zm_shop_province",
+        shop_location_label: "zm_shop_location_label",
+        home_selling_label: "zm_home_selling_label",
+      };
+      Object.keys(simple).forEach((apiKey) => {
+        if (!Object.prototype.hasOwnProperty.call(prefs, apiKey)) return;
+        if (prefs[apiKey] == null || prefs[apiKey] === "") localStorage.removeItem(simple[apiKey]);
+        else localStorage.setItem(simple[apiKey], String(prefs[apiKey]));
+      });
+      Object.keys(JSON_PREF_KEYS).forEach((lsKey) => {
+        const apiKey = ACCOUNT_PREF_KEYS[lsKey];
+        if (!Object.prototype.hasOwnProperty.call(prefs, apiKey)) return;
+        if (prefs[apiKey] == null) localStorage.removeItem(lsKey);
+        else localStorage.setItem(lsKey, JSON.stringify(prefs[apiKey]));
+      });
+    } finally {
+      applyingAccountPrefs = false;
+    }
+    if (prefs.lang && typeof window.setLangAndApply === "function") {
+      applyingAccountPrefs = true;
+      try {
+        window.setLangAndApply(prefs.lang);
+      } finally {
+        applyingAccountPrefs = false;
+      }
+    }
+    if (typeof window.setLowData === "function" && (prefs.low_data === "true" || prefs.low_data === "false")) {
+      applyingAccountPrefs = true;
+      try {
+        window.setLowData(prefs.low_data === "true");
+      } finally {
+        applyingAccountPrefs = false;
+      }
+    }
+    window.dispatchEvent(new Event("zmprefsapplied"));
+  }
+
+  async function zmPushAccountPrefsNow(patch) {
+    const token = localStorage.getItem("zm_token");
+    if (!token || !patch || !Object.keys(patch).length) return;
+    try {
+      await fetch(`${API_URL}/auth/prefs`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(patch),
+      });
+    } catch (e) { /* offline */ }
+  }
+
+  function zmPushAccountPrefs(patch) {
+    if (!localStorage.getItem("zm_token") || applyingAccountPrefs) return;
+    if (!patch || !Object.keys(patch).length) return;
+    prefsPushPending = Object.assign(prefsPushPending, patch);
+    clearTimeout(prefsPushTimer);
+    prefsPushTimer = setTimeout(() => {
+      const body = prefsPushPending;
+      prefsPushPending = {};
+      zmPushAccountPrefsNow(body);
+    }, 600);
+  }
+
+  function zmQueuePrefFromLocal(lsKey, value, removed) {
+    const apiKey = ACCOUNT_PREF_KEYS[lsKey];
+    if (!apiKey || applyingAccountPrefs || !localStorage.getItem("zm_token")) return;
+    const patch = {};
+    patch[apiKey] = removed ? null : parsePrefLocalValue(lsKey, value);
+    zmPushAccountPrefs(patch);
+  }
+
+  function zmLoadAccountPrefs() {
+    if (prefsLoadInflight) return prefsLoadInflight;
+    prefsLoadInflight = (async () => {
+      const token = localStorage.getItem("zm_token");
+      if (!token) return;
+      try {
+        const res = await Promise.race([
+          fetch(`${API_URL}/auth/prefs`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 4000)),
+        ]);
+        if (!res.ok) return;
+        const data = await res.json();
+        const prefs = data.prefs || {};
+        if (prefsAreEmpty(prefs)) {
+          const local = zmCollectLocalPrefs();
+          if (Object.keys(local).length) await zmPushAccountPrefsNow(local);
+          return;
+        }
+        zmApplyAccountPrefs(prefs);
+      } catch (e) { /* offline — keep local copy */ }
+    })().finally(() => {
+      prefsLoadInflight = null;
+    });
+    return prefsLoadInflight;
+  }
+
+  function zmApplyLoginPrefs(prefs) {
+    if (prefs && !prefsAreEmpty(prefs)) {
+      zmApplyAccountPrefs(prefs);
+      return;
+    }
+    const local = zmCollectLocalPrefs();
+    if (Object.keys(local).length) zmPushAccountPrefsNow(local);
+  }
+
   function clearAuth() {
     localStorage.removeItem("zm_token");
     localStorage.removeItem("zm_user");
     localStorage.removeItem("zm_recent_listings");
     localStorage.removeItem("recentlyViewed");
     localStorage.removeItem("zm_recent_migrated");
+    LOGOUT_PREF_KEYS.forEach((key) => localStorage.removeItem(key));
     syncNativeAuth();
   }
 
@@ -243,6 +434,10 @@
 
   window.escHtml = escHtml;
   window.clearAuth = clearAuth;
+  window.zmApplyAccountPrefs = zmApplyAccountPrefs;
+  window.zmApplyLoginPrefs = zmApplyLoginPrefs;
+  window.zmPushAccountPrefs = zmPushAccountPrefs;
+  window.zmLoadAccountPrefs = zmLoadAccountPrefs;
   window.zmPriceDrop = zmPriceDrop;
   window.zmDropChipHtml = zmDropChipHtml;
   window.zmDropPriceHtml = zmDropPriceHtml;
@@ -265,11 +460,13 @@
     localStorage.setItem = function (key, value) {
       origSet(key, value);
       if (key === "zm_token") syncNativeAuth();
+      zmQueuePrefFromLocal(key, value, false);
     };
     const origRemove = localStorage.removeItem.bind(localStorage);
     localStorage.removeItem = function (key) {
       origRemove(key);
       if (key === "zm_token") syncNativeAuth();
+      zmQueuePrefFromLocal(key, null, true);
     };
   } catch (e) {}
 
@@ -376,4 +573,10 @@
     else window.addEventListener("load", start, { once: true });
   }
   deferSessionWatch();
+
+  if (/login\.html|signup\.html|verify-otp\.html|forgot-password\.html/i.test(location.pathname)) {
+    window.zmPrefsReady = Promise.resolve();
+  } else {
+    window.zmPrefsReady = zmLoadAccountPrefs();
+  }
 })();
