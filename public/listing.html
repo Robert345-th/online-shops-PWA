@@ -451,6 +451,13 @@
   const app = document.getElementById("app");
   const token = localStorage.getItem("zm_token");
   const currentUser = JSON.parse(localStorage.getItem("zm_user") || "null");
+  const listingNext = listingId ? `/listing.html?id=${encodeURIComponent(listingId)}` : "/listing.html";
+  if (listingId && typeof zmIsLoggedIn === "function" && !zmIsLoggedIn()) {
+    const dest = typeof zmSignupUrl === "function"
+      ? zmSignupUrl(listingNext)
+      : `/signup.html?next=${encodeURIComponent(listingNext)}`;
+    window.location.replace(dest);
+  }
 
   let listing = null;
   let mainPhotoIndex = 0;
@@ -491,7 +498,7 @@
 
   if (!listingId) {
     app.innerHTML = `<div class="center-box"><div class="error-text">${t("no_listing_specified")}</div></div>`;
-  } else {
+  } else if (typeof zmIsLoggedIn !== "function" || zmIsLoggedIn()) {
     fetchListing();
   }
 
@@ -765,7 +772,7 @@
   }
 
   function getListingShareUrl() {
-    return `${window.location.origin}/listing.html?id=${listing.id}`;
+    return `https://zedmarket.app/listing.html?id=${listing.id}`;
   }
 
   function getListingShareText() {

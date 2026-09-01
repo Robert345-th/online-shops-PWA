@@ -49,6 +49,17 @@
     return `/login.html?next=${encodeURIComponent(next)}`;
   }
 
+  function zmSignupUrl(nextPath) {
+    const next = nextPath || (location.pathname + location.search);
+    return `/signup.html?next=${encodeURIComponent(next)}`;
+  }
+
+  function zmSafeNext(raw) {
+    const value = String(raw || "");
+    if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/index.html";
+    return value;
+  }
+
   function zmRequireLogin(nextPath) {
     if (zmIsLoggedIn()) return true;
     location.href = zmLoginUrl(nextPath);
@@ -189,6 +200,8 @@
   window.zmIsLoggedIn = zmIsLoggedIn;
   window.zmRequireLogin = zmRequireLogin;
   window.zmLoginUrl = zmLoginUrl;
+  window.zmSignupUrl = zmSignupUrl;
+  window.zmSafeNext = zmSafeNext;
   window.handleAuthResponse = handleAuthResponse;
   window.forceLogoutSuspended = forceLogoutSuspended;
   window.startSessionWatch = startSessionWatch;

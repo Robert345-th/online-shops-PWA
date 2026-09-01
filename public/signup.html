@@ -185,7 +185,7 @@
     </div>
   </div>
 
-  <a class="link" href="/login.html" data-i18n="already_have_account">Already have an account? Log in</a>
+  <a class="link" href="/login.html" id="loginLink" data-i18n="already_have_account">Already have an account? Log in</a>
 </div>
 
 <script src="/js/lang.js"></script>
@@ -194,6 +194,11 @@
 <script src="/js/phone.js"></script>
 <script>
   const API_URL = "https://online-shops-production.up.railway.app";
+  const nextParam = new URLSearchParams(location.search).get("next");
+  const loginLink = document.getElementById("loginLink");
+  if (loginLink && nextParam) {
+    loginLink.href = `/login.html?next=${encodeURIComponent(nextParam)}`;
+  }
 
   let step = 1;
   let showPassword = false;
@@ -498,7 +503,9 @@
         sessionStorage.setItem("zm_otp_sms_failed", "1");
       }
 
-      window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
+      window.location.href = nextParam
+        ? `/verify-otp.html?phone=${encodeURIComponent(phone)}&next=${encodeURIComponent(nextParam)}`
+        : `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
     } catch {
       showError(t("chat_server_fail"));
     } finally {

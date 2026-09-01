@@ -1,18 +1,25 @@
 (function () {
   function listingShareUrl(item) {
-    return `${window.location.origin}/listing.html?id=${item.id}`;
+    return `https://zedmarket.app/listing.html?id=${item.id}`;
+  }
+
+  function formatPrice(price) {
+    const amount = Number(price);
+    if (!Number.isFinite(amount)) return "";
+    return "K" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
   }
 
   function listingShareText(item) {
-    const lines = [
+    const details = [
       item.title || "",
-      item.price != null && item.price !== "" ? `K${item.price}` : "",
+      formatPrice(item.price),
       item.location_label || "",
+      [item.category, item.condition].filter(Boolean).join(" · "),
     ].filter(Boolean);
-    const photo = item.photos && item.photos[0];
-    if (photo) lines.push(photo);
-    lines.push(listingShareUrl(item));
-    return lines.join("\n");
+    details.push("");
+    details.push("View on ZedMarket — register or log in to see this listing:");
+    details.push(listingShareUrl(item));
+    return details.join("\n");
   }
 
   function openWhatsAppText(text) {

@@ -150,6 +150,82 @@ function apkIsReady() {
 
 registerPushRoutes(app, getUserIdFromToken);
 
+const LISTING_API = process.env.API_URL || "https://online-shops-production.up.railway.app";
+const SITE_URL = "https://zedmarket.app";
+
+function isShareCrawler(userAgent) {
+  return /whatsapp|facebookexternalhit|facebot|twitterbot|slackbot|telegrambot|linkedinbot|discordbot/i.test(userAgent || "");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function listingPhotoUrl(listing) {
+  let photos = listing && listing.photos;
+  if (typeof photos === "string") {
+    try { photos = JSON.parse(photos); } catch { photos = []; }
+  }
+  const first = Array.isArray(photos) && photos[0] ? String(photos[0]) : "";
+  if (first.startsWith("https://")) return first;
+  return `${SITE_URL}/icon-512.png`;
+}
+
+function listingOgHtml(listing, url) {
+  const price = Number(listing.price);
+  const priceLabel = Number.isFinite(price)
+    ? `K${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+    : "";
+  const title = [listing.title, priceLabel].filter(Boolean).join(" — ") + " | ZedMarket";
+  const description = [
+    listing.location_label,
+    listing.category,
+    listing.condition,
+    "On ZedMarket — register or log in to view.",
+  ].filter(Boolean).join(" · ");
+  const image = listingPhotoUrl(listing);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(title)}</title>
+<meta property="og:type" content="product" />
+<meta property="og:site_name" content="ZedMarket" />
+<meta property="og:title" content="${escapeHtml(title)}" />
+<meta property="og:description" content="${escapeHtml(description)}" />
+<meta property="og:url" content="${escapeHtml(url)}" />
+<meta property="og:image" content="${escapeHtml(image)}" />
+<meta property="og:image:secure_url" content="${escapeHtml(image)}" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="${escapeHtml(title)}" />
+<meta name="twitter:description" content="${escapeHtml(description)}" />
+<meta name="twitter:image" content="${escapeHtml(image)}" />
+</head>
+<body></body>
+</html>`;
+}
+
+app.get("/listing.html", async (req, res, next) => {
+  const id = String(req.query.id || "").replace(/\D/g, "");
+  if (!id || !isShareCrawler(req.get("user-agent"))) return next();
+  try {
+    const apiRes = await fetch(`${LISTING_API}/listings/${id}`);
+    if (!apiRes.ok) return next();
+    const listing = await apiRes.json();
+    if (!listing || listing.error || !listing.id) return next();
+    const url = `${SITE_URL}/listing.html?id=${id}`;
+    res.setHeader("Cache-Control", "public, max-age=300");
+    return res.type("html").send(listingOgHtml(listing, url));
+  } catch (e) {
+    return next();
+  }
+});
+
+
 app.get("/.well-known/assetlinks.json", (req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.setHeader("Pragma", "no-cache");

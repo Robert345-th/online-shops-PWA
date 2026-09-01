@@ -203,7 +203,9 @@
       localStorage.setItem("zm_token", data.token);
       localStorage.setItem("zm_user", JSON.stringify(data.user));
       showSuccess(t("otp_verified_welcome", { name: data.user.name }));
-      setTimeout(() => { window.location.href = "/index.html"; }, 700);
+      const nextUrl = new URLSearchParams(location.search).get("next");
+      const dest = (typeof zmSafeNext === "function") ? zmSafeNext(nextUrl) : (nextUrl && nextUrl.startsWith("/") ? nextUrl : "/index.html");
+      setTimeout(() => { window.location.href = dest; }, 700);
     } catch (e) {
       showError(t("chat_server_fail"));
     } finally {

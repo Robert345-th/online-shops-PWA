@@ -114,7 +114,7 @@
 
   <button class="submit-btn" id="loginBtn" type="button" data-i18n="login">Log In</button>
 
-  <a class="link" href="/signup.html" data-i18n="no_account_signup">Don't have an account? Sign up</a>
+  <a class="link" href="/signup.html" id="signupLink" data-i18n="no_account_signup">Don't have an account? Sign up</a>
 </div>
 
 <script src="/js/lang.js"></script>
@@ -129,6 +129,11 @@
   const checkboxBox = document.getElementById("checkboxBox");
   const errorBanner = document.getElementById("errorBanner");
   const successBanner = document.getElementById("successBanner");
+  const nextParam = new URLSearchParams(location.search).get("next");
+  const signupLink = document.getElementById("signupLink");
+  if (signupLink && nextParam) {
+    signupLink.href = `/signup.html?next=${encodeURIComponent(nextParam)}`;
+  }
 
   // Replaces alert() - shows a styled banner above the form instead of the
   // browser's native popup, and scrolls it into view so it's never missed.
@@ -184,7 +189,10 @@
 
       if (!res.ok) {
         if (data.needsVerification) {
-          window.location.href = `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
+          const otpUrl = nextParam
+            ? `/verify-otp.html?phone=${encodeURIComponent(phone)}&next=${encodeURIComponent(nextParam)}`
+            : `/verify-otp.html?phone=${encodeURIComponent(phone)}`;
+          window.location.href = otpUrl;
           return;
         }
         showError(data.error || "Something went wrong.");
@@ -195,8 +203,8 @@
       localStorage.setItem("zm_user", JSON.stringify(data.user));
       showSuccess(`Welcome back! Logged in as ${data.user.name}`);
       loginBtn.disabled = true;
-      const nextUrl = new URLSearchParams(window.location.search).get("next");
-      const dest = nextUrl && nextUrl.startsWith("/") ? nextUrl : "/index.html";
+      const nextUrl = nextParam || new URLSearchParams(window.location.search).get("next");
+      const dest = (typeof zmSafeNext === "function") ? zmSafeNext(nextUrl) : (nextUrl && nextUrl.startsWith("/") ? nextUrl : "/index.html");
       setTimeout(() => { window.location.replace(dest); }, 700);
     } catch (e) {
       showError("Could not connect to the server.");
