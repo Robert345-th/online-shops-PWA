@@ -124,6 +124,12 @@
   .follow-btn.on {
     background: var(--card); color: var(--text); border: 2px solid var(--text);
   }
+  .block-btn {
+    width: 100%; margin: 0 0 14px; padding: 12px;
+    background: none; color: var(--price-red); border: 2px solid var(--price-red);
+    font-weight: 800; font-size: 12px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
   .follow-note { font-size: 11px; color: var(--subtext); text-align: center; margin: 0 0 14px; }
 </style>
 </head>
@@ -156,6 +162,8 @@
   let followingShop = false;
   let followerCount = 0;
   let followingCount = 0;
+  let iBlockedThem = false;
+  let theyBlockedMe = false;
 
   function compactCount(n) {
     n = Number(n) || 0;
@@ -244,6 +252,20 @@
     } catch (e) {}
   }
 
+  async function loadBlockStatus() {
+    if (!token || isOwnShop) return;
+    try {
+      const res = await fetch(`${API_URL}/messages/block/${sellerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        iBlockedThem = !!data.i_blocked_them;
+        theyBlockedMe = !!data.they_blocked_me;
+      }
+    } catch (e) {}
+  }
+
   function followNoteText(shopName) {
     if (followingShop) return t("follow_note_on", { name: shopName });
     return t("follow_note_off");
@@ -286,14 +308,42 @@
     });
   }
 
+  function wireBlockButton() {
+    const btn = document.getElementById("blockShopBtn");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      if (!token) {
+        location.href = zmLoginUrl(`/seller-profile.html?id=${sellerId}`);
+        return;
+      }
+      if (!iBlockedThem && !confirm(t("block_seller_confirm"))) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_URL}/messages/block/${sellerId}`, {
+          method: iBlockedThem ? "DELETE" : "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("fail");
+        iBlockedThem = !iBlockedThem;
+        theyBlockedMe = false;
+        loadProfile();
+      } catch (err) {
+        alert(iBlockedThem ? t("chat_unblock_fail") : t("chat_block_fail"));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
   async function loadProfile() {
     try {
       const [profileRes, reviewsRes, listingsRes, soldRes] = await Promise.all([
         fetch(`${API_URL}/reviews/seller/${sellerId}/profile`),
         fetch(`${API_URL}/reviews/seller/${sellerId}`),
-        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=50`),
+        fetch(`${API_URL}/listings?seller_id=${sellerId}&limit=50`, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined),
         fetch(`${API_URL}/sale-confirmations/seller/${sellerId}/history`),
         loadFollowStatus(),
+        loadBlockStatus(),
       ]);
       const profile = await profileRes.json();
       const reviewsData = await reviewsRes.json();
@@ -358,6 +408,7 @@
         ${isOwnShop ? "" : `
         <button class="follow-btn${followingShop ? " on" : ""}" id="followShopBtn">${followingShop ? t("following_btn") : t("follow_shop")}</button>
         <div class="follow-note" id="followNote">${followNoteText(profile.display_name || "")}</div>
+        <button class="block-btn" id="blockShopBtn">${iBlockedThem ? t("unblock_seller") : t("block_seller")}</button>
         `}
 
         <div class="stats-row">
@@ -378,9 +429,13 @@
         ${progressHtml}
 
         <div class="section-title">${t("seller_listings_section")}</div>
-        ${listings.length === 0
-          ? `<div class="empty-text">${t("no_seller_listings")}</div>`
-          : `<div class="grid" id="sellerListingsGrid">${listings.map(renderListingCard).join("")}</div>`}
+        ${theyBlockedMe
+          ? `<div class="empty-text">${t("seller_blocked_you")}</div>`
+          : iBlockedThem
+            ? `<div class="empty-text">${t("seller_blocked")}</div>`
+            : listings.length === 0
+              ? `<div class="empty-text">${t("no_seller_listings")}</div>`
+              : `<div class="grid" id="sellerListingsGrid">${listings.map(renderListingCard).join("")}</div>`}
 
         <div class="section-title">${t("sold_history_section")}</div>
         ${soldHistory.length === 0
@@ -415,8 +470,9 @@
               ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ""}
             </div>`).join("")}
       </div>`;
-    wireListingCards(listings);
+    wireListingCards(iBlockedThem || theyBlockedMe ? [] : listings);
     wireFollowButton(profile.display_name || "");
+    wireBlockButton();
     app.querySelectorAll("[data-sold-id]").forEach((row) => {
       row.addEventListener("click", () => {
         window.location.href = `/listing.html?id=${row.dataset.soldId}`;
