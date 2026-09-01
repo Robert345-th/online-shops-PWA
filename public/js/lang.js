@@ -1769,7 +1769,7 @@
   }
 
   function applyTranslations(root) {
-    const scope = root || document;
+    const scope = (root && typeof root.querySelectorAll === "function") ? root : document;
     scope.querySelectorAll("[data-i18n]").forEach((el) => {
       el.textContent = t(el.dataset.i18n);
     });
@@ -1805,7 +1805,7 @@
   function initLang() {
     document.documentElement.lang = getLang() === "en" ? "en" : getLang();
     applyTranslations();
-    window.addEventListener("pageshow", applyTranslations);
+    window.addEventListener("pageshow", () => applyTranslations());
   }
 
   window.getLang = getLang;
