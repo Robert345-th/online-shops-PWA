@@ -74,6 +74,9 @@
   function clearAuth() {
     localStorage.removeItem("zm_token");
     localStorage.removeItem("zm_user");
+    localStorage.removeItem("zm_recent_listings");
+    localStorage.removeItem("recentlyViewed");
+    localStorage.removeItem("zm_recent_migrated");
     syncNativeAuth();
   }
 

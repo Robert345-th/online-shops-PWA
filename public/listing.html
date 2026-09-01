@@ -610,7 +610,10 @@
     const key = `viewed_${listingId}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
-    fetch(`${API_URL}/listings/${listingId}/view`, { method: "POST" })
+    fetch(`${API_URL}/listings/${listingId}/view`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && typeof data.view_count === "number") {

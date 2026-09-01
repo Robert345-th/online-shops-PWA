@@ -773,11 +773,27 @@
   }
 
   const RECENT_KEY = "zm_recent_listings";
+  const RECENT_MIGRATED_KEY = "zm_recent_migrated";
   function readRecent() {
     try {
       const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) { return []; }
+  }
+  function writeRecent(items) {
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify((items || []).slice(0, 12)));
+    } catch (e) {}
+  }
+  function mapServerRecent(rows) {
+    if (!Array.isArray(rows)) return [];
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      price: row.price,
+      compare_at_price: row.compare_at_price,
+      photo: (row.photos && row.photos[0]) || row.photo || null,
+    }));
   }
   function paintRecent() {
     const wrap = document.getElementById("recentWrap");
@@ -795,6 +811,34 @@
     wrap.querySelectorAll(".recent-card").forEach((el) => {
       el.addEventListener("click", () => { window.location.href = `/listing.html?id=${el.dataset.id}`; });
     });
+  }
+  async function loadRecentFromAccount() {
+    const token = localStorage.getItem("zm_token");
+    if (!token) {
+      paintRecent();
+      return;
+    }
+    paintRecent();
+    try {
+      if (!localStorage.getItem(RECENT_MIGRATED_KEY)) {
+        const localIds = readRecent().map((item) => item.id).filter(Boolean);
+        if (localIds.length) {
+          await fetch(`${API_URL}/listings/recent`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ listing_ids: localIds }),
+          });
+        }
+        localStorage.setItem(RECENT_MIGRATED_KEY, "1");
+      }
+      const res = await fetch(`${API_URL}/listings/recent`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const items = mapServerRecent(await res.json());
+      writeRecent(items);
+      paintRecent();
+    } catch (e) {}
   }
 
   function currentSearchPayload() {
@@ -1038,7 +1082,7 @@
   refreshAuthState();
   renderChips();
   showCachedFeedIfFresh();
-  paintRecent();
+  loadRecentFromAccount();
   loadListings(true);
   loadFavoriteIds().then(() => {
     if (feed.classList.contains("grid")) renderFeed();
@@ -1053,6 +1097,7 @@
     setTimeout(syncLoggedInServices, 0);
     loadMyCoords();
     applyListingDistances();
+    loadRecentFromAccount();
     loadFavoriteIds().then(() => {
       if (feedReady) renderFeed();
     });
