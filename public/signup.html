@@ -48,6 +48,13 @@
     border-radius: 0; padding: 10px 0; font-size: 15px; color: var(--text);
   }
   .phone-hint { font-size: 11px; color: var(--subtext); margin-bottom: 22px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lang-pick { display: flex; gap: 8px; margin-bottom: 22px; }
+  .lang-chip {
+    flex: 1; background: transparent; border: 2px solid var(--border); color: var(--text);
+    padding: 12px 8px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; cursor: pointer;
+  }
+  .lang-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 
   .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 18px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; padding: 2px 0; }
   .checkbox-row.multiline { align-items: flex-start; }
@@ -113,6 +120,12 @@
   <div class="form-banner error" id="errorBanner"></div>
 
   <div class="step-panel active" id="step1">
+    <div class="label" data-i18n="choose_language">Choose your language</div>
+    <div class="lang-pick" id="signupLangRow">
+      <button type="button" class="lang-chip" data-lang="en">English</button>
+      <button type="button" class="lang-chip" data-lang="bem">IciBemba</button>
+      <button type="button" class="lang-chip" data-lang="ny">Chinyanja</button>
+    </div>
     <div class="label" data-i18n="full_name">Full Name</div>
     <input class="field-input" id="nameInput" data-i18n-placeholder="name_placeholder" placeholder="e.g. Robert Banda" autocomplete="name" />
 
@@ -176,6 +189,7 @@
 </div>
 
 <script src="/js/lang.js"></script>
+<script src="/js/lang-gate.js"></script>
 <script src="/js/location.js"></script>
 <script src="/js/phone.js"></script>
 <script>
@@ -193,6 +207,21 @@
   const stepSubtitle = document.getElementById("stepSubtitle");
   const signupBtn = document.getElementById("signupBtn");
   const locButton = document.getElementById("locButton");
+
+  function paintSignupLang() {
+    const current = typeof getLang === "function" ? getLang() : (localStorage.getItem("zm_lang") || "en");
+    document.querySelectorAll("#signupLangRow [data-lang]").forEach((btn) => {
+      btn.classList.toggle("on", btn.dataset.lang === current);
+    });
+  }
+
+  document.getElementById("signupLangRow").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lang]");
+    if (!btn) return;
+    if (typeof setLangAndApply === "function") setLangAndApply(btn.dataset.lang);
+    else localStorage.setItem("zm_lang", btn.dataset.lang);
+    paintSignupLang();
+  });
 
   function showError(message) {
     errorBanner.textContent = message;
@@ -480,6 +509,7 @@
 
   window.addEventListener("langchange", () => {
     updateStepUI();
+    paintSignupLang();
     if (!gettingLocation && locButton.textContent !== signupLocationLabel) {
       locButton.textContent = t("use_current_location");
     }
@@ -489,6 +519,7 @@
   });
 
   restoreDraft();
+  paintSignupLang();
 </script>
 </body>
 </html>
