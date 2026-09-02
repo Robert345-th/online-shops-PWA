@@ -469,8 +469,6 @@
     let badge = `<div class="status-badge">${item.status}</div>`;
     if (item.payment_disabled) {
       badge = `<div class="disabled-badge">${t("disabled_needs_sub", { category: item.category })}</div>`;
-    } else if (item.status === "quiet") {
-      badge = `<div class="disabled-badge">${t("listing_quiet_badge")}</div>`;
     } else if (item.status === "reserved") {
       badge = `<div class="status-badge">${t("listing_reserved")}</div>`;
     } else if (item.status === "sold") {
@@ -500,12 +498,9 @@
   function openManageModal(item) {
     manageItem = item;
     document.getElementById("manageModalTitle").textContent = item.title;
-    document.getElementById("boostListingBtn").style.display = item.is_boosted || item.status === "sold" || item.status === "quiet" ? "none" : "block";
+    document.getElementById("boostListingBtn").style.display = item.is_boosted || item.status === "sold" ? "none" : "block";
     const reservedBtn = document.getElementById("markReservedBtn");
-    if (item.status === "quiet") {
-      reservedBtn.textContent = t("still_selling");
-      reservedBtn.style.display = "block";
-    } else if (item.status === "sold") {
+    if (item.status === "sold") {
       reservedBtn.textContent = t("relist_listing");
       reservedBtn.style.display = "block";
     } else if (item.status === "reserved") {
@@ -527,12 +522,6 @@
   document.getElementById("boostListingBtn").addEventListener("click", () => { window.location.href = `/boost-listing.html?id=${manageItem.id}`; });
   document.getElementById("markReservedBtn").addEventListener("click", async () => {
     if (!manageItem) return;
-    if (manageItem.status === "quiet") {
-      manageModal.classList.remove("open");
-      await refreshListing(manageItem.id);
-      manageItem = null;
-      return;
-    }
     const next = manageItem.status === "reserved" || manageItem.status === "sold" ? "active" : "reserved";
     if (next === "reserved" && !confirm(t("reserve_confirm"))) return;
     manageModal.classList.remove("open");
@@ -619,24 +608,6 @@
     buyerPickerItem = null;
   });
   document.getElementById("buyerCancelBtn").addEventListener("click", () => { buyerModal.classList.remove("open"); buyerPickerItem = null; });
-
-  async function refreshListing(id) {
-    try {
-      const res = await fetch(`${API_URL}/listings/${id}/refresh`, {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || "Could not update listing.");
-        return;
-      }
-      listings = listings.map((i) => i.id === id ? { ...i, status: "active" } : i);
-      render();
-    } catch (e) {
-      alert("Could not connect to the server.");
-    }
-  }
 
   async function setListingStatus(id, status) {
     const item = listings.find((i) => i.id === id);
