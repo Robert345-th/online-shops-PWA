@@ -477,6 +477,13 @@
     return Number(n).toLocaleString("en");
   }
 
+  function filterLabel(key, fallback, vars) {
+    const s = typeof t === "function" ? t(key, vars) : "";
+    if (s && s !== key) return s;
+    if (!vars) return fallback;
+    return String(fallback).replace(/\{n\}/g, vars.n);
+  }
+
   let activeCategory = "All";
   let activeCity = readStoredCity();
   let maxPrice = readStoredMaxPrice();
@@ -633,17 +640,22 @@
     categoryRow.innerHTML = CATEGORIES.map(c =>
       `<div class="chip ${activeCategory === c ? "active" : ""}" data-cat="${c}">${tCat(c)}</div>`
     ).join("");
-    townRow.innerHTML = TOWNS.map((town) => {
-      const on = (town === "All" && !activeCity) || town === activeCity;
-      const label = town === "All" ? t("filter_all_towns") : town;
-      return `<div class="chip ${on ? "active" : ""}" data-city="${town}">${label}</div>`;
-    }).join("");
-    priceRow.innerHTML = [
-      `<div class="chip ${!maxPrice ? "active" : ""}" data-price="">${t("any_price")}</div>`,
-      ...PRICE_CAPS.map((cap) =>
-        `<div class="chip ${maxPrice === cap ? "active" : ""}" data-price="${cap}">${t("filter_under_k", { n: formatKwacha(cap) })}</div>`
-      ),
-    ].join("");
+    if (townRow) {
+      townRow.innerHTML = TOWNS.map((town) => {
+        const on = (town === "All" && !activeCity) || town === activeCity;
+        const label = town === "All" ? filterLabel("filter_all_towns", "All towns") : town;
+        return `<div class="chip ${on ? "active" : ""}" data-city="${town}">${label}</div>`;
+      }).join("");
+    }
+    if (priceRow) {
+      priceRow.innerHTML = [
+        `<div class="chip ${!maxPrice ? "active" : ""}" data-price="">${filterLabel("any_price", "Any price")}</div>`,
+        ...PRICE_CAPS.map((cap) => {
+          const n = formatKwacha(cap);
+          return `<div class="chip ${maxPrice === cap ? "active" : ""}" data-price="${cap}">${filterLabel("filter_under_k", "Under K{n}", { n })}</div>`;
+        }),
+      ].join("");
+    }
 
     sortRow.querySelectorAll("[data-sort]").forEach(el =>
       el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
@@ -651,7 +663,7 @@
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
       el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); loadListings(true); })
     );
-    townRow.querySelectorAll("[data-city]").forEach((el) =>
+    townRow?.querySelectorAll("[data-city]").forEach((el) =>
       el.addEventListener("click", () => {
         activeCity = el.dataset.city === "All" ? "" : el.dataset.city;
         persistHomeFilters();
@@ -659,7 +671,7 @@
         loadListings(true);
       })
     );
-    priceRow.querySelectorAll("[data-price]").forEach((el) =>
+    priceRow?.querySelectorAll("[data-price]").forEach((el) =>
       el.addEventListener("click", () => {
         const n = parseFloat(el.dataset.price);
         maxPrice = Number.isFinite(n) && n > 0 ? n : null;
