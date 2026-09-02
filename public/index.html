@@ -341,7 +341,9 @@
   </div>
 
   <div class="chips-row" id="sortRow"></div>
-  <div class="chips-row" id="categoryRow" style="padding-bottom: 12px;"></div>
+  <div class="chips-row" id="categoryRow"></div>
+  <div class="chips-row" id="townRow"></div>
+  <div class="chips-row" id="priceRow" style="padding-bottom: 12px;"></div>
 </div>
 
 <div class="map-loc-needed" id="mapLocNeeded">
@@ -380,6 +382,8 @@
   const API_URL = "https://online-shops-production.up.railway.app";
   const CATEGORIES = ['All', 'Electronics', 'Clothing', 'Furniture', 'Produce', 'Cars', 'Land'];
   const SORT_OPTIONS = ['Newest', 'Nearest', 'Price: Low-High', 'Price: High-Low'];
+  const TOWNS = ["All", "Lusaka", "Kitwe", "Ndola", "Livingstone", "Chipata", "Kabwe", "Chingola", "Solwezi", "Kasama", "Mongu"];
+  const PRICE_CAPS = [500, 2000, 10000, 50000, 200000];
   const PAGE_SIZE = 20;
   const FEED_CACHE_KEY = "zm_feed_cache_v1";
   const FEED_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
@@ -406,6 +410,7 @@
   }
 
   function showCachedFeedIfFresh() {
+    if (hasFeedFilters()) return false;
     const parsed = readFeedCache();
     if (!parsed) return false;
     if (Date.now() - parsed.ts > FEED_CACHE_MAX_AGE_MS) return false;
@@ -414,14 +419,24 @@
   }
 
   function showCachedFeedAny() {
+    if (hasFeedFilters()) return false;
     const parsed = readFeedCache();
     if (!parsed) return false;
     applyCachedListings(parsed);
     return true;
   }
 
+  function hasFeedFilters() {
+    return !!(
+      (searchInput && searchInput.value.trim()) ||
+      (activeCategory && activeCategory !== "All") ||
+      activeCity ||
+      (maxPrice && maxPrice > 0)
+    );
+  }
+
   function saveFeedCache() {
-    if ((searchInput && searchInput.value.trim()) || (activeCategory && activeCategory !== "All")) return;
+    if (hasFeedFilters()) return;
     const payload = JSON.stringify({
       ts: Date.now(),
       items: listings.slice(0, PAGE_SIZE),
@@ -431,7 +446,40 @@
     try { localStorage.setItem(FEED_CACHE_KEY, payload); } catch { /* ignore */ }
   }
 
+  function readStoredCity() {
+    try {
+      const v = localStorage.getItem("zm_home_city") || "";
+      return TOWNS.includes(v) && v !== "All" ? v : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function readStoredMaxPrice() {
+    try {
+      const n = parseFloat(localStorage.getItem("zm_home_max_price"));
+      return PRICE_CAPS.includes(n) ? n : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function persistHomeFilters() {
+    try {
+      if (activeCity) localStorage.setItem("zm_home_city", activeCity);
+      else localStorage.removeItem("zm_home_city");
+      if (maxPrice) localStorage.setItem("zm_home_max_price", String(maxPrice));
+      else localStorage.removeItem("zm_home_max_price");
+    } catch { /* ignore */ }
+  }
+
+  function formatKwacha(n) {
+    return Number(n).toLocaleString("en");
+  }
+
   let activeCategory = "All";
+  let activeCity = readStoredCity();
+  let maxPrice = readStoredMaxPrice();
   let sortBy = "Newest";
   let listings = [];
   let feedReady = false;
@@ -447,6 +495,8 @@
   const loadMoreBtn = document.getElementById("loadMoreBtn");
   const sortRow = document.getElementById("sortRow");
   const categoryRow = document.getElementById("categoryRow");
+  const townRow = document.getElementById("townRow");
+  const priceRow = document.getElementById("priceRow");
 
   const searchInput = document.getElementById("searchInput");
   const authBtn = document.getElementById("authBtn");
@@ -583,12 +633,40 @@
     categoryRow.innerHTML = CATEGORIES.map(c =>
       `<div class="chip ${activeCategory === c ? "active" : ""}" data-cat="${c}">${tCat(c)}</div>`
     ).join("");
+    townRow.innerHTML = TOWNS.map((town) => {
+      const on = (town === "All" && !activeCity) || town === activeCity;
+      const label = town === "All" ? t("filter_all_towns") : town;
+      return `<div class="chip ${on ? "active" : ""}" data-city="${town}">${label}</div>`;
+    }).join("");
+    priceRow.innerHTML = [
+      `<div class="chip ${!maxPrice ? "active" : ""}" data-price="">${t("any_price")}</div>`,
+      ...PRICE_CAPS.map((cap) =>
+        `<div class="chip ${maxPrice === cap ? "active" : ""}" data-price="${cap}">${t("filter_under_k", { n: formatKwacha(cap) })}</div>`
+      ),
+    ].join("");
 
     sortRow.querySelectorAll("[data-sort]").forEach(el =>
       el.addEventListener("click", () => { sortBy = el.dataset.sort; renderChips(); renderFeed(); })
     );
     categoryRow.querySelectorAll("[data-cat]").forEach(el =>
       el.addEventListener("click", () => { activeCategory = el.dataset.cat; renderChips(); loadListings(true); })
+    );
+    townRow.querySelectorAll("[data-city]").forEach((el) =>
+      el.addEventListener("click", () => {
+        activeCity = el.dataset.city === "All" ? "" : el.dataset.city;
+        persistHomeFilters();
+        renderChips();
+        loadListings(true);
+      })
+    );
+    priceRow.querySelectorAll("[data-price]").forEach((el) =>
+      el.addEventListener("click", () => {
+        const n = parseFloat(el.dataset.price);
+        maxPrice = Number.isFinite(n) && n > 0 ? n : null;
+        persistHomeFilters();
+        renderChips();
+        loadListings(true);
+      })
     );
   }
 
@@ -666,6 +744,8 @@
       const q = searchInput.value.trim();
       if (q) params.set("q", q);
       if (activeCategory && activeCategory !== "All") params.set("category", activeCategory);
+      if (activeCity) params.set("city", activeCity);
+      if (maxPrice && maxPrice > 0) params.set("max_price", String(maxPrice));
       const res = await fetchListingsPage(`${API_URL}/listings?${params.toString()}`);
       if (!res.ok) throw new Error("Server error " + res.status);
       const batch = await res.json();
@@ -847,7 +927,12 @@
   function currentSearchPayload() {
     const query = searchInput.value.trim();
     const category = activeCategory || "All";
-    return { query, category, city: "", max_price: null };
+    return {
+      query,
+      category,
+      city: activeCity || "",
+      max_price: maxPrice && maxPrice > 0 ? maxPrice : null,
+    };
   }
 
   function updateSaveSearchBar() {
@@ -855,7 +940,12 @@
     const btn = document.getElementById("saveSearchBtn");
     if (!wrap || !btn) return;
     const payload = currentSearchPayload();
-    const show = !!(payload.query || (payload.category && payload.category !== "All"));
+    const show = !!(
+      payload.query ||
+      (payload.category && payload.category !== "All") ||
+      payload.city ||
+      payload.max_price
+    );
     wrap.style.display = show ? "block" : "none";
     btn.classList.remove("on");
     btn.textContent = t("save_search");
