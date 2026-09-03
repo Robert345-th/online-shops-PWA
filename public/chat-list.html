@@ -278,31 +278,65 @@
     bindConversationRows(conversations);
   }
 
-  async function loadConversations() {
+  function readCachedConversations() {
     try {
+      const cachedRaw = JSON.parse(sessionStorage.getItem(`zm_chat_list_${user.id}`) || "null");
+      const cached = Array.isArray(cachedRaw) ? cachedRaw : cachedRaw?.conversations;
+      return Array.isArray(cached) && cached.length ? cached : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function showConversationsFail() {
+    const stale = readCachedConversations();
+    if (stale && !content.querySelector(".list")) {
+      paintConversationList(stale);
+      applyConversationNames(stale);
+      return;
+    }
+    if (content.querySelector(".list")) return;
+    content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div>
+      <button type="button" class="login-btn" id="chatRetryBtn">${t("gate_try_again")}</button></div>`;
+    document.getElementById("chatRetryBtn")?.addEventListener("click", () => loadConversations());
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function fetchConversationList() {
+    let lastRes = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const cachedRaw = JSON.parse(sessionStorage.getItem(`zm_chat_list_${user.id}`) || "null");
-        const cached = Array.isArray(cachedRaw) ? cachedRaw : cachedRaw?.conversations;
-        const cacheAge = Array.isArray(cachedRaw) ? 0 : (Date.now() - (cachedRaw?.ts || 0));
-        if (Array.isArray(cached) && cached.length && !content.querySelector(".list") && cacheAge < 60000) {
-          paintConversationList(cached);
+        const res = await fetch(`${API_URL}/messages/conversations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        lastRes = res;
+        if (res.status === 401) return { res, conversations: null };
+        if (res.ok) {
+          const conversations = await res.json();
+          if (Array.isArray(conversations)) return { res, conversations };
         }
       } catch (e) {}
+      if (attempt < 2) await sleep(700 * (attempt + 1));
+    }
+    return { res: lastRes, conversations: null };
+  }
 
-      const [res] = await Promise.all([
-        fetch(`${API_URL}/messages/conversations`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        loadSupportContactId(),
-      ]);
-      const conversations = await res.json();
+  async function loadConversations() {
+    try {
+      const cached = readCachedConversations();
+      if (cached && !content.querySelector(".list")) {
+        paintConversationList(cached);
+      }
 
-      if (!res.ok || !Array.isArray(conversations)) {
-        if (!content.querySelector(".list")) {
-          content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div>
-            <button type="button" class="login-btn" id="chatRetryBtn">${t("gate_try_again")}</button></div>`;
-          document.getElementById("chatRetryBtn")?.addEventListener("click", () => loadConversations());
-        }
+      loadSupportContactId();
+      const { conversations } = await fetchConversationList();
+      await loadSupportContactId();
+
+      if (!Array.isArray(conversations)) {
+        showConversationsFail();
         return;
       }
 
@@ -322,11 +356,7 @@
       await applyListPresence(conversations);
       applyConversationNames(conversations);
     } catch (e) {
-      if (!content.querySelector(".list")) {
-        content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div>
-          <button type="button" class="login-btn" id="chatRetryBtn">${t("gate_try_again")}</button></div>`;
-        document.getElementById("chatRetryBtn")?.addEventListener("click", () => loadConversations());
-      }
+      showConversationsFail();
     }
   }
 
@@ -351,7 +381,7 @@
     return `
       <div class="row" id="convrow-${conv.other_user_id}">
         <div class="avatar-wrap">
-          <div class="avatar${isSupportConversation(conv) ? " zm-brand" : ""}">${isSupportConversation(conv) ? zmSupportAvatarHtml() : (displayName ? displayName.charAt(0).toUpperCase() : "?")}</div>
+          <div class="avatar${isSupportConversation(conv) ? " zm-brand" : ""}">${isSupportConversation(conv) ? supportAvatarHtml() : (displayName ? displayName.charAt(0).toUpperCase() : "?")}</div>
           <span class="online-dot" id="dot-${conv.other_user_id}"></span>
         </div>
         <div class="row-info">
@@ -562,8 +592,15 @@
   }
 
   function isSupportConversation(conv) {
+    if (!conv) return false;
+    if (conv.other_user_is_admin) return true;
     const otherId = String(conv.other_user_id);
     return !!(supportContactId && otherId === supportContactId);
+  }
+
+  function supportAvatarHtml() {
+    if (typeof zmSupportAvatarHtml === "function") return zmSupportAvatarHtml();
+    return '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
   }
 
   function getConversationName(conv) {
@@ -576,7 +613,11 @@
   function setRowAvatar(el, conv, name) {
     if (!el) return;
     if (isSupportConversation(conv)) {
-      zmSetSupportAvatar(el);
+      if (typeof zmSetSupportAvatar === "function") zmSetSupportAvatar(el);
+      else {
+        el.classList.add("zm-brand");
+        el.innerHTML = supportAvatarHtml();
+      }
       return;
     }
     el.classList.remove("zm-brand");
