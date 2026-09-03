@@ -432,7 +432,19 @@
     });
   }
 
+  function zmSupportAvatarHtml() {
+    return '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
+  }
+
+  function zmSetSupportAvatar(el) {
+    if (!el) return;
+    el.classList.add("zm-brand");
+    el.innerHTML = zmSupportAvatarHtml();
+  }
+
   window.escHtml = escHtml;
+  window.zmSupportAvatarHtml = zmSupportAvatarHtml;
+  window.zmSetSupportAvatar = zmSetSupportAvatar;
   window.clearAuth = clearAuth;
   window.zmApplyAccountPrefs = zmApplyAccountPrefs;
   window.zmApplyLoginPrefs = zmApplyLoginPrefs;

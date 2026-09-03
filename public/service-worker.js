@@ -1,9 +1,10 @@
-const CACHE = "zedmarket-shell-v85";
+const CACHE = "zedmarket-shell-v86";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   OFFLINE_URL,
   "/icon-192.png",
   "/icon-512.png",
+  "/assets/icon.svg",
   "/css/dark-mode.css",
   "/js/utils.js",
   "/js/android-chrome.js",

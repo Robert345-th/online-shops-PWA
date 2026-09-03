@@ -56,7 +56,12 @@
     color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; border: none; width: 100%;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .support-banner svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .support-banner svg { display: none; }
+  .support-banner-icon {
+    width: 22px; height: 22px; border-radius: 11px; overflow: hidden;
+    background: #111; flex-shrink: 0;
+  }
+  .support-banner-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   .center-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
   .empty-text { color: var(--subtext); margin-bottom: 8px; }
@@ -71,7 +76,10 @@
   .avatar {
     width: 44px; height: 44px; border-radius: 22px; background: #E01B27;
     display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; flex-shrink: 0;
+    overflow: hidden;
   }
+  .avatar.zm-brand { background: #111111; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .avatar-wrap { position: relative; flex-shrink: 0; }
   .online-dot {
     position: absolute; bottom: 0; right: 0; width: 12px; height: 12px;
@@ -159,7 +167,7 @@
   </div>
 </div>
 
-<button class="support-banner" id="supportBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg><span data-i18n="contact_support">Contact Support</span></button>
+<button class="support-banner" id="supportBtn"><span class="support-banner-icon zm-brand"><img src="/icon-192.png" alt="" onerror="this.onerror=null;this.src='/assets/icon.svg'"></span><span data-i18n="contact_support">Contact Support</span></button>
 
 <div id="content"><div class="center-box" data-i18n="loading">Loading…</div></div>
 
@@ -343,7 +351,7 @@
     return `
       <div class="row" id="convrow-${conv.other_user_id}">
         <div class="avatar-wrap">
-          <div class="avatar">${displayName ? displayName.charAt(0).toUpperCase() : "?"}</div>
+          <div class="avatar${isSupportConversation(conv) ? " zm-brand" : ""}">${isSupportConversation(conv) ? zmSupportAvatarHtml() : (displayName ? displayName.charAt(0).toUpperCase() : "?")}</div>
           <span class="online-dot" id="dot-${conv.other_user_id}"></span>
         </div>
         <div class="row-info">
@@ -381,10 +389,7 @@
       rowNameEl.innerHTML = `${escHtml(name)}${pin}${mute}`;
     }
     const avatarEl = document.querySelector(`#convrow-${id} .avatar`);
-    if (avatarEl) {
-      const name = getConversationName(conv);
-      if (name) avatarEl.textContent = name.charAt(0).toUpperCase();
-    }
+    setRowAvatar(avatarEl, conv, getConversationName(conv));
 
     const previewEl = document.getElementById(`preview-${id}`);
     if (previewEl && !previewEl.classList.contains("typing")) {
@@ -529,20 +534,28 @@
       const res = await fetch(`${API_URL}/admin/support-contact`);
       if (res.ok) {
         const data = await res.json();
+        try { sessionStorage.setItem("zm_support_id", String(data.id)); } catch (e) {}
         window.location.href = `/chat-room.html?userId=${data.id}&support=1`;
       }
     } catch (e) {}
   });
 
   let supportContactId = null;
+  try { supportContactId = sessionStorage.getItem("zm_support_id") || null; } catch (e) {}
 
   async function loadSupportContactId() {
+    if (supportContactId) return supportContactId;
+    try {
+      const cached = sessionStorage.getItem("zm_support_id");
+      if (cached) supportContactId = cached;
+    } catch (e) {}
     if (supportContactId) return supportContactId;
     try {
       const res = await fetch(`${API_URL}/admin/support-contact`);
       if (res.ok) {
         const data = await res.json();
         supportContactId = String(data.id);
+        try { sessionStorage.setItem("zm_support_id", supportContactId); } catch (e) {}
       }
     } catch (e) {}
     return supportContactId;
@@ -560,6 +573,16 @@
     return (conv.other_user_name || "").trim() || t("chat_unknown_user", "Chat");
   }
 
+  function setRowAvatar(el, conv, name) {
+    if (!el) return;
+    if (isSupportConversation(conv)) {
+      zmSetSupportAvatar(el);
+      return;
+    }
+    el.classList.remove("zm-brand");
+    el.textContent = name ? name.charAt(0).toUpperCase() : "?";
+  }
+
   function updateRowName(userId, name) {
     const conv = conversationsCache.find((c) => String(c.other_user_id) === String(userId));
     const rowName = document.querySelector(`#convrow-${userId} .row-name`);
@@ -569,7 +592,7 @@
       const mute = conv?.muted ? `<span class="mute-mark">🔇</span>` : "";
       rowName.innerHTML = `${escHtml(name)}${pin}${mute}`;
     }
-    if (avatar && name) avatar.textContent = name.charAt(0).toUpperCase();
+    setRowAvatar(avatar, conv, name);
   }
 
   function applyConversationNames(conversations) {
