@@ -187,12 +187,10 @@
   .sort-chip { padding: 6px 12px; font-size: 11px; }
   .sort-chip.active { background: var(--black); border-color: var(--black); color: var(--gold); font-weight: 600; }
   .grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; padding-bottom: 40px; }
-  .load-more-wrap { padding: 0 12px 80px; text-align: center; }
-  .load-more-btn {
-    background: var(--black); color: var(--gold); border: none;
-    padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer;
+  .feed-sentinel-wrap { padding: 8px 12px 88px; text-align: center; min-height: 24px; }
+  .feed-loading-more {
+    margin: 0; font-size: 13px; color: var(--subtext); font-weight: 600;
   }
-  .load-more-btn:disabled { opacity: 0.6; cursor: wait; }
   .verified-chip {
     display: inline-flex; align-items: center; gap: 4px;
     border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
@@ -375,8 +373,9 @@
   <button type="button" class="save-search-btn" id="saveSearchBtn" data-i18n="save_search">Notify me of new matches</button>
 </div>
 <div id="feed" class="loading" data-i18n="loading_listings">Loading listings…</div>
-<div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
-  <button type="button" class="load-more-btn" id="loadMoreBtn" data-i18n="load_more">Load more</button>
+<div class="feed-sentinel-wrap" id="feedSentinelWrap" style="display:none;">
+  <div id="feedSentinel" aria-hidden="true"></div>
+  <p class="feed-loading-more" id="feedLoadingMore" hidden>Loading…</p>
 </div>
 
 <script src="/js/lang.js"></script>
@@ -509,8 +508,12 @@
   if (myCoords) sortBy = "Nearest";
 
   const feed = document.getElementById("feed");
-  const loadMoreWrap = document.getElementById("loadMoreWrap");
-  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  const feedSentinelWrap = document.getElementById("feedSentinelWrap");
+  const feedSentinel = document.getElementById("feedSentinel");
+  const feedLoadingMore = document.getElementById("feedLoadingMore");
+  let feedObserver = null;
+  let loadMoreRetryAt = 0;
+  let scrollLoadQueued = false;
   const sortRow = document.getElementById("sortRow");
   const categoryRow = document.getElementById("categoryRow");
   const townRow = document.getElementById("townRow");
@@ -748,7 +751,7 @@
       <div>${noData ? t("feed_offline") : t("feed_error")}</div>
       <button type="button" class="empty-btn" id="feedRetryBtn">${t("gate_try_again")}</button>`;
     document.getElementById("feedRetryBtn")?.addEventListener("click", () => loadListings(true));
-    updateLoadMoreButton();
+    updateInfiniteScroll();
   }
 
   function fetchListingsPage(url) {
@@ -763,6 +766,7 @@
 
   async function loadListings(reset = true) {
     if (loadingMore) return;
+    if (!reset && (!hasMore || Date.now() < loadMoreRetryAt)) return;
     if (reset && isOffline() && !listings.length) {
       if (showCachedFeedAny()) return;
       renderFeedError(true);
@@ -770,6 +774,7 @@
     }
     const prevOffset = serverOffset;
     const prevHasMore = hasMore;
+    loadingMore = true;
     if (reset) {
       serverOffset = 0;
       hasMore = true;
@@ -777,11 +782,9 @@
         feed.className = "loading";
         feed.textContent = t("loading_listings");
       }
-      loadMoreWrap.style.display = "none";
+      if (feedSentinelWrap) feedSentinelWrap.style.display = "none";
     } else {
-      loadingMore = true;
-      loadMoreBtn.disabled = true;
-      loadMoreBtn.textContent = t("loading");
+      updateInfiniteScroll();
     }
     try {
       const params = new URLSearchParams({
@@ -806,6 +809,7 @@
       if (reset) saveFeedCache();
     } catch (e) {
       const network = isNetworkFailure(e);
+      if (!reset) loadMoreRetryAt = Date.now() + 2000;
       if (reset && listings.length) {
         serverOffset = prevOffset;
         hasMore = prevHasMore;
@@ -817,19 +821,46 @@
       console.error(e);
     } finally {
       loadingMore = false;
-      if (loadMoreBtn) {
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = t("load_more");
-      }
+      updateInfiniteScroll();
+      maybeLoadNextPage();
     }
   }
 
-  function updateLoadMoreButton() {
-    if (!hasMore || feed.classList.contains("empty") || feed.classList.contains("error") || feed.classList.contains("offline") || feed.classList.contains("loading")) {
-      loadMoreWrap.style.display = "none";
+  function updateInfiniteScroll() {
+    if (!feedSentinelWrap) return;
+    const show = hasMore && feed.classList.contains("grid");
+    feedSentinelWrap.style.display = show ? "block" : "none";
+    if (feedLoadingMore) {
+      feedLoadingMore.hidden = !loadingMore;
+      feedLoadingMore.textContent = t("loading");
+    }
+    if (!show) {
+      if (feedObserver) {
+        feedObserver.disconnect();
+        feedObserver = null;
+      }
       return;
     }
-    loadMoreWrap.style.display = "block";
+    if (!feedObserver && feedSentinel && "IntersectionObserver" in window) {
+      feedObserver = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        maybeLoadNextPage();
+      }, { root: null, rootMargin: "800px 0px", threshold: 0 });
+      feedObserver.observe(feedSentinel);
+    }
+  }
+
+  function maybeLoadNextPage() {
+    if (!hasMore || loadingMore) return;
+    if (!feed.classList.contains("grid")) return;
+    if (Date.now() < loadMoreRetryAt) return;
+    if (!feedSentinelWrap || feedSentinelWrap.style.display === "none") return;
+    if (!feedSentinel) {
+      loadListings(false);
+      return;
+    }
+    const rect = feedSentinel.getBoundingClientRect();
+    if (rect.top <= window.innerHeight + 800) loadListings(false);
   }
 
   function renderFeed() {
@@ -837,19 +868,22 @@
 
     const isBoosted = (item) => item.boosted_until && new Date(item.boosted_until) > new Date();
 
-    if (sortBy === "Nearest" && myCoords) {
-      items.sort((a, b) => {
-        if (isBoosted(a) !== isBoosted(b)) return isBoosted(a) ? -1 : 1;
-        if (a.distanceKm == null) return 1;
-        if (b.distanceKm == null) return -1;
-        return a.distanceKm - b.distanceKm;
-      });
-    } else if (sortBy === "Price: Low-High") {
-      items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(a.price) - parseFloat(b.price));
-    } else if (sortBy === "Price: High-Low") {
-      items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(b.price) - parseFloat(a.price));
-    } else {
-      items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : new Date(b.date_posted) - new Date(a.date_posted));
+    // Keep API order after the first page so scrolling does not jump the grid.
+    if (listings.length <= PAGE_SIZE) {
+      if (sortBy === "Nearest" && myCoords) {
+        items.sort((a, b) => {
+          if (isBoosted(a) !== isBoosted(b)) return isBoosted(a) ? -1 : 1;
+          if (a.distanceKm == null) return 1;
+          if (b.distanceKm == null) return -1;
+          return a.distanceKm - b.distanceKm;
+        });
+      } else if (sortBy === "Price: Low-High") {
+        items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(a.price) - parseFloat(b.price));
+      } else if (sortBy === "Price: High-Low") {
+        items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : parseFloat(b.price) - parseFloat(a.price));
+      } else {
+        items.sort((a, b) => (isBoosted(a) !== isBoosted(b)) ? (isBoosted(a) ? -1 : 1) : new Date(b.date_posted) - new Date(a.date_posted));
+      }
     }
 
     if (!items.length) {
@@ -866,7 +900,7 @@
         if (!zmRequireLogin("/post-listing.html")) return;
         window.location.href = "/post-listing.html";
       });
-      updateLoadMoreButton();
+      updateInfiniteScroll();
       updateSaveSearchBar();
       return;
     }
@@ -898,7 +932,7 @@
       });
     });
     observeLazyImages(feed);
-    updateLoadMoreButton();
+    updateInfiniteScroll();
     updateSaveSearchBar();
   }
 
@@ -1224,6 +1258,14 @@
   showCachedFeedIfFresh();
   loadRecentFromAccount();
   loadListings(true);
+  window.addEventListener("scroll", () => {
+    if (scrollLoadQueued) return;
+    scrollLoadQueued = true;
+    requestAnimationFrame(() => {
+      scrollLoadQueued = false;
+      maybeLoadNextPage();
+    });
+  }, { passive: true });
   loadFavoriteIds().then(() => {
     if (feed.classList.contains("grid")) renderFeed();
   });
