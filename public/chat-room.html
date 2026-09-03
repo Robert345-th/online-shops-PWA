@@ -294,9 +294,19 @@
   const name = document.getElementById("headerName");
   const avatar = document.getElementById("headerAvatar");
   if (name) name.textContent = "Customer Support";
+  const menu = document.getElementById("menuBtn");
+  if (menu) menu.style.display = "none";
   if (avatar) {
-    if (typeof zmSetSupportAvatar === "function") zmSetSupportAvatar(avatar);
-    else avatar.innerHTML = '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
+    try {
+      if (typeof zmSetSupportAvatar === "function") zmSetSupportAvatar(avatar);
+      else {
+        avatar.classList.add("zm-brand");
+        avatar.innerHTML = '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
+      }
+    } catch (e) {
+      avatar.classList.add("zm-brand");
+      avatar.innerHTML = '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
+    }
   }
 })();
 </script>
@@ -411,6 +421,19 @@
     return icons[type] || "";
   }
 
+  function setSupportHeaderAvatar() {
+    const el = document.getElementById("headerAvatar");
+    if (!el) return;
+    try {
+      if (typeof zmSetSupportAvatar === "function") {
+        zmSetSupportAvatar(el);
+        return;
+      }
+    } catch (e) {}
+    el.classList.add("zm-brand");
+    el.innerHTML = '<img src="/icon-192.png" alt="ZedMarket" onerror="this.onerror=null;this.src=\'/assets/icon.svg\'">';
+  }
+
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("userId");
   const nameFromLink = params.get("name");
@@ -425,9 +448,11 @@
   let activeListing = null;
 
   if (isKnownSupportChat) {
-    document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
-    zmSetSupportAvatar(document.getElementById("headerAvatar"));
-    document.getElementById("menuBtn").style.display = "none";
+    try {
+      document.getElementById("menuBtn").style.display = "none";
+      document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
+      setSupportHeaderAvatar();
+    } catch (e) {}
   }
 
   let messages = [];
@@ -541,9 +566,9 @@
   }
 
   function renderHeader() {
-    if (otherUser?.is_admin) {
+    if (isKnownSupportChat || otherUser?.is_admin) {
       document.getElementById("headerName").textContent = t("support_chat_name", "Customer Support");
-      zmSetSupportAvatar(document.getElementById("headerAvatar"));
+      setSupportHeaderAvatar();
       document.getElementById("menuBtn").style.display = "none";
       return;
     }
@@ -781,7 +806,11 @@
       cacheMessages();
       const recording = mediaRecorder && mediaRecorder.state !== "inactive";
       if (!recording) updateComposerVisibility();
-    } catch (e) {}
+    } catch (e) {
+      if (showSpinner && !messages.length) {
+        messagesList.innerHTML = `<div class="empty-text">${t("chat_server_fail", "Could not load messages.")}</div>`;
+      }
+    }
   }
 
   function renderBlockedBanner() {
