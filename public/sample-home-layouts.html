@@ -9,30 +9,31 @@
 <meta name="theme-color" content="#111111" />
 <style>
   :root {
-    --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
+    --bg: #F3EFE8; --card: #FFFFFF; --border: #E6E1D8;
     --text: #1A1A1A; --subtext: #6B6B66; --black: #111111;
-    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27;
+    --gold: #F5C518; --price-red: #B3121C; --orange: #FF7A1A;
   }
   body.dark {
     --bg: #121212; --card: #1E1E1E; --border: #333333;
     --text: #F0EDE8; --subtext: #A8A29B; --black: #000000;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
   html, body { height: 100%; }
   body {
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
-    background: #0b0b0b; color: var(--text);
+    background: #0b0b0b; color: var(--text); -webkit-font-smoothing: antialiased;
   }
 
   .picker {
-    background: var(--black); color: var(--gold);
-    padding: 8px 10px;
+    background: var(--black);
+    padding: 8px 10px calc(8px + env(safe-area-inset-top, 0px));
     padding-top: calc(8px + env(safe-area-inset-top, 0px));
     position: sticky; top: 0; z-index: 60;
   }
   .picker-label {
     font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
-    text-transform: uppercase; text-align: center; margin-bottom: 8px; color: #F5C518;
+    text-transform: uppercase; text-align: center; margin-bottom: 8px; color: var(--gold);
   }
   .picker-row { display: flex; gap: 6px; }
   .pick {
@@ -49,236 +50,214 @@
   .layout { display: none; }
   .layout.on { display: block; }
 
-  .topbar {
+  .bar {
     background: var(--black); padding: 14px 16px 12px;
-    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .brand { color: var(--gold); font-size: 20px; font-weight: 700; }
-  .tag { color: #C9BFAF; font-size: 10px; margin-top: 2px; }
-  .icons { display: flex; gap: 8px; }
-  .icon {
-    width: 36px; height: 36px; border-radius: 18px; background: rgba(255,255,255,0.15);
-    border: none; color: var(--gold); font-size: 14px; font-weight: 800;
+  .brand { color: var(--gold); font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .bar-btns { display: flex; gap: 8px; }
+  .round {
+    width: 36px; height: 36px; border-radius: 18px; border: none;
+    background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
   }
-  .chevron {
-    background: var(--black); display: flex; align-items: center; justify-content: center;
-    padding: 4px 0 7px;
-  }
+  .round svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
   .search {
-    margin: 12px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px; font-size: 14px; color: var(--subtext);
+    margin: 10px 14px 8px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 14px; font-size: 14px; color: var(--subtext);
   }
-  .chips { display: flex; gap: 8px; overflow: hidden; padding: 0 12px 8px; }
+  .chips { display: flex; gap: 8px; padding: 0 14px 10px; overflow: hidden; }
   .chip {
-    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-    padding: 7px 14px; font-size: 13px; white-space: nowrap; flex-shrink: 0;
+    background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600; white-space: nowrap;
   }
-  .chip.on { background: var(--orange); border-color: var(--orange); color: #fff; font-weight: 600; }
-  .chip.sort.on { background: var(--black); border-color: var(--black); color: var(--gold); }
+  .chip.on { background: var(--black); color: var(--gold); border-color: var(--black); }
 
-  .ph {
-    background: #d9d0c2; display: flex; align-items: center; justify-content: center;
-    color: #8a8276; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+  .heart {
+    position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 15px;
+    background: rgba(17,17,17,0.55); border: none; display: flex; align-items: center; justify-content: center;
   }
-  .ph.phone { background: #2b3344; color: #c9d2e3; }
-  .ph.car { background: #3d4a3e; color: #d5e0d4; }
-  .ph.sofa { background: #5c4638; color: #ead9c8; }
-  .ph.pram { background: #5a3d52; color: #ecd6e3; }
-  .ph.shirt { background: #1f4a3a; color: #cde8db; }
-  .ph.land { background: #4a5a2e; color: #e4efc8; }
+  .heart svg { width: 14px; height: 14px; stroke: #fff; fill: none; stroke-width: 2.2; }
 
-  /* A — current 2-col */
-  .a-grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; }
-  .a-card {
-    width: calc(50% - 5px); background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; overflow: hidden;
+  /* A — clean 2-col */
+  .a-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 14px 20px; }
+  .a-card { width: calc(50% - 4px); }
+  .a-photo { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #ddd; }
+  .a-price { font-size: 15px; font-weight: 800; color: var(--price-red); margin-top: 8px; }
+  .a-title {
+    font-size: 13px; font-weight: 600; margin-top: 2px; line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .a-card .ph { height: 150px; }
-  .a-info { padding: 10px; }
-  .price { font-weight: 700; font-size: 14px; color: var(--price-red); }
-  .title { font-size: 12px; margin: 3px 0; }
-  .loc { font-size: 10.5px; color: var(--subtext); }
+  .a-loc { font-size: 11px; color: var(--subtext); margin-top: 3px; }
+  .a-loc b { color: var(--orange); font-weight: 700; }
 
-  /* B — list rows */
-  .b-search-bar {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--black); padding: 0 16px 12px;
-  }
-  .b-search {
-    flex: 1; background: #2A2A2A; color: #C9BFAF; border: none;
-    border-radius: 20px; padding: 10px 14px; font-size: 13px;
-  }
-  .b-list { padding: 8px 0 20px; }
+  /* B — marketplace rows */
+  .b-list { padding: 2px 0 16px; }
   .b-row {
-    display: flex; gap: 12px; padding: 10px 14px;
+    display: flex; gap: 12px; padding: 12px 14px;
     background: var(--card); border-bottom: 1px solid var(--border);
   }
-  .b-row .ph { width: 92px; height: 92px; border-radius: 10px; flex-shrink: 0; }
-  .b-main { flex: 1; min-width: 0; padding-top: 4px; }
-  .b-main .price { font-size: 16px; }
-  .b-main .title { font-size: 14px; font-weight: 700; margin: 4px 0 6px; }
-  .b-main .loc { font-size: 12px; }
+  .b-photo { width: 108px; height: 108px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #ddd; }
+  .b-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .b-price { font-size: 18px; font-weight: 800; color: var(--price-red); }
+  .b-title { font-size: 14px; font-weight: 650; margin-top: 4px; line-height: 1.3; }
+  .b-meta { font-size: 12px; color: var(--subtext); margin-top: 8px; }
 
-  /* C — big photos */
-  .c-feed { padding: 10px 12px 20px; }
-  .c-card {
-    background: var(--card); border-radius: 16px; overflow: hidden;
-    margin-bottom: 12px; border: 1px solid var(--border);
+  /* C — one featured, then grid */
+  .c-hero { margin: 4px 14px 12px; }
+  .c-hero-photo { position: relative; height: 230px; border-radius: 14px; overflow: hidden; background: #ddd; }
+  .c-hero-over {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 36px 14px 12px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.78));
   }
-  .c-photo { position: relative; }
-  .c-card .ph { height: 220px; font-size: 13px; }
-  .c-over {
-    position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 28px 14px 12px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.72));
-    color: #fff;
-  }
-  .c-over .price { color: var(--gold); font-size: 20px; }
-  .c-over .title { color: #fff; font-size: 14px; font-weight: 700; margin: 2px 0 0; }
-  .c-meta { padding: 10px 14px 12px; font-size: 12px; color: var(--subtext); }
+  .c-hero-over .price { color: var(--gold); font-size: 22px; font-weight: 800; }
+  .c-hero-over .title { color: #fff; font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .c-hero-over .loc { color: #ddd; font-size: 12px; margin-top: 2px; }
+  .c-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 20px; }
+  .c-card { width: calc(50% - 4px); }
+  .c-photo { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #ddd; }
+  .c-price { font-size: 14px; font-weight: 800; color: var(--price-red); margin-top: 7px; }
+  .c-title { font-size: 12px; font-weight: 600; margin-top: 2px; }
+  .c-loc { font-size: 11px; color: var(--subtext); margin-top: 2px; }
 
-  /* D — tight + category tiles */
-  .d-top {
-    background: var(--black); padding: 12px 14px 14px;
+  /* D — quiet overlay grid */
+  .d-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px 20px; }
+  .d-card { width: calc(50% - 3px); position: relative; }
+  .d-photo { position: relative; aspect-ratio: 4/5; border-radius: 10px; overflow: hidden; background: #ddd; }
+  .d-over {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 10px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.82));
+  }
+  .d-over .price { color: var(--gold); font-size: 14px; font-weight: 800; }
+  .d-over .title { color: #fff; font-size: 12px; font-weight: 650; margin-top: 2px; }
+  .d-over .loc { color: #cfcfcf; font-size: 11px; margin-top: 2px; }
+
+  .d-bar {
+    background: var(--black); padding: 10px 12px 12px;
     display: flex; align-items: center; gap: 10px;
   }
-  .d-logo { color: var(--gold); font-size: 16px; font-weight: 800; flex-shrink: 0; }
+  .d-logo { color: var(--gold); font-size: 15px; font-weight: 800; }
   .d-search {
-    flex: 1; background: #2A2A2A; color: #C9BFAF; border: none;
+    flex: 1; background: #222; color: #C9BFAF; border: none;
     border-radius: 10px; padding: 10px 12px; font-size: 13px;
   }
-  .d-cats {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    padding: 12px 12px 4px;
-  }
-  .d-cat {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 700;
-  }
-  .d-cat.on { background: var(--black); color: var(--gold); border-color: var(--black); }
-  .d-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px 20px; }
-  .d-card {
-    width: calc(50% - 4px); border-radius: 12px; overflow: hidden; position: relative;
-  }
-  .d-card .ph { height: 168px; }
-  .d-cap {
-    position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 18px 8px 8px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.7));
-    color: #fff;
-  }
-  .d-cap .price { color: var(--gold); font-size: 13px; }
-  .d-cap .title { color: #fff; font-size: 11px; margin: 1px 0 0; }
 </style>
 </head>
 <body data-nav-active="home">
 <script>document.body.classList.toggle("dark", localStorage.getItem("zm_dark_mode") === "true");</script>
 
 <div class="picker">
-  <div class="picker-label">Home samples — live app is unchanged. Tell me A, B, C or D</div>
+  <div class="picker-label">New samples — live app unchanged. Tell me A, B, C or D</div>
   <div class="picker-row">
-    <button class="pick on" type="button" data-id="a">A Now</button>
-    <button class="pick" type="button" data-id="b">B List</button>
-    <button class="pick" type="button" data-id="c">C Big</button>
-    <button class="pick" type="button" data-id="d">D Tight</button>
+    <button class="pick on" type="button" data-id="a">A Cards</button>
+    <button class="pick" type="button" data-id="b">B Rows</button>
+    <button class="pick" type="button" data-id="c">C Feature</button>
+    <button class="pick" type="button" data-id="d">D Poster</button>
   </div>
 </div>
 
 <div class="phone">
-  <section class="layout on" id="layout-a">
-    <div class="topbar">
-      <div>
-        <div class="brand">ZedMarket</div>
-        <div class="tag">Zambia's buy &amp; sell marketplace</div>
-      </div>
-      <div class="icons"><button class="icon" type="button">Map</button><button class="icon" type="button">Chat</button></div>
-    </div>
-    <div class="chevron"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-    <div class="search">Search listings...</div>
-    <div class="chips"><div class="chip sort on">Newest</div><div class="chip">Nearest</div><div class="chip">Price: Low-High</div></div>
-    <div class="chips"><div class="chip on">All</div><div class="chip">Electronics</div><div class="chip">Cars</div><div class="chip">Land</div></div>
-    <div class="chips"><div class="chip on">All towns</div><div class="chip">Lusaka</div><div class="chip">Kitwe</div></div>
-    <div class="a-grid">
-      <div class="a-card"><div class="ph phone">PHONE</div><div class="a-info"><div class="price">K6,000</div><div class="title">iPhone 13</div><div class="loc">Lusaka</div></div></div>
-      <div class="a-card"><div class="ph car">CAR</div><div class="a-info"><div class="price">K85,000</div><div class="title">Toyota Corolla</div><div class="loc">Kitwe</div></div></div>
-      <div class="a-card"><div class="ph sofa">SOFA</div><div class="a-info"><div class="price">K2,400</div><div class="title">Sofa set</div><div class="loc">Ndola</div></div></div>
-      <div class="a-card"><div class="ph pram">PRAM</div><div class="a-info"><div class="price">K400</div><div class="title">Baby pram</div><div class="loc">Lusaka</div></div></div>
-      <div class="a-card"><div class="ph shirt">KIT</div><div class="a-info"><div class="price">K150</div><div class="title">Football jersey</div><div class="loc">Chipata</div></div></div>
-      <div class="a-card"><div class="ph land">LAND</div><div class="a-info"><div class="price">K180,000</div><div class="title">Plot in Kabulonga</div><div class="loc">Lusaka</div></div></div>
-    </div>
-  </section>
-
-  <section class="layout" id="layout-b">
-    <div class="topbar" style="padding-bottom: 10px;">
-      <div class="brand">ZedMarket</div>
-      <div class="icons"><button class="icon" type="button">Chat</button><button class="icon" type="button">♥</button></div>
-    </div>
-    <div class="b-search-bar"><div class="b-search">Search listings...</div></div>
-    <div class="chips" style="padding-top: 10px;"><div class="chip on">All</div><div class="chip">Electronics</div><div class="chip">Cars</div><div class="chip">Land</div><div class="chip">Lusaka</div></div>
-    <div class="b-list">
-      <div class="b-row"><div class="ph phone">PHONE</div><div class="b-main"><div class="price">K6,000</div><div class="title">iPhone 13</div><div class="loc">Lusaka · Electronics</div></div></div>
-      <div class="b-row"><div class="ph car">CAR</div><div class="b-main"><div class="price">K85,000</div><div class="title">Toyota Corolla</div><div class="loc">Kitwe · Cars</div></div></div>
-      <div class="b-row"><div class="ph sofa">SOFA</div><div class="b-main"><div class="price">K2,400</div><div class="title">Sofa set</div><div class="loc">Ndola · Furniture</div></div></div>
-      <div class="b-row"><div class="ph pram">PRAM</div><div class="b-main"><div class="price">K400</div><div class="title">Baby pram</div><div class="loc">Lusaka</div></div></div>
-      <div class="b-row"><div class="ph shirt">KIT</div><div class="b-main"><div class="price">K150</div><div class="title">Football jersey</div><div class="loc">Chipata · Clothing</div></div></div>
-      <div class="b-row"><div class="ph land">LAND</div><div class="b-main"><div class="price">K180,000</div><div class="title">Plot in Kabulonga</div><div class="loc">Lusaka · Land</div></div></div>
-    </div>
-  </section>
-
-  <section class="layout" id="layout-c">
-    <div class="topbar">
-      <div class="brand">ZedMarket</div>
-      <div class="icons"><button class="icon" type="button">Map</button><button class="icon" type="button">Chat</button></div>
-    </div>
-    <div class="search">Search listings...</div>
-    <div class="c-feed">
-      <div class="c-card">
-        <div class="c-photo"><div class="ph phone">PHONE</div><div class="c-over"><div class="price">K6,000</div><div class="title">iPhone 13</div></div></div>
-        <div class="c-meta">Lusaka · Electronics · 2 km away</div>
-      </div>
-      <div class="c-card">
-        <div class="c-photo"><div class="ph car">CAR</div><div class="c-over"><div class="price">K85,000</div><div class="title">Toyota Corolla</div></div></div>
-        <div class="c-meta">Kitwe · Cars</div>
-      </div>
-      <div class="c-card">
-        <div class="c-photo"><div class="ph sofa">SOFA</div><div class="c-over"><div class="price">K2,400</div><div class="title">Sofa set</div></div></div>
-        <div class="c-meta">Ndola · Furniture</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="layout" id="layout-d">
-    <div class="d-top">
-      <div class="d-logo">ZM</div>
-      <div class="d-search">Search…</div>
-      <button class="icon" type="button">Chat</button>
-    </div>
-    <div class="d-cats">
-      <div class="d-cat on">All</div>
-      <div class="d-cat">Phones</div>
-      <div class="d-cat">Cars</div>
-      <div class="d-cat">Land</div>
-    </div>
-    <div class="d-grid">
-      <div class="d-card"><div class="ph phone">PHONE</div><div class="d-cap"><div class="price">K6,000</div><div class="title">iPhone 13</div></div></div>
-      <div class="d-card"><div class="ph car">CAR</div><div class="d-cap"><div class="price">K85,000</div><div class="title">Toyota Corolla</div></div></div>
-      <div class="d-card"><div class="ph sofa">SOFA</div><div class="d-cap"><div class="price">K2,400</div><div class="title">Sofa set</div></div></div>
-      <div class="d-card"><div class="ph pram">PRAM</div><div class="d-cap"><div class="price">K400</div><div class="title">Baby pram</div></div></div>
-      <div class="d-card"><div class="ph shirt">KIT</div><div class="d-cap"><div class="price">K150</div><div class="title">Football jersey</div></div></div>
-      <div class="d-card"><div class="ph land">LAND</div><div class="d-cap"><div class="price">K180,000</div><div class="title">Plot in Kabulonga</div></div></div>
-    </div>
-  </section>
+  <section class="layout on" id="layout-a"></section>
+  <section class="layout" id="layout-b"></section>
+  <section class="layout" id="layout-c"></section>
+  <section class="layout" id="layout-d"></section>
 </div>
 
 <script src="/js/lang.js"></script>
 <script src="/js/bottom-nav.js"></script>
 <script>
-  const picks = document.querySelectorAll(".pick");
-  const layouts = document.querySelectorAll(".layout");
-  picks.forEach((btn) => {
+  const ITEMS = [
+    { src: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=700&q=80", price: "K6,000", title: "iPhone 13", loc: "Lusaka", dist: "2 km" },
+    { src: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=700&q=80", price: "K85,000", title: "Toyota Corolla", loc: "Kitwe", dist: "" },
+    { src: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=700&q=80", price: "K2,400", title: "Sofa set", loc: "Ndola", dist: "" },
+    { src: "https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=700&q=80", price: "K400", title: "Baby pram", loc: "Lusaka", dist: "4 km" },
+    { src: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=700&q=80", price: "K150", title: "Football jersey", loc: "Chipata", dist: "" },
+    { src: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80", price: "K180,000", title: "Plot in Kabulonga", loc: "Lusaka", dist: "" },
+  ];
+
+  const HEART = `<button class="heart" type="button" aria-label="Save"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>`;
+  const CHAT = `<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+  const MAP = `<svg viewBox="0 0 24 24"><path d="M9 3.5v17l-5 2v-17z"/><path d="M9 3.5l6 2v17l-6-2z"/><path d="M15 5.5l5-2v17l-5 2z"/></svg>`;
+
+  function locLine(item) {
+    return item.dist ? `${item.loc} · <b>${item.dist}</b>` : item.loc;
+  }
+
+  function header() {
+    return `<div class="bar">
+      <div class="brand">ZedMarket</div>
+      <div class="bar-btns">
+        <button class="round" type="button">${MAP}</button>
+        <button class="round" type="button">${CHAT}</button>
+      </div>
+    </div>
+    <div class="search">Search listings...</div>
+    <div class="chips"><div class="chip on">All</div><div class="chip">Electronics</div><div class="chip">Cars</div><div class="chip">Land</div></div>`;
+  }
+
+  document.getElementById("layout-a").innerHTML = header() + `<div class="a-grid">${
+    ITEMS.map((item) => `<div class="a-card">
+      <div class="a-photo"><img src="${item.src}" alt=""><div>${HEART}</div></div>
+      <div class="a-price">${item.price}</div>
+      <div class="a-title">${item.title}</div>
+      <div class="a-loc">${locLine(item)}</div>
+    </div>`).join("")
+  }</div>`;
+
+  document.getElementById("layout-b").innerHTML = header() + `<div class="b-list">${
+    ITEMS.map((item) => `<div class="b-row">
+      <div class="b-photo"><img src="${item.src}" alt=""></div>
+      <div class="b-main">
+        <div class="b-price">${item.price}</div>
+        <div class="b-title">${item.title}</div>
+        <div class="b-meta">${item.loc}${item.dist ? " · " + item.dist : ""}</div>
+      </div>
+    </div>`).join("")
+  }</div>`;
+
+  const [hero, ...rest] = ITEMS;
+  document.getElementById("layout-c").innerHTML = header() + `
+    <div class="c-hero">
+      <div class="c-hero-photo">
+        <img src="${hero.src}" alt="">
+        ${HEART}
+        <div class="c-hero-over">
+          <div class="price">${hero.price}</div>
+          <div class="title">${hero.title}</div>
+          <div class="loc">${hero.loc}${hero.dist ? " · " + hero.dist : ""}</div>
+        </div>
+      </div>
+    </div>
+    <div class="c-grid">${rest.map((item) => `<div class="c-card">
+      <div class="c-photo"><img src="${item.src}" alt="">${HEART}</div>
+      <div class="c-price">${item.price}</div>
+      <div class="c-title">${item.title}</div>
+      <div class="c-loc">${item.loc}</div>
+    </div>`).join("")}</div>`;
+
+  document.getElementById("layout-d").innerHTML = `
+    <div class="d-bar">
+      <div class="d-logo">ZedMarket</div>
+      <div class="d-search">Search…</div>
+      <button class="round" type="button">${CHAT}</button>
+    </div>
+    <div class="chips" style="padding-top:10px"><div class="chip on">All</div><div class="chip">Electronics</div><div class="chip">Cars</div><div class="chip">Land</div></div>
+    <div class="d-grid">${ITEMS.map((item) => `<div class="d-card">
+      <div class="d-photo">
+        <img src="${item.src}" alt="">
+        ${HEART}
+        <div class="d-over">
+          <div class="price">${item.price}</div>
+          <div class="title">${item.title}</div>
+          <div class="loc">${item.loc}</div>
+        </div>
+      </div>
+    </div>`).join("")}</div>`;
+
+  document.querySelectorAll(".pick").forEach((btn) => {
     btn.addEventListener("click", () => {
-      picks.forEach((p) => p.classList.remove("on"));
-      layouts.forEach((l) => l.classList.remove("on"));
+      document.querySelectorAll(".pick").forEach((p) => p.classList.remove("on"));
+      document.querySelectorAll(".layout").forEach((l) => l.classList.remove("on"));
       btn.classList.add("on");
       document.getElementById("layout-" + btn.dataset.id).classList.add("on");
       window.scrollTo(0, 0);
