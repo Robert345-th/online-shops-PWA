@@ -291,7 +291,9 @@
 
       if (!res.ok || !Array.isArray(conversations)) {
         if (!content.querySelector(".list")) {
-          content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
+          content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div>
+            <button type="button" class="login-btn" id="chatRetryBtn">${t("gate_try_again")}</button></div>`;
+          document.getElementById("chatRetryBtn")?.addEventListener("click", () => loadConversations());
         }
         return;
       }
@@ -313,7 +315,9 @@
       applyConversationNames(conversations);
     } catch (e) {
       if (!content.querySelector(".list")) {
-        content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div></div>`;
+        content.innerHTML = `<div class="center-box"><div class="empty-text">${t("conversations_load_fail")}</div>
+          <button type="button" class="login-btn" id="chatRetryBtn">${t("gate_try_again")}</button></div>`;
+        document.getElementById("chatRetryBtn")?.addEventListener("click", () => loadConversations());
       }
     }
   }
