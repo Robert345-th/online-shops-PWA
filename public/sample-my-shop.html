@@ -11,64 +11,191 @@
   :root {
     --bg: #F4F1EC; --card: #FFFFFF; --border: #E2E0DC;
     --text: #211D1A; --subtext: #5C5955; --black: #111111;
-    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A; --red-btn: #E01B27;
-    --thumb-bg: #E9E2D3;
+    --gold: #F5C518; --price-red: #A3131C; --orange: #FF7A1A;
+    --thumb-bg: #E9E2D3; --green: #1B8A4A;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  html, body { min-height: 100%; }
   body {
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg); color: var(--text);
+    background: #0b0b0b; color: var(--text); -webkit-font-smoothing: antialiased;
   }
+  button { font-family: inherit; }
 
   .picker {
-    background: var(--black); color: var(--gold);
-    padding: 8px 10px;
+    background: var(--black);
+    padding: 8px 10px 10px;
     padding-top: calc(8px + env(safe-area-inset-top, 0px));
-    position: sticky; top: 0; z-index: 40;
+    position: sticky; top: 0; z-index: 60;
   }
   .picker-label {
     font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
-    text-transform: uppercase; text-align: center; margin-bottom: 4px; color: #F5C518;
+    text-transform: uppercase; text-align: center; color: var(--gold); margin-bottom: 4px;
   }
   .picker-note {
     font-size: 11px; color: #C9BFAF; text-align: center; margin-bottom: 8px; font-weight: 600;
   }
-  .picker-row { display: flex; gap: 6px; }
-  .picker-row + .picker-row { margin-top: 6px; }
+  .picker-grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+  }
   .pick {
-    flex: 1; background: #2A2A2A; color: #F0EDE8; border: 2px solid #2A2A2A;
-    padding: 8px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 0.03em; cursor: pointer;
+    background: #2A2A2A; color: #F0EDE8; border: 2px solid #2A2A2A;
+    padding: 7px 0; font-size: 11px; font-weight: 800; cursor: pointer;
   }
   .pick.on { background: var(--gold); color: var(--black); border-color: var(--gold); }
+  .picker-now {
+    margin-top: 8px; text-align: center; color: #fff; font-size: 12px; font-weight: 800;
+  }
+  .picker-now span { color: var(--gold); }
 
-  .layout { display: none; padding-bottom: 88px; }
+  .phone {
+    max-width: 430px; margin: 0 auto; min-height: 100dvh;
+    background: var(--bg); padding-bottom: 88px; position: relative;
+  }
+  .layout { display: none; }
   .layout.on { display: block; }
+  .layout.dark-shop { background: #121212; color: #F5F2ED; min-height: calc(100dvh - 88px); padding-bottom: 8px; }
 
   .topbar {
-    background: var(--black); padding: 16px;
+    background: var(--black); padding: 14px 16px;
     display: flex; justify-content: space-between; align-items: center;
   }
-  .brand { color: var(--gold); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .brand { color: var(--gold); font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
   .brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .sub-brand { color: #C9BFAF; font-size: 12px; margin-top: 2px; }
-  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+  .sell-btn {
+    background: var(--orange); color: #fff; border: none;
+    padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px;
+  }
+  .icon-btns { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 18px; border: none;
+    background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .list { padding: 14px; }
+  .verified-stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid var(--green); color: var(--green); background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .tiles {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px;
+  }
+  .tile {
+    background: var(--card); border: 1.5px solid var(--gold); border-radius: 14px;
+    padding: 14px 8px 12px; text-align: center;
+  }
+  .tile-ico {
+    width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 20px;
+    background: var(--gold); color: var(--black);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tile-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile-lbl { font-size: 11px; font-weight: 800; }
+  .admin-link {
+    display: block; width: 100%; background: none; border: none;
+    color: var(--subtext); font-size: 11px; font-weight: 800; padding: 4px 8px 8px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    padding: 12px 14px 4px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 8px; text-align: center;
+  }
+  .stat b { display: block; font-size: 16px; font-weight: 800; }
+  .stat span { font-size: 10px; color: var(--subtext); font-weight: 700; text-transform: uppercase; }
+
+  .banner {
+    background: var(--black); padding: 16px 16px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .av {
+    width: 52px; height: 52px; border-radius: 26px; background: #E01B27;
+    color: #fff; font-size: 20px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    border: 2px solid var(--gold);
+  }
+  .banner h2 { color: #fff; font-size: 16px; font-weight: 800; }
+  .banner .meta { color: #C9BFAF; font-size: 12px; margin: 2px 0 6px; }
+  .banner .sell-btn { margin-left: auto; }
+
+  .profile-block { text-align: center; padding: 20px 16px 8px; }
+  .profile-block .av { margin: 0 auto 10px; width: 72px; height: 72px; border-radius: 36px; font-size: 28px; }
+  .profile-block h2 { font-size: 18px; font-weight: 800; }
+  .profile-block .meta { color: var(--subtext); font-size: 12px; margin: 4px 0 8px; }
+  .icon-row {
+    display: flex; justify-content: center; gap: 16px; padding: 8px 16px 12px;
+  }
+  .icon-row button {
+    width: 44px; height: 44px; border-radius: 22px; border: none;
+    background: var(--black); display: flex; align-items: center; justify-content: center;
+  }
+  .icon-row svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .cover {
+    height: 120px; background:
+      linear-gradient(135deg, #111 0%, #3a3208 55%, #F5C518 140%);
+    position: relative;
+  }
+  .cover .av { position: absolute; left: 16px; bottom: -26px; }
+  .cover-body { padding: 34px 16px 12px; }
+  .cover-body h2 { font-size: 18px; font-weight: 800; }
+  .cover-top { position: absolute; right: 12px; top: 12px; }
+
+  .chips { display: flex; gap: 8px; padding: 12px 14px 4px; overflow-x: auto; }
+  .chip {
+    flex-shrink: 0; background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 800;
+  }
+  .chip.on { background: var(--black); color: var(--gold); border-color: var(--black); }
+
+  .tabs {
+    display: flex; gap: 0; padding: 0 8px; border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .tab {
+    flex: 1; background: none; border: none; padding: 12px 4px 10px;
+    font-size: 12px; font-weight: 800; color: var(--subtext);
+    border-bottom: 2px solid transparent;
+  }
+  .tab.on { color: var(--text); border-bottom-color: var(--gold); }
+
+  .search {
+    margin: 12px 14px 0; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 14px; font-size: 14px; color: var(--subtext);
+  }
+
+  .tools-row {
+    margin: 12px 14px 0; background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 14px; font-weight: 700;
+  }
+  .tools-row span { color: var(--subtext); font-size: 18px; font-weight: 400; }
+  .list-label {
+    padding: 16px 16px 4px; font-size: 11px; font-weight: 800;
+    color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .list { padding: 12px 14px; }
   .row {
     display: flex; align-items: center; background: var(--card);
-    border: 1px solid var(--border); padding: 10px; margin-bottom: 10px;
+    border: 1px solid var(--border); border-radius: 14px; padding: 10px; margin-bottom: 8px;
   }
-  .layout-a .row { border-radius: 0; border-width: 2px; }
-  .layout-b .row, .layout-c .row, .layout-d .row, .layout-e .row { border-radius: 14px; }
   .thumb {
-    width: 60px; height: 60px; background: var(--thumb-bg); margin-right: 12px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
+    width: 60px; height: 60px; border-radius: 10px; background: var(--thumb-bg);
+    margin-right: 12px; flex-shrink: 0; overflow: hidden; position: relative;
   }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .layout-a .thumb { border-radius: 0; }
-  .layout-b .thumb, .layout-c .thumb, .layout-d .thumb, .layout-e .thumb { border-radius: 10px; }
   .boost-badge {
     position: absolute; top: 2px; right: 2px; background: var(--orange);
     min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
@@ -78,113 +205,80 @@
   .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
   .row-views { font-size: 10px; color: var(--subtext); margin-top: 2px; }
-  .status-badge {
-    display: inline-block; background: var(--black); color: var(--gold);
-    padding: 2px 8px; font-size: 9px; font-weight: 800; margin-top: 4px;
-    text-transform: uppercase;
+  .status-badge, .boosted-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    font-size: 9px; font-weight: 800; margin-top: 4px; text-transform: uppercase;
   }
-  .boosted-badge {
-    display: inline-block; background: var(--orange); color: #fff;
-    padding: 2px 8px; font-size: 9px; font-weight: 800; margin-top: 4px;
-    text-transform: uppercase;
-  }
-  .layout-b .status-badge, .layout-c .status-badge, .layout-d .status-badge, .layout-e .status-badge,
-  .layout-b .boosted-badge, .layout-c .boosted-badge, .layout-d .boosted-badge, .layout-e .boosted-badge { border-radius: 6px; }
+  .status-badge { background: var(--black); color: var(--gold); }
+  .boosted-badge { background: var(--orange); color: #fff; }
   .manage {
     width: 40px; height: 40px; margin-left: 8px; background: var(--bg);
-    border: 1.5px solid var(--text); font-size: 18px; font-weight: 700; flex-shrink: 0;
-  }
-  .layout-a .manage { border-radius: 0; border-width: 2px; }
-  .layout-b .manage, .layout-c .manage, .layout-d .manage, .layout-e .manage { border-radius: 10px; }
-
-  /* A — pills */
-  .a-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
-  .a-chip {
-    background: var(--card); border: 1.5px solid var(--text); color: var(--text);
-    border-radius: 999px; padding: 10px 14px; font-size: 12px; font-weight: 800;
-  }
-  .a-chip.admin { display: inline-flex; align-items: center; gap: 6px; }
-
-  /* B — icon tiles */
-  .b-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px;
-  }
-  .b-tile {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 14px 8px 12px; text-align: center;
-  }
-  .b-admin {
-    display: block; margin: 0 12px 4px; text-align: center;
-    background: none; border: none; color: var(--subtext);
-    font-size: 11px; font-weight: 800; padding: 8px; text-transform: uppercase;
-  }
-  .b-ico {
-    width: 36px; height: 36px; margin: 0 auto 8px; border-radius: 18px;
-    background: var(--black); color: var(--gold);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .b-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .b-lbl { font-size: 11px; font-weight: 800; line-height: 1.2; }
-
-  /* E — same tiles as B, gold instead of black */
-  #layout-e .b-tile {
-    background: var(--card);
-    border-color: var(--gold);
-  }
-  #layout-e .b-ico {
-    width: 40px; height: 40px; border-radius: 20px;
-    background: var(--gold);
-    color: var(--black);
+    border: 1.5px solid var(--text); border-radius: 10px; font-size: 18px; font-weight: 700; flex-shrink: 0;
   }
 
-  /* C — shop card + icon toolbar */
-  .c-card {
-    margin: 12px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 14px 14px 10px;
+  .row.cardish .thumb { width: 88px; height: 88px; border-radius: 12px; }
+  .row.cardish .row-title { font-size: 15px; }
+  .row.cardish .row-price { font-size: 16px; }
+
+  .dense { padding: 0; background: var(--card); margin: 8px 0 0; }
+  .dense .row {
+    border: none; border-bottom: 1px solid var(--border); border-radius: 0;
+    margin: 0; padding: 10px 14px;
   }
-  .c-who { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .c-av {
-    width: 52px; height: 52px; border-radius: 26px; background: var(--red-btn);
-    color: #fff; font-size: 20px; font-weight: 800;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  .dense .thumb { width: 48px; height: 48px; border-radius: 8px; }
+  .dense .manage { width: 32px; height: 32px; border: none; background: none; font-size: 20px; }
+
+  .price-row .row-price { margin-left: auto; font-size: 15px; padding-left: 8px; }
+  .price-row .row-info { display: flex; flex-direction: column; }
+  .price-row .manage { display: none; }
+
+  .grid2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px;
   }
-  .c-name { font-size: 16px; font-weight: 800; }
-  .c-meta { font-size: 12px; color: var(--subtext); margin-top: 2px; }
-  .c-ver {
-    display: inline-block; margin-top: 4px; background: #1B8A4A; color: #fff;
-    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
-    padding: 2px 7px; border-radius: 6px;
+  .gcard {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
   }
-  .c-tools { display: flex; gap: 6px; padding-top: 4px; border-top: 1px solid var(--border); }
-  .c-tool {
-    flex: 1; background: none; border: none; padding: 10px 4px 6px; text-align: center; color: var(--text);
-  }
-  .c-tool svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto 6px; }
-  .c-tool span { display: block; font-size: 10px; font-weight: 800; }
-  .c-admin {
-    display: block; width: 100%; margin-top: 6px; background: none; border: none;
-    color: var(--subtext); font-size: 11px; font-weight: 800; padding: 8px; text-transform: uppercase;
+  .gcard .photo { height: 130px; background: var(--thumb-bg); position: relative; }
+  .gcard .body { padding: 8px 10px 10px; }
+  .gcard .row-title { font-size: 13px; }
+  .gcard .row-price { font-size: 13px; }
+
+  .board .photo { height: 160px; }
+  .board .price-over {
+    position: absolute; left: 8px; bottom: 8px;
+    background: rgba(17,17,17,0.82); color: #fff;
+    font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 8px;
   }
 
-  /* D — settings rows */
-  .d-wrap { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .d-row {
-    display: flex; align-items: center; gap: 12px; width: 100%;
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 12px 14px; color: var(--text); text-align: left;
+  .feature {
+    margin: 12px 14px 4px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
   }
-  .d-ico {
-    width: 36px; height: 36px; border-radius: 10px; background: var(--black); color: var(--gold);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  .feature .photo { height: 180px; background: var(--thumb-bg); position: relative; }
+  .feature .body { padding: 12px 14px 14px; }
+  .feature .row-title { font-size: 16px; }
+  .feature .row-price { font-size: 18px; }
+
+  .fab {
+    position: fixed; right: calc(50% - 199px); bottom: 84px;
+    width: 56px; height: 56px; border-radius: 28px; border: none;
+    background: var(--orange); color: #fff; font-size: 28px; font-weight: 600;
+    box-shadow: 0 8px 20px rgba(255,122,26,0.35); z-index: 30;
   }
-  .d-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .d-lbl { flex: 1; font-size: 14px; font-weight: 700; }
-  .d-go { color: var(--subtext); font-size: 18px; font-weight: 400; }
+  @media (max-width: 430px) { .fab { right: 16px; } }
+
+  .dark-shop .row, .dark-shop .gcard, .dark-shop .feature, .dark-shop .stat, .dark-shop .tile {
+    background: #252525; border-color: #444;
+  }
+  .dark-shop .row-title { color: #F5F2ED; }
+  .dark-shop .row-views, .dark-shop .admin-link, .dark-shop .stat span { color: #C9C0B6; }
+  .dark-shop .manage { background: #1a1a1a; border-color: #F5F2ED; color: #F5F2ED; }
 
   .nav {
-    position: fixed; left: 0; right: 0; bottom: 0;
+    position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto;
     background: #fff; border-top: 1px solid var(--border);
     display: flex; padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
   }
   .nav span { flex: 1; text-align: center; font-size: 10px; font-weight: 700; color: #8A8680; }
   .nav span.on { color: var(--orange); }
@@ -192,119 +286,14 @@
 </head>
 <body>
 <div class="picker">
-  <div class="picker-label">My Shop samples — tap one</div>
-  <div class="picker-note">Layout sample only. Not your real shop. E Gold is live now.</div>
-  <div class="picker-row">
-    <button type="button" class="pick" data-id="a">A Pills</button>
-    <button type="button" class="pick" data-id="b">B Tiles</button>
-    <button type="button" class="pick" data-id="c">C Card</button>
-    <button type="button" class="pick" data-id="d">D Rows</button>
-  </div>
-  <div class="picker-row" style="justify-content:flex-start;">
-    <button type="button" class="pick on" data-id="e" style="flex:0 0 calc(25% - 5px);">E Gold</button>
-  </div>
+  <div class="picker-label">My Shop layouts — 20 samples</div>
+  <div class="picker-note">Same 20 ads in every layout. Not your real shop.</div>
+  <div class="picker-grid" id="picker"></div>
+  <div class="picker-now" id="pickerNow"></div>
 </div>
-
-<section class="layout layout-a" id="layout-a">
-  <div class="topbar">
-    <div>
-      <div class="brand"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>
-      <div class="sub-brand">Robert zulu</div>
-    </div>
-    <button type="button" class="sell-btn">+ Sell</button>
-  </div>
-  <div class="a-row">
-    <button type="button" class="a-chip">Edit shop profile</button>
-    <button type="button" class="a-chip">Shop insights</button>
-    <button type="button" class="a-chip">View my shop</button>
-    <button type="button" class="a-chip">Share shop</button>
-    <button type="button" class="a-chip admin"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
-  </div>
-  <div class="list" data-sample-list></div>
-</section>
-
-<section class="layout layout-b" id="layout-b">
-  <div class="topbar">
-    <div>
-      <div class="brand"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>
-      <div class="sub-brand">Robert zulu</div>
-    </div>
-    <button type="button" class="sell-btn">+ Sell</button>
-  </div>
-  <div class="b-grid">
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="b-lbl">Edit profile</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div><div class="b-lbl">Insights</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="b-lbl">View shop</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div><div class="b-lbl">Share</div></div>
-  </div>
-  <button type="button" class="b-admin">Admin</button>
-  <div class="list" data-sample-list></div>
-</section>
-
-<section class="layout layout-e on" id="layout-e">
-  <div class="topbar">
-    <div>
-      <div class="brand"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>
-      <div class="sub-brand">Robert zulu</div>
-    </div>
-    <button type="button" class="sell-btn">+ Sell</button>
-  </div>
-  <div class="b-grid">
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="b-lbl">Edit profile</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div><div class="b-lbl">Insights</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="b-lbl">View shop</div></div>
-    <div class="b-tile"><div class="b-ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div><div class="b-lbl">Share</div></div>
-  </div>
-  <button type="button" class="b-admin">Admin</button>
-  <div class="list" data-sample-list></div>
-</section>
-
-<section class="layout layout-c" id="layout-c">
-  <div class="topbar">
-    <div>
-      <div class="brand"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>
-      <div class="sub-brand">Your listings</div>
-    </div>
-    <button type="button" class="sell-btn">+ Sell</button>
-  </div>
-  <div class="c-card">
-    <div class="c-who">
-      <div class="c-av">R</div>
-      <div>
-        <div class="c-name">Robert zulu</div>
-        <div class="c-meta">Shop seller</div>
-        <div class="c-ver">Verified shop</div>
-      </div>
-    </div>
-    <div class="c-tools">
-      <button type="button" class="c-tool"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>Edit</span></button>
-      <button type="button" class="c-tool"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg><span>Insights</span></button>
-      <button type="button" class="c-tool"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>View</span></button>
-      <button type="button" class="c-tool"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>Share</span></button>
-    </div>
-    <button type="button" class="c-admin">Admin</button>
-  </div>
-  <div class="list" data-sample-list></div>
-</section>
-
-<section class="layout layout-d" id="layout-d">
-  <div class="topbar">
-    <div>
-      <div class="brand"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>My Shop</div>
-      <div class="sub-brand">Robert zulu</div>
-    </div>
-    <button type="button" class="sell-btn">+ Sell</button>
-  </div>
-  <div class="d-wrap">
-    <button type="button" class="d-row"><div class="d-ico"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><span class="d-lbl">Edit shop profile</span><span class="d-go">›</span></button>
-    <button type="button" class="d-row"><div class="d-ico"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div><span class="d-lbl">Shop insights</span><span class="d-go">›</span></button>
-    <button type="button" class="d-row"><div class="d-ico"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="d-lbl">View my shop</span><span class="d-go">›</span></button>
-    <button type="button" class="d-row"><div class="d-ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div><span class="d-lbl">Share shop</span><span class="d-go">›</span></button>
-    <button type="button" class="d-row"><div class="d-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><span class="d-lbl">Admin</span><span class="d-go">›</span></button>
-  </div>
-  <div class="list" data-sample-list></div>
-</section>
-
+<div class="phone">
+  <div id="stage"></div>
+</div>
 <div class="nav">
   <span>Home</span>
   <span>Wanted</span>
@@ -313,7 +302,7 @@
 </div>
 
 <script>
-  const SAMPLE_LISTINGS = [
+  const LISTINGS = [
     { title: "iPhone 13", price: 6500, views: 84, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/IPhone_13%2C_January_28%2C_2024.jpg/960px-IPhone_13%2C_January_28%2C_2024.jpg" },
     { title: "iPhone 12", price: 4500, views: 41, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/IPhone_12_Black_256g.jpg/960px-IPhone_12_Black_256g.jpg" },
     { title: "Samsung A54", price: 3800, views: 33, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Samsung_Galaxy_A54_5G_2023.jpg/960px-Samsung_Galaxy_A54_5G_2023.jpg" },
@@ -336,44 +325,155 @@
     { title: "Office chair", price: 400, views: 2, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3a/Sihoo_M57_mesh_office_chair_02.jpg/1280px-Sihoo_M57_mesh_office_chair_02.jpg" }
   ];
 
-  function rowHtml(item) {
-    const boosted = item.status === "boosted";
-    const badgeClass = boosted ? "boosted-badge" : "status-badge";
-    const badgeText = boosted ? "boosted" : item.status;
-    const views = item.views > 0 ? `<div class="row-views">${item.views} views</div>` : "";
-    const boostMark = boosted ? `<div class="boost-badge">B</div>` : "";
-    return `
-      <div class="row">
-        <div class="thumb">
-          <img src="${item.photo}" alt="${item.title}" />
-          ${boostMark}
-        </div>
-        <div class="row-info">
-          <div class="row-title">${item.title}</div>
-          <div class="row-price">K${item.price}</div>
-          ${views}
-          <div class="${badgeClass}">${badgeText}</div>
-        </div>
-        <button type="button" class="manage" aria-label="Manage">⋮</button>
-      </div>`;
+  const LAYOUTS = [
+    { id: 1, name: "Now", hint: "live Gold tiles" },
+    { id: 2, name: "Banner", hint: "shop photo in header" },
+    { id: 3, name: "Stats", hint: "ads / views / sold" },
+    { id: 4, name: "Grid", hint: "2 photos across" },
+    { id: 5, name: "Cards", hint: "bigger photos" },
+    { id: 6, name: "Dense", hint: "tight list" },
+    { id: 7, name: "Plus", hint: "orange + button" },
+    { id: 8, name: "Tabs", hint: "All / Active / Sold" },
+    { id: 9, name: "Chips", hint: "tools as pills" },
+    { id: 10, name: "Profile", hint: "name in the middle" },
+    { id: 11, name: "Cover", hint: "gold shop cover" },
+    { id: 12, name: "Icons", hint: "small header buttons" },
+    { id: 13, name: "Search", hint: "find your ads" },
+    { id: 14, name: "Boost", hint: "boosted ad on top" },
+    { id: 15, name: "Mix", hint: "2 big, rest list" },
+    { id: 16, name: "Dark", hint: "black shop" },
+    { id: 17, name: "Clean", hint: "just the ads" },
+    { id: 18, name: "Tools", hint: "one tools row" },
+    { id: 19, name: "Price", hint: "price on the right" },
+    { id: 20, name: "Board", hint: "photo tiles" }
+  ];
+
+  const SVG = {
+    bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    insights: '<path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>',
+    view: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+    more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    check: '<path d="M5 13l5 5L20 7"/>'
+  };
+  const icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${SVG[name]}</svg>`;
+  const STAMP = `<span class="verified-stamp">${icon("check")}Verified Shop</span>`;
+
+  function money(n) { return "K" + n.toLocaleString("en-ZM"); }
+  function badge(item) {
+    if (item.status === "boosted") return `<div class="boosted-badge">boosted</div>`;
+    return `<div class="status-badge">${item.status}</div>`;
+  }
+  function thumb(item, extra = "") {
+    return `<div class="thumb">${item.photo ? `<img src="${item.photo}" alt="">` : ""}${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${extra}</div>`;
   }
 
-  const listHtml = SAMPLE_LISTINGS.map(rowHtml).join("");
-  document.querySelectorAll("[data-sample-list]").forEach((el) => {
-    el.innerHTML = listHtml;
+  function row(item, kind) {
+    const cls = kind === "cards" ? "row cardish" : kind === "price" ? "row price-row" : "row";
+    const views = item.views ? `<div class="row-views">${item.views} views</div>` : "";
+    if (kind === "price") {
+      return `<div class="${cls}">${thumb(item)}<div class="row-info"><div class="row-title">${item.title}</div>${views}${badge(item)}</div><div class="row-price">${money(item.price)}</div></div>`;
+    }
+    return `<div class="${cls}">${thumb(item)}<div class="row-info"><div class="row-title">${item.title}</div><div class="row-price">${money(item.price)}</div>${views}${badge(item)}</div><button type="button" class="manage" aria-label="Manage">⋮</button></div>`;
+  }
+
+  function gcard(item, board) {
+    return `<div class="gcard${board ? " board" : ""}"><div class="photo"><img src="${item.photo}" alt="">${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${board ? `<div class="price-over">${money(item.price)}</div>` : ""}</div>${board ? "" : `<div class="body"><div class="row-title">${item.title}</div><div class="row-price">${money(item.price)}</div></div>`}</div>`;
+  }
+
+  function list(kind) {
+    if (kind === "grid") return `<div class="grid2">${LISTINGS.map((i) => gcard(i, false)).join("")}</div>`;
+    if (kind === "board") return `<div class="grid2 board">${LISTINGS.map((i) => gcard(i, true)).join("")}</div>`;
+    if (kind === "dense") return `<div class="dense">${LISTINGS.map((i) => row(i)).join("")}</div>`;
+    if (kind === "cards") return `<div class="list">${LISTINGS.map((i) => row(i, "cards")).join("")}</div>`;
+    if (kind === "price") return `<div class="list">${LISTINGS.map((i) => row(i, "price")).join("")}</div>`;
+    if (kind === "feature") {
+      const fit = LISTINGS.find((i) => i.title === "Honda Fit");
+      const rest = LISTINGS.filter((i) => i !== fit);
+      return `<div class="feature"><div class="photo"><img src="${fit.photo}" alt=""><div class="boost-badge">B</div></div><div class="body"><div class="row-title">${fit.title}</div><div class="row-price">${money(fit.price)}</div><div class="row-views">${fit.views} views</div>${badge(fit)}</div></div><div class="list">${rest.map((i) => row(i)).join("")}</div>`;
+    }
+    if (kind === "mix") {
+      const top = LISTINGS.slice(0, 2);
+      const rest = LISTINGS.slice(2);
+      return `<div class="grid2">${top.map((i) => gcard(i, false)).join("")}</div><div class="list">${rest.map((i) => row(i)).join("")}</div>`;
+    }
+    return `<div class="list">${LISTINGS.map((i) => row(i)).join("")}</div>`;
+  }
+
+  function topbar(opts = {}) {
+    const sell = opts.hideSell ? "" : `<button type="button" class="sell-btn">+ Sell</button>`;
+    const icons = opts.icons ? `<div class="icon-btns">${["edit","insights","view","share"].map((n) => `<button type="button" class="icon-btn">${icon(n)}</button>`).join("")}</div>` : "";
+    const more = opts.more ? `<button type="button" class="icon-btn">${icon("more")}</button>` : "";
+    return `<div class="topbar"><div><div class="brand">${icon("bag")}My Shop</div><div class="sub-brand">Robert zulu</div></div>${icons || more || sell}</div>`;
+  }
+
+  function tiles() {
+    const items = [["edit","Edit profile"],["insights","Insights"],["view","View shop"],["share","Share"]];
+    return `<div class="tiles">${items.map(([n,l]) => `<div class="tile"><div class="tile-ico">${icon(n)}</div><div class="tile-lbl">${l}</div></div>`).join("")}</div><button type="button" class="admin-link">Admin</button>`;
+  }
+
+  function chrome(id) {
+    if (id === 1) return topbar() + tiles();
+    if (id === 2) return `<div class="banner"><div class="av">R</div><div><h2>Robert zulu</h2><div class="meta">Shop seller</div>${STAMP}</div><button type="button" class="sell-btn">+ Sell</button></div>` + `<div class="stats"><div class="stat"><b>20</b><span>Ads</span></div><div class="stat"><b>412</b><span>Views</span></div><div class="stat"><b>1</b><span>Sold</span></div></div>`;
+    if (id === 3) return topbar() + `<div class="stats"><div class="stat"><b>20</b><span>Ads</span></div><div class="stat"><b>412</b><span>Views</span></div><div class="stat"><b>1</b><span>Sold</span></div></div>`;
+    if (id === 4) return topbar({ icons: true });
+    if (id === 5) return topbar();
+    if (id === 6) return topbar();
+    if (id === 7) return topbar({ hideSell: true, more: true }) + `<button type="button" class="fab">+</button>`;
+    if (id === 8) return topbar() + `<div class="tabs"><button type="button" class="tab on">All 20</button><button type="button" class="tab">Active</button><button type="button" class="tab">Reserved</button><button type="button" class="tab">Sold</button></div>`;
+    if (id === 9) return topbar() + `<div class="chips"><span class="chip on">Edit shop</span><span class="chip">Insights</span><span class="chip">View shop</span><span class="chip">Share</span><span class="chip">Admin</span></div>`;
+    if (id === 10) return topbar({ hideSell: true }) + `<div class="profile-block"><div class="av">R</div><h2>Robert zulu</h2><div class="meta">Shop seller</div>${STAMP}</div><div class="icon-row"><button type="button">${icon("edit")}</button><button type="button">${icon("insights")}</button><button type="button">${icon("view")}</button><button type="button">${icon("share")}</button></div>`;
+    if (id === 11) return `<div class="cover"><button type="button" class="sell-btn cover-top">+ Sell</button><div class="av">R</div></div><div class="cover-body"><h2>Robert zulu</h2><div class="sub-brand" style="margin:4px 0 8px">Shop seller</div>${STAMP}</div>`;
+    if (id === 12) return topbar({ icons: true });
+    if (id === 13) return topbar() + `<div class="search">Search my listings</div><div class="chips"><span class="chip on">All</span><span class="chip">Active</span><span class="chip">Reserved</span><span class="chip">Sold</span></div>`;
+    if (id === 14) return topbar();
+    if (id === 15) return topbar();
+    if (id === 16) return topbar() + tiles();
+    if (id === 17) return topbar({ more: true });
+    if (id === 18) return topbar() + `<div class="tools-row">Shop tools <span>›</span></div><div class="list-label">Your ads</div>`;
+    if (id === 19) return topbar();
+    if (id === 20) return topbar({ icons: true });
+    return topbar();
+  }
+
+  function listKind(id) {
+    if (id === 4) return "grid";
+    if (id === 5) return "cards";
+    if (id === 6) return "dense";
+    if (id === 14) return "feature";
+    if (id === 15) return "mix";
+    if (id === 19) return "price";
+    if (id === 20) return "board";
+    return "rows";
+  }
+
+  const stage = document.getElementById("stage");
+  stage.innerHTML = LAYOUTS.map((l) => {
+    const dark = l.id === 16 ? " dark-shop" : "";
+    return `<section class="layout${dark}" id="layout-${l.id}" data-id="${l.id}">${chrome(l.id)}${list(listKind(l.id))}</section>`;
+  }).join("");
+
+  const picker = document.getElementById("picker");
+  picker.innerHTML = LAYOUTS.map((l, i) =>
+    `<button type="button" class="pick${i === 1 ? " on" : ""}" data-id="${l.id}">${l.id}</button>`
+  ).join("");
+
+  function show(id) {
+    const layout = LAYOUTS.find((l) => l.id === id);
+    document.querySelectorAll(".pick").forEach((p) => p.classList.toggle("on", Number(p.dataset.id) === id));
+    document.querySelectorAll(".layout").forEach((el) => el.classList.toggle("on", Number(el.dataset.id) === id));
+    document.getElementById("pickerNow").innerHTML = `<span>${layout.id}</span> ${layout.name} — ${layout.hint}`;
+    window.scrollTo(0, 0);
+  }
+
+  picker.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pick");
+    if (!btn) return;
+    show(Number(btn.dataset.id));
   });
 
-  const picks = document.querySelectorAll(".pick");
-  const layouts = document.querySelectorAll(".layout");
-  picks.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      picks.forEach((p) => p.classList.remove("on"));
-      layouts.forEach((l) => l.classList.remove("on"));
-      btn.classList.add("on");
-      document.getElementById("layout-" + btn.dataset.id).classList.add("on");
-      window.scrollTo(0, 0);
-    });
-  });
+  show(2);
 </script>
 </body>
 </html>
