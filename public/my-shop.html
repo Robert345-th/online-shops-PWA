@@ -39,21 +39,44 @@
   .countdown { color: var(--gold); font-size: 11px; margin-top: 2px; font-weight: 600; }
   .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
 
-  .action-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px;
+  .shop-head {
+    margin: 12px 14px 8px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px;
   }
-  .shop-tile {
-    background: var(--card); border: 1.5px solid var(--gold); border-radius: 14px;
-    padding: 14px 8px 12px; text-align: center; color: var(--text);
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  .shop-who { display: flex; align-items: center; gap: 12px; }
+  .shop-av {
+    width: 52px; height: 52px; border-radius: 26px; background: #E01B27;
+    color: #fff; font-size: 20px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .shop-tile-ico {
-    width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 20px;
-    background: var(--gold); color: var(--black);
-    display: flex; align-items: center; justify-content: center;
+  .shop-name { font-size: 16px; font-weight: 800; }
+  .shop-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .shop-sub { font-size: 12px; color: var(--subtext); }
+  .verified-stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
   }
-  .shop-tile-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .shop-tile-lbl { font-size: 11px; font-weight: 800; line-height: 1.2; }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tool-row {
+    display: flex; gap: 4px; margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .tool-btn {
+    flex: 1; background: none; border: none; padding: 8px 2px 4px; text-align: center;
+    color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .tool-btn svg {
+    width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto 6px;
+  }
+  .tool-btn span { display: block; font-size: 10px; font-weight: 800; }
+  .layout-note {
+    margin: 4px 16px 8px; text-align: center;
+    font-size: 12px; font-weight: 600; color: var(--subtext);
+  }
   .action-extra { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; }
   .sold-section { padding: 0 14px 8px; }
   .sold-section-title { font-size: 11px; font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
@@ -177,8 +200,26 @@
     view: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
   };
-  function shopTile(icon, label, extra = "") {
-    return `<button type="button" class="shop-tile" ${extra}><div class="shop-tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg></div><div class="shop-tile-lbl">${label}</div></button>`;
+  function shopTool(icon, label, extra = "") {
+    return `<button type="button" class="tool-btn" ${extra}><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg><span>${label}</span></button>`;
+  }
+  function verifiedStamp(label) {
+    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
+  }
+  function layoutSampleListings() {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: "layout-sample-" + (i + 1),
+      title: "Listing title",
+      price: 0,
+      view_count: 0,
+      status: i === 5 ? "active" : i === 8 ? "reserved" : i === 9 ? "sold" : "active",
+      is_boosted: i === 5,
+      photos: [],
+      _layoutSample: true,
+    }));
+  }
+  function isLayoutPreview() {
+    return new URLSearchParams(location.search).get("layout") === "1";
   }
   const ADMIN_BTN = '<button type="button" class="admin-link" onclick="window.location.href=\'/admin.html\'">Admin</button>';
   const app = document.getElementById("app");
@@ -230,6 +271,17 @@
   }
 
   async function loadData() {
+    if (isLayoutPreview()) {
+      user = { id: "preview", name: "Robert zulu", shop_name: "Robert zulu", is_admin: true };
+      token = "preview";
+      shopAccountType = "shop";
+      shopStatus = "approved";
+      shopCompliance = { shop_name: "Robert zulu", nrc_verified: true };
+      subscription = { payment_status: "active" };
+      listings = [];
+      render();
+      return;
+    }
     if (!user || !token) { window.location.href = "/login.html"; return; }
     if (window.zmPrefsReady) await window.zmPrefsReady;
 
@@ -327,21 +379,37 @@
       user.is_admin ? ADMIN_BTN : "",
     ].filter(Boolean).join("");
 
+    const initial = (shopDisplayName() || "S").charAt(0).toUpperCase();
+    const stamp = isVerifiedShop ? verifiedStamp(t("verified_shop")) : isPending ? `<span class="shop-sub">${t("status_pending")}</span>` : "";
+    const showLayoutSamples = listings.length === 0;
+    const rows = showLayoutSamples ? layoutSampleListings() : listings;
+
     app.innerHTML = `
       <div class="topbar">
         <div>
           ${myShopBrand()}
-          <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
         </div>
         ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
       </div>
 
-      <div class="action-grid">
-        ${shopTile("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
-        ${shopTile("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
-        ${shopTile("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
-        ${shopTile("share", t("share_shop"), `id="shareShopBtn"`)}
+      <div class="shop-head">
+        <div class="shop-who">
+          <div class="shop-av">${initial}</div>
+          <div>
+            <div class="shop-name">${shopDisplayName()}</div>
+            <div class="shop-meta">
+              <span class="shop-sub">${t("shop_seller")}</span>
+              ${stamp}
+            </div>
+          </div>
+        </div>
+        <div class="tool-row">
+          ${shopTool("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
+          ${shopTool("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
+          ${shopTool("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
+          ${shopTool("share", t("share_shop"), `id="shareShopBtn"`)}
+        </div>
       </div>
       ${extraActions ? `<div class="action-extra">${extraActions}</div>` : ""}
 
@@ -355,15 +423,13 @@
 
       ${renderSoldTemplatesSection()}
 
-      ${listings.length === 0 ? `
-        <div class="center-box">
-          <div class="empty-text">${t("no_listings_yet")}</div>
-          ${canPost ? `<button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
-        </div>` : `
-        <div class="list">${listings.map(renderRow).join("")}</div>`}
+      ${showLayoutSamples ? `<div class="layout-note">Layout only. These are not your ads.</div>` : ""}
+      <div class="list">${rows.map(renderRow).join("")}</div>
+      ${showLayoutSamples && canPost ? `<div class="center-box" style="padding:8px 24px 24px;"><button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button></div>` : ""}
     `;
 
-    listings.forEach(item => {
+    rows.forEach(item => {
+      if (item._layoutSample) return;
       const rowMain = document.getElementById(`rowmain-${item.id}`);
       if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
       const manageBtn = document.getElementById(`manage-${item.id}`);
@@ -464,8 +530,8 @@
   }
 
   function renderRow(item) {
-    const img = (item.photos && item.photos[0])
-      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null);
+    const img = item._layoutSample ? null : ((item.photos && item.photos[0])
+      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null));
     let badge = `<div class="status-badge">${item.status}</div>`;
     if (item.payment_disabled) {
       badge = `<div class="disabled-badge">${t("disabled_needs_sub", { category: item.category })}</div>`;
@@ -480,7 +546,7 @@
       <div class="row ${item.payment_disabled ? "disabled" : ""}">
         <div class="row-main" id="rowmain-${item.id}">
           <div class="thumb">
-            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
+            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : (item._layoutSample ? "" : photoPlaceholder(24))}
             ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
             ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
           </div>
