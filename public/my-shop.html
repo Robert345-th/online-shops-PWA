@@ -73,10 +73,6 @@
     stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto 6px;
   }
   .tool-btn span { display: block; font-size: 10px; font-weight: 800; }
-  .layout-note {
-    margin: 4px 16px 8px; text-align: center;
-    font-size: 12px; font-weight: 600; color: var(--subtext);
-  }
   .action-extra { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; }
   .sold-section { padding: 0 14px 8px; }
   .sold-section-title { font-size: 11px; font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
@@ -205,18 +201,6 @@
   }
   function verifiedStamp(label) {
     return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
-  }
-  function layoutSampleListings() {
-    return Array.from({ length: 20 }, (_, i) => ({
-      id: "layout-sample-" + (i + 1),
-      title: "Listing title",
-      price: 0,
-      view_count: 0,
-      status: i === 5 ? "active" : i === 8 ? "reserved" : i === 9 ? "sold" : "active",
-      is_boosted: i === 5,
-      photos: [],
-      _layoutSample: true,
-    }));
   }
   function isLayoutPreview() {
     return new URLSearchParams(location.search).get("layout") === "1";
@@ -381,8 +365,6 @@
 
     const initial = (shopDisplayName() || "S").charAt(0).toUpperCase();
     const stamp = isVerifiedShop ? verifiedStamp(t("verified_shop")) : isPending ? `<span class="shop-sub">${t("status_pending")}</span>` : "";
-    const showLayoutSamples = listings.length === 0;
-    const rows = showLayoutSamples ? layoutSampleListings() : listings;
 
     app.innerHTML = `
       <div class="topbar">
@@ -423,13 +405,15 @@
 
       ${renderSoldTemplatesSection()}
 
-      ${showLayoutSamples ? `<div class="layout-note">Layout only. These are not your ads.</div>` : ""}
-      <div class="list">${rows.map(renderRow).join("")}</div>
-      ${showLayoutSamples && canPost ? `<div class="center-box" style="padding:8px 24px 24px;"><button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button></div>` : ""}
+      ${listings.length === 0 ? `
+        <div class="center-box">
+          <div class="empty-text">${t("no_listings_yet")}</div>
+          ${canPost ? `<button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
+        </div>` : `
+        <div class="list">${listings.map(renderRow).join("")}</div>`}
     `;
 
-    rows.forEach(item => {
-      if (item._layoutSample) return;
+    listings.forEach(item => {
       const rowMain = document.getElementById(`rowmain-${item.id}`);
       if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
       const manageBtn = document.getElementById(`manage-${item.id}`);
@@ -530,8 +514,8 @@
   }
 
   function renderRow(item) {
-    const img = item._layoutSample ? null : ((item.photos && item.photos[0])
-      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null));
+    const img = (item.photos && item.photos[0])
+      || (item.video_url && typeof videoPosterUrl === "function" ? videoPosterUrl(item.video_url) : null);
     let badge = `<div class="status-badge">${item.status}</div>`;
     if (item.payment_disabled) {
       badge = `<div class="disabled-badge">${t("disabled_needs_sub", { category: item.category })}</div>`;
@@ -546,7 +530,7 @@
       <div class="row ${item.payment_disabled ? "disabled" : ""}">
         <div class="row-main" id="rowmain-${item.id}">
           <div class="thumb">
-            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : (item._layoutSample ? "" : photoPlaceholder(24))}
+            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
             ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
             ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
           </div>
