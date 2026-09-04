@@ -1,4 +1,4 @@
-const CACHE = "zedmarket-shell-v95";
+const CACHE = "zedmarket-shell-v96";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   OFFLINE_URL,

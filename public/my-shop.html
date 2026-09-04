@@ -31,29 +31,21 @@
 
   .topbar {
     background: var(--black); padding: 16px;
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
   }
   .brand { color: var(--gold); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
   .sub-brand { color: #C9BFAF; font-size: 12px; margin-top: 2px; }
   .countdown { color: var(--gold); font-size: 11px; margin-top: 2px; font-weight: 600; }
-  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
-
-  .action-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px;
-  }
-  .shop-tile {
-    background: var(--card); border: 1.5px solid var(--gold); border-radius: 14px;
-    padding: 14px 8px 12px; text-align: center; color: var(--text);
+  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 12px; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+  .top-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .icon-btns { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 17px; border: none;
+    background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .shop-tile-ico {
-    width: 40px; height: 40px; margin: 0 auto 8px; border-radius: 20px;
-    background: var(--gold); color: var(--black);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .shop-tile-ico svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .shop-tile-lbl { font-size: 11px; font-weight: 800; line-height: 1.2; }
+  .icon-btn svg { width: 17px; height: 17px; stroke: var(--gold); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .action-extra { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; }
   .sold-section { padding: 0 14px 8px; }
   .sold-section-title { font-size: 11px; font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
@@ -87,23 +79,34 @@
   .empty-text { color: var(--subtext); margin-bottom: 16px; }
   .error-text { color: var(--price-red); }
 
-  .list { padding: 14px; }
-  .row { display: flex; align-items: center; background: var(--card); border-radius: 14px; border: 1.5px solid var(--border); padding: 10px; margin-bottom: 10px; }
-  .row.disabled { opacity: 0.6; border-color: var(--price-red); }
-  .row-main { display: flex; flex: 1; align-items: center; cursor: pointer; }
-  .thumb { width: 60px; height: 60px; border-radius: 10px; background: var(--thumb-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 12px; position: relative; flex-shrink: 0; }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .listing-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px 20px;
+  }
+  .gcard {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .gcard.disabled { opacity: 0.6; border-color: var(--price-red); }
+  .gcard .photo {
+    height: 130px; background: var(--thumb-bg); position: relative;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .gcard .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gcard .body { padding: 8px 10px 10px; cursor: pointer; }
+  .gcard .row-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gcard .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
+  .gcard .row-views { font-size: 10px; color: var(--subtext); margin-top: 2px; }
   .photo-ph { color: var(--subtext); stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
   .photo-ph circle { fill: currentColor; stroke: none; }
-  .boost-badge { position: absolute; top: 2px; right: 2px; background: var(--orange); min-width: 18px; height: 18px; border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; padding: 0 3px; }
-  .row-info { flex: 1; min-width: 0; }
-  .row-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-price { font-size: 13px; color: var(--price-red); font-weight: 700; margin-top: 2px; }
-  .row-views { font-size: 10px; color: var(--subtext); margin-top: 2px; }
+  .boost-badge { position: absolute; top: 6px; left: 6px; background: var(--orange); min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; padding: 0 3px; }
   .status-badge { display: inline-block; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
   .disabled-badge { display: inline-block; background: var(--price-red); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
   .boosted-badge { display: inline-block; background: var(--orange); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
-  .manage-btn { width: 40px; height: 40px; border-radius: 10px; background: var(--bg); border: 1.5px solid var(--text); display: flex; align-items: center; justify-content: center; margin-left: 8px; font-size: 20px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .manage-btn {
+    position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 10px;
+    background: rgba(17,17,17,0.72); border: none; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; cursor: pointer; z-index: 2;
+  }
 
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
@@ -177,8 +180,8 @@
     view: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
   };
-  function shopTile(icon, label, extra = "") {
-    return `<button type="button" class="shop-tile" ${extra}><div class="shop-tile-ico"><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg></div><div class="shop-tile-lbl">${label}</div></button>`;
+  function shopIcon(icon, label, extra = "") {
+    return `<button type="button" class="icon-btn" aria-label="${label}" ${extra}><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg></button>`;
   }
   const ADMIN_BTN = '<button type="button" class="admin-link" onclick="window.location.href=\'/admin.html\'">Admin</button>';
   const app = document.getElementById("app");
@@ -334,14 +337,15 @@
           <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
           ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
         </div>
-        ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
-      </div>
-
-      <div class="action-grid">
-        ${shopTile("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
-        ${shopTile("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
-        ${shopTile("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
-        ${shopTile("share", t("share_shop"), `id="shareShopBtn"`)}
+        <div class="top-actions">
+          ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
+          <div class="icon-btns">
+            ${shopIcon("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
+            ${shopIcon("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
+            ${shopIcon("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
+            ${shopIcon("share", t("share_shop"), `id="shareShopBtn"`)}
+          </div>
+        </div>
       </div>
       ${extraActions ? `<div class="action-extra">${extraActions}</div>` : ""}
 
@@ -360,14 +364,20 @@
           <div class="empty-text">${t("no_listings_yet")}</div>
           ${canPost ? `<button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
         </div>` : `
-        <div class="list">${listings.map(renderRow).join("")}</div>`}
+        <div class="listing-grid">${listings.map(renderRow).join("")}</div>`}
     `;
 
     listings.forEach(item => {
+      const openListing = () => { window.location.href = `/listing.html?id=${item.id}`; };
       const rowMain = document.getElementById(`rowmain-${item.id}`);
-      if (rowMain) rowMain.addEventListener("click", () => window.location.href = `/listing.html?id=${item.id}`);
+      if (rowMain) rowMain.addEventListener("click", openListing);
+      const rowBody = document.getElementById(`rowbody-${item.id}`);
+      if (rowBody) rowBody.addEventListener("click", openListing);
       const manageBtn = document.getElementById(`manage-${item.id}`);
-      if (manageBtn) manageBtn.addEventListener("click", () => openManageModal(item));
+      if (manageBtn) manageBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openManageModal(item);
+      });
     });
     document.getElementById("shareShopBtn")?.addEventListener("click", shareShop);
     document.querySelectorAll("[data-similar]").forEach((el) => {
@@ -477,21 +487,19 @@
       badge = `<div class="boosted-badge">${t("boosted_label")}</div>`;
     }
     return `
-      <div class="row ${item.payment_disabled ? "disabled" : ""}">
-        <div class="row-main" id="rowmain-${item.id}">
-          <div class="thumb">
-            ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
-            ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
-            ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
-          </div>
-          <div class="row-info">
-            <div class="row-title">${item.title}</div>
-            <div class="row-price">K${item.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
-            ${item.view_count > 0 ? `<div class="row-views">${t("listing_views_count", { count: item.view_count })}</div>` : ""}
-            ${badge}
-          </div>
+      <div class="gcard ${item.payment_disabled ? "disabled" : ""}">
+        <div class="photo" id="rowmain-${item.id}">
+          ${img ? zmImg(img, { alt: item.title, preset: "card", defer: true }) : photoPlaceholder(24)}
+          ${item.is_boosted ? `<div class="boost-badge">B</div>` : ""}
+          ${typeof zmDropChipHtml === "function" ? zmDropChipHtml(item) : ""}
+          <button type="button" class="manage-btn" id="manage-${item.id}">⋮</button>
         </div>
-        <button class="manage-btn" id="manage-${item.id}">⋮</button>
+        <div class="body" id="rowbody-${item.id}">
+          <div class="row-title">${item.title}</div>
+          <div class="row-price">K${item.price}${typeof zmDropPriceHtml === "function" ? zmDropPriceHtml(item) : ""}</div>
+          ${item.view_count > 0 ? `<div class="row-views">${t("listing_views_count", { count: item.view_count })}</div>` : ""}
+          ${badge}
+        </div>
       </div>`;
   }
 
