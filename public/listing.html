@@ -136,15 +136,31 @@
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
-  .verified-stamp {
-    display: inline-flex; align-items: center; gap: 4px;
-    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
-    padding: 2px 7px; border-radius: 3px;
-    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
-    flex-shrink: 0;
+  .verified-tick {
+    width: 16px; height: 16px; display: block; flex-shrink: 0;
   }
-  .verified-stamp svg { width: 10px; height: 10px; display: block; }
-  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+  .verified-tick circle { fill: #1B8A4A; }
+  .verified-tick path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .item-details {
+    background: var(--card); border: 1.5px solid var(--text);
+    border-radius: 12px; padding: 0; margin: 10px 0 12px;
+  }
+  .item-details summary {
+    list-style: none; cursor: pointer; padding: 12px 14px;
+    font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .item-details summary::-webkit-details-marker { display: none; }
+  .item-details summary .chev {
+    margin-left: auto; width: 18px; height: 18px; stroke: var(--subtext); fill: none;
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .item-details[open] summary .chev { transform: rotate(180deg); }
+  .item-details .details-body { padding: 0 14px 14px; border-top: 1px solid var(--border); }
+  .item-details .details-body > :first-child { margin-top: 10px; }
+  .item-details .details-body > :last-child { margin-bottom: 0; }
+  .item-details .description { margin-bottom: 0; }
   .specs-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .specs-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
   .specs-row { display: flex; justify-content: space-between; padding: 2px 0; }
@@ -183,26 +199,34 @@
   }
   .similar-card .drop-chip { top: 58px; bottom: auto; right: 6px; }
   .seller-row {
-    display: flex; flex-direction: column; gap: 12px;
     background: var(--card); border: 1.5px solid var(--text);
-    border-radius: 12px; padding: 12px; margin-top: 4px;
+    border-radius: 12px; margin-top: 4px; overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
-  .seller-go {
+  .seller-summary {
     display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;
-    background: none; border: none; padding: 0; margin: 0;
+    background: none; border: none; padding: 10px 12px; margin: 0;
     text-align: left; cursor: pointer; color: inherit; font: inherit;
     -webkit-tap-highlight-color: transparent;
   }
-  .seller-avatar { width: 44px; height: 44px; border-radius: 22px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .seller-avatar { width: 40px; height: 40px; border-radius: 20px; background: var(--red-btn); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: 700; flex-shrink: 0; }
   .seller-info { flex: 1; min-width: 0; }
-  .seller-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .seller-name { font-size: 14px; font-weight: 800; }
+  .seller-name-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .seller-name { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .seller-registered { font-size: 10px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; }
   .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
+  .seller-chev {
+    margin-left: auto; width: 18px; height: 18px; flex-shrink: 0;
+    stroke: var(--subtext); fill: none; stroke-width: 2.2;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.15s;
+  }
+  .seller-row.open .seller-chev { transform: rotate(180deg); }
+  .seller-panel { display: none; padding: 0 12px 12px; border-top: 1px solid var(--border); }
+  .seller-row.open .seller-panel { display: block; padding-top: 10px; }
   .seller-actions {
-    display: flex; align-items: stretch; gap: 12px; width: 100%;
+    display: flex; align-items: stretch; gap: 12px; width: 100%; margin-top: 10px;
     -webkit-tap-highlight-color: transparent;
   }
   .view-shop-btn, .review-btn {
@@ -703,6 +727,13 @@
         ${listing.status === "sold" ? `<div class="status-banner sold">${t("listing_sold_note")}</div>` : ""}
         <div id="sellerRowWrap"></div>
 
+        ${listing.car_details || listing.land_details || listing.description ? `
+        <details class="item-details" id="itemDetails">
+          <summary>
+            <span>${t("listing_details")}</span>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="details-body">
         ${listing.car_details ? `
           <div class="specs-box">
             <div class="specs-title">🚗 Car Details</div>
@@ -720,6 +751,8 @@
           </div>` : ""}
 
         ${listing.description ? `<div class="description">${listing.description}</div>` : ""}
+          </div>
+        </details>` : ""}
 
         <div class="safety-row">
           <div class="safety-btn" id="safetyOpenBtn">${t("safety_tips")}</div>
@@ -862,18 +895,35 @@
     document.getElementById("moreMenu").classList.remove("open");
   }
 
-  function verifiedStamp(label) {
-    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
+  function verifiedTick() {
+    return `<svg class="verified-tick" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7.2 12.4l3.1 3.2 6.5-7"/></svg>`;
   }
 
-  function sellerTrustBadge() {
-    const kind = typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(listing) : "";
-    const label = typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
+  function sellerTrustKind() {
+    return typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(listing) : "";
+  }
+
+  function sellerTrustLabel() {
+    const kind = sellerTrustKind();
+    return typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
+  }
+
+  function sellerNameTick() {
+    const kind = sellerTrustKind();
+    if (kind === "verified_shop" || kind === "id_verified" || kind === "approved_shop") {
+      return verifiedTick();
+    }
+    return "";
+  }
+
+  function sellerPanelBadge() {
+    const kind = sellerTrustKind();
+    const label = sellerTrustLabel();
     if (!label) return "";
     if (kind === "registered_shop") {
-      return `<span class="seller-registered">${label}</span>`;
+      return `<div class="seller-registered">${label}</div>`;
     }
-    return verifiedStamp(label);
+    return `<div class="seller-sub">${label}</div>`;
   }
 
   function replyLabel() {
@@ -890,30 +940,38 @@
     const wrap = document.getElementById("sellerRowWrap");
     if (!wrap) return;
     const displayName = listing.shop_name || listing.seller_name || t("unknown_seller");
-    const badge = sellerTrustBadge();
     wrap.innerHTML = `
       <div class="seller-row" id="sellerRow">
-        <div class="seller-go" id="sellerGo" role="button" tabindex="0">
+        <button class="seller-summary" id="sellerToggle" type="button" aria-expanded="false">
           <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
           <div class="seller-info">
             <div class="seller-name-line">
               <span class="seller-name">${displayName}</span>
-              ${badge}
+              ${sellerNameTick()}
             </div>
-            <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
-            ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
-            ${replyLabel() ? `<div class="seller-sub">${replyLabel()}</div>` : ""}
+          </div>
+          <svg class="seller-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="seller-panel" id="sellerPanel">
+          <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
+          ${sellerPanelBadge()}
+          ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
+          ${replyLabel() ? `<div class="seller-sub">${replyLabel()}</div>` : ""}
+          <div class="seller-actions">
+            <button class="view-shop-btn" id="viewShopBtn" type="button">${t("view_shop_btn")}</button>
+            <button class="review-btn" id="rateSellerBtn" type="button">${t("rate_seller")}</button>
           </div>
         </div>
-        <div class="seller-actions">
-          <button class="view-shop-btn" id="viewShopBtn" type="button">${t("view_shop_btn")}</button>
-          <button class="review-btn" id="rateSellerBtn" type="button">${t("rate_seller")}</button>
-        </div>
       </div>`;
+    const row = document.getElementById("sellerRow");
+    const toggle = document.getElementById("sellerToggle");
     const goToShop = () => {
       window.location.href = `/seller-profile.html?id=${listing.seller_id}`;
     };
-    document.getElementById("sellerGo").addEventListener("click", goToShop);
+    toggle.addEventListener("click", () => {
+      const open = row.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
     document.getElementById("viewShopBtn").addEventListener("click", goToShop);
     document.getElementById("rateSellerBtn").addEventListener("click", openReviewModal);
   }
