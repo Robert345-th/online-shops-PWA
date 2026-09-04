@@ -286,8 +286,8 @@
 </head>
 <body>
 <div class="picker">
-  <div class="picker-label">My Shop layouts — 20 samples</div>
-  <div class="picker-note">Same 20 ads in every layout. Not your real shop.</div>
+  <div class="picker-label">My Shop layout samples</div>
+  <div class="picker-note">Not on the app. Tap a number. Tell me which one to put live.</div>
   <div class="picker-grid" id="picker"></div>
   <div class="picker-now" id="pickerNow"></div>
 </div>
@@ -303,34 +303,34 @@
 
 <script>
   const LISTINGS = [
-    { title: "iPhone 13", price: 6500, views: 84, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/IPhone_13%2C_January_28%2C_2024.jpg/960px-IPhone_13%2C_January_28%2C_2024.jpg" },
-    { title: "iPhone 12", price: 4500, views: 41, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/IPhone_12_Black_256g.jpg/960px-IPhone_12_Black_256g.jpg" },
-    { title: "Samsung A54", price: 3800, views: 33, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Samsung_Galaxy_A54_5G_2023.jpg/960px-Samsung_Galaxy_A54_5G_2023.jpg" },
-    { title: "Tecno Spark 20", price: 2200, views: 19, status: "active", photo: "https://upload.wikimedia.org/wikipedia/commons/1/17/Tecno_Spark_20.png" },
-    { title: "Hisense 32 inch TV", price: 2200, views: 27, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Best_LED_TV_2020.jpg/960px-Best_LED_TV_2020.jpg" },
-    { title: "Honda Fit", price: 110000, views: 62, status: "boosted", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/2009_Honda_Fit_Base.jpg/960px-2009_Honda_Fit_Base.jpg" },
-    { title: "HP laptop", price: 4500, views: 22, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/HP_EliteBook_840_G8.png/960px-HP_EliteBook_840_G8.png" },
-    { title: "PlayStation 4", price: 2800, views: 15, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/PS4-Console-wDS4.jpg/960px-PS4-Console-wDS4.jpg" },
-    { title: "Fridge", price: 3500, views: 9, status: "reserved", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Hisense%2C_IFA_2018%2C_Berlin_%28P1070177%29.jpg/1280px-Hisense%2C_IFA_2018%2C_Berlin_%28P1070177%29.jpg" },
-    { title: "Microwave", price: 750, views: 6, status: "sold", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Microwave_Oven.jpg/960px-Microwave_Oven.jpg" },
-    { title: "Generator 2kVA", price: 5500, views: 18, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/20240930_144911_Power_generator.jpg/960px-20240930_144911_Power_generator.jpg" },
-    { title: "Sofa set", price: 2800, views: 11, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/2022-08-26_14_10_23_A_Corvara_Sofa_and_Loveseat_with_a_Mallacar_Rectangular_Cocktail_Table_in_the_living_room_of_a_house_along_Aquetong_Lane_in_the_Mountainview_section_of_Ewing_Township%2C_Mercer_County%2C_New_Jersey.jpg/1280px-thumbnail.jpg" },
-    { title: "Dining table", price: 2000, views: 7, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/HK_CWB_%E9%8A%85%E9%91%BC%E7%81%A3_Causeway_Bay_%E6%9F%8F%E5%AF%A7%E9%85%92%E5%BA%97_Park_Lane_Hotel_basement_%E5%AE%9C%E5%AE%B6%E5%AE%B6%E5%B1%85_IKEA_shop_furniture_dining_wooden_table_n_chairs_September_2022_Px3.jpg/960px-HK_CWB_%E9%8A%85%E9%91%BC%E7%81%A3_Causeway_Bay_%E6%9F%8F%E5%AF%A7%E9%85%92%E5%BA%97_Park_Lane_Hotel_basement_%E5%AE%9C%E5%AE%B6%E5%AE%B6%E5%B1%85_IKEA_shop_furniture_dining_wooden_table_n_chairs_September_2022_Px3.jpg" },
-    { title: "Bed and mattress", price: 1800, views: 14, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Malm_bed_from_Ikea%2C_Brisbane%2C_Australia.jpg/1280px-Malm_bed_from_Ikea%2C_Brisbane%2C_Australia.jpg" },
-    { title: "Air fryer", price: 650, views: 8, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Air_Fryer_2020.jpg/960px-Air_Fryer_2020.jpg" },
-    { title: "Bicycle", price: 650, views: 5, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Cube%2C_Cyclingworld_Europe_2024%2C_Meerbusch_%28P1180003%29.jpg/960px-Cube%2C_Cyclingworld_Europe_2024%2C_Meerbusch_%28P1180003%29.jpg" },
-    { title: "Washing machine", price: 4800, views: 12, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/81/Pakshoma_Washing_Machine_9_Kg_2.jpg/1280px-Pakshoma_Washing_Machine_9_Kg_2.jpg" },
-    { title: "Men sneakers", price: 250, views: 4, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/-01_sneakers.jpg/960px--01_sneakers.jpg" },
-    { title: "Gas stove", price: 900, views: 3, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Gas_Stove_%28two_burners%29.jpg/960px-Gas_Stove_%28two_burners%29.jpg" },
-    { title: "Office chair", price: 400, views: 2, status: "active", photo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3a/Sihoo_M57_mesh_office_chair_02.jpg/1280px-Sihoo_M57_mesh_office_chair_02.jpg" }
+    { title: "iPhone 13", price: 6500, views: 84, status: "active" },
+    { title: "iPhone 12", price: 4500, views: 41, status: "active" },
+    { title: "Samsung A54", price: 3800, views: 33, status: "active" },
+    { title: "Tecno Spark 20", price: 2200, views: 19, status: "active" },
+    { title: "Hisense 32 inch TV", price: 2200, views: 27, status: "active" },
+    { title: "Honda Fit", price: 110000, views: 62, status: "boosted" },
+    { title: "HP laptop", price: 4500, views: 22, status: "active" },
+    { title: "PlayStation 4", price: 2800, views: 15, status: "active" },
+    { title: "Fridge", price: 3500, views: 9, status: "reserved" },
+    { title: "Microwave", price: 750, views: 6, status: "sold" },
+    { title: "Generator 2kVA", price: 5500, views: 18, status: "active" },
+    { title: "Sofa set", price: 2800, views: 11, status: "active" },
+    { title: "Dining table", price: 2000, views: 7, status: "active" },
+    { title: "Bed and mattress", price: 1800, views: 14, status: "active" },
+    { title: "Air fryer", price: 650, views: 8, status: "active" },
+    { title: "Bicycle", price: 650, views: 5, status: "active" },
+    { title: "Washing machine", price: 4800, views: 12, status: "active" },
+    { title: "Men sneakers", price: 250, views: 4, status: "active" },
+    { title: "Gas stove", price: 900, views: 3, status: "active" },
+    { title: "Office chair", price: 400, views: 2, status: "active" }
   ];
 
   const LAYOUTS = [
     { id: 1, name: "Now", hint: "live Gold tiles" },
     { id: 2, name: "Banner", hint: "shop photo in header" },
     { id: 3, name: "Stats", hint: "ads / views / sold" },
-    { id: 4, name: "Grid", hint: "2 photos across" },
-    { id: 5, name: "Cards", hint: "bigger photos" },
+    { id: 4, name: "Grid", hint: "2 boxes across" },
+    { id: 5, name: "Cards", hint: "bigger boxes" },
     { id: 6, name: "Dense", hint: "tight list" },
     { id: 7, name: "Plus", hint: "orange + button" },
     { id: 8, name: "Tabs", hint: "All / Active / Sold" },
@@ -345,7 +345,7 @@
     { id: 17, name: "Clean", hint: "just the ads" },
     { id: 18, name: "Tools", hint: "one tools row" },
     { id: 19, name: "Price", hint: "price on the right" },
-    { id: 20, name: "Board", hint: "photo tiles" }
+    { id: 20, name: "Board", hint: "tile boxes" }
   ];
 
   const SVG = {
@@ -366,7 +366,7 @@
     return `<div class="status-badge">${item.status}</div>`;
   }
   function thumb(item, extra = "") {
-    return `<div class="thumb">${item.photo ? `<img src="${item.photo}" alt="">` : ""}${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${extra}</div>`;
+    return `<div class="thumb">${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${extra}</div>`;
   }
 
   function row(item, kind) {
@@ -379,7 +379,7 @@
   }
 
   function gcard(item, board) {
-    return `<div class="gcard${board ? " board" : ""}"><div class="photo"><img src="${item.photo}" alt="">${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${board ? `<div class="price-over">${money(item.price)}</div>` : ""}</div>${board ? "" : `<div class="body"><div class="row-title">${item.title}</div><div class="row-price">${money(item.price)}</div></div>`}</div>`;
+    return `<div class="gcard${board ? " board" : ""}"><div class="photo">${item.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}${board ? `<div class="price-over">${money(item.price)}</div>` : ""}</div>${board ? "" : `<div class="body"><div class="row-title">${item.title}</div><div class="row-price">${money(item.price)}</div></div>`}</div>`;
   }
 
   function list(kind) {
@@ -391,7 +391,7 @@
     if (kind === "feature") {
       const fit = LISTINGS.find((i) => i.title === "Honda Fit");
       const rest = LISTINGS.filter((i) => i !== fit);
-      return `<div class="feature"><div class="photo"><img src="${fit.photo}" alt=""><div class="boost-badge">B</div></div><div class="body"><div class="row-title">${fit.title}</div><div class="row-price">${money(fit.price)}</div><div class="row-views">${fit.views} views</div>${badge(fit)}</div></div><div class="list">${rest.map((i) => row(i)).join("")}</div>`;
+      return `<div class="feature"><div class="photo">${fit.status === "boosted" ? `<div class="boost-badge">B</div>` : ""}</div><div class="body"><div class="row-title">${fit.title}</div><div class="row-price">${money(fit.price)}</div><div class="row-views">${fit.views} views</div>${badge(fit)}</div></div><div class="list">${rest.map((i) => row(i)).join("")}</div>`;
     }
     if (kind === "mix") {
       const top = LISTINGS.slice(0, 2);
@@ -456,7 +456,7 @@
 
   const picker = document.getElementById("picker");
   picker.innerHTML = LAYOUTS.map((l, i) =>
-    `<button type="button" class="pick${i === 1 ? " on" : ""}" data-id="${l.id}">${l.id}</button>`
+    `<button type="button" class="pick${i === 0 ? " on" : ""}" data-id="${l.id}">${l.id}</button>`
   ).join("");
 
   function show(id) {
@@ -473,7 +473,7 @@
     show(Number(btn.dataset.id));
   });
 
-  show(2);
+  show(1);
 </script>
 </body>
 </html>
