@@ -136,11 +136,15 @@
   .badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .badge { padding: 4px 10px; border-radius: 20px; background: var(--black); color: #fff; font-size: 11px; font-weight: 600; }
   .badge.dist { color: var(--gold); }
-  .verified-tick {
-    width: 16px; height: 16px; display: block; flex-shrink: 0;
+  .verified-stamp {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid #1B8A4A; color: #1B8A4A; background: transparent;
+    padding: 2px 7px; border-radius: 3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+    flex-shrink: 0;
   }
-  .verified-tick circle { fill: #1B8A4A; }
-  .verified-tick path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .verified-stamp svg { width: 10px; height: 10px; display: block; }
+  .verified-stamp path { fill: none; stroke: #1B8A4A; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
   .item-details {
     background: var(--card); border: 1.5px solid var(--text);
     border-radius: 12px; padding: 0; margin: 10px 0 12px;
@@ -213,8 +217,9 @@
   .seller-info { flex: 1; min-width: 0; }
   .seller-name-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .seller-name { font-size: 14px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seller-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
   .seller-registered { font-size: 10px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; }
-  .seller-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+  .seller-sub { font-size: 12px; color: var(--subtext); }
   .rating-text { font-size: 11px; color: var(--price-red); font-weight: 600; margin-top: 2px; }
   .seller-chev {
     margin-left: auto; width: 18px; height: 18px; flex-shrink: 0;
@@ -895,35 +900,22 @@
     document.getElementById("moreMenu").classList.remove("open");
   }
 
-  function verifiedTick() {
-    return `<svg class="verified-tick" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7.2 12.4l3.1 3.2 6.5-7"/></svg>`;
+  function verifiedStamp(label) {
+    return `<span class="verified-stamp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l5 5L20 7"/></svg>${label}</span>`;
   }
 
   function sellerTrustKind() {
     return typeof zmSellerTrustKind === "function" ? zmSellerTrustKind(listing) : "";
   }
 
-  function sellerTrustLabel() {
+  function sellerTrustBadge() {
     const kind = sellerTrustKind();
-    return typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
-  }
-
-  function sellerNameTick() {
-    const kind = sellerTrustKind();
-    if (kind === "verified_shop" || kind === "id_verified" || kind === "approved_shop") {
-      return verifiedTick();
-    }
-    return "";
-  }
-
-  function sellerPanelBadge() {
-    const kind = sellerTrustKind();
-    const label = sellerTrustLabel();
+    const label = typeof zmSellerTrustLabel === "function" ? zmSellerTrustLabel(kind) : "";
     if (!label) return "";
     if (kind === "registered_shop") {
-      return `<div class="seller-registered">${label}</div>`;
+      return `<span class="seller-registered">${label}</span>`;
     }
-    return `<div class="seller-sub">${label}</div>`;
+    return verifiedStamp(label);
   }
 
   function replyLabel() {
@@ -945,16 +937,15 @@
         <button class="seller-summary" id="sellerToggle" type="button" aria-expanded="false">
           <div class="seller-avatar">${displayName.charAt(0).toUpperCase()}</div>
           <div class="seller-info">
-            <div class="seller-name-line">
-              <span class="seller-name">${displayName}</span>
-              ${sellerNameTick()}
+            <div class="seller-name">${displayName}</div>
+            <div class="seller-meta">
+              <span class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</span>
+              ${sellerTrustBadge()}
             </div>
           </div>
           <svg class="seller-chev" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="seller-panel" id="sellerPanel">
-          <div class="seller-sub">${listing.seller_account_type === "shop" ? t("shop_seller") : t("individual_seller")}</div>
-          ${sellerPanelBadge()}
           ${reviewData.total > 0 ? `<div class="rating-text">${reviewData.average} (${reviewData.total} ${reviewData.total === 1 ? t("review_singular") : t("review_plural")})</div>` : ""}
           ${replyLabel() ? `<div class="seller-sub">${replyLabel()}</div>` : ""}
           <div class="seller-actions">
