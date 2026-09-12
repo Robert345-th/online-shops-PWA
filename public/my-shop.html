@@ -30,22 +30,26 @@
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
 
   .topbar {
-    background: var(--black); padding: 16px;
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: var(--card); padding: 16px 16px 14px; border-bottom: 1px solid var(--border);
   }
-  .brand { color: var(--gold); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .sub-brand { color: #C9BFAF; font-size: 12px; margin-top: 2px; }
-  .countdown { color: var(--gold); font-size: 11px; margin-top: 2px; font-weight: 600; }
-  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 12px; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+  .topbar-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .brand { color: var(--text); font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--gold); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-icon svg { width: 19px; height: 19px; stroke: var(--warn-text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sub-brand { color: var(--subtext); font-size: 12px; margin-top: 2px; }
+  .countdown { color: var(--orange); font-size: 11px; margin-top: 6px; font-weight: 600; }
+  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0; align-self: flex-start; }
   .top-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .icon-btns { display: flex; gap: 6px; }
+  .icon-btns { display: flex; gap: 8px; margin-top: 12px; }
   .icon-btn {
-    width: 34px; height: 34px; border-radius: 17px; border: none;
-    background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center;
+    flex: 1; height: 38px; border-radius: 10px; border: none;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .icon-btn svg { width: 17px; height: 17px; stroke: var(--gold); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn svg { width: 17px; height: 17px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .action-extra { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; }
   .sold-section { padding: 0 14px 8px; }
   .sold-section-title { font-size: 11px; font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
@@ -78,6 +82,15 @@
   .login-btn { background: var(--black); color: var(--gold); border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
   .empty-text { color: var(--subtext); margin-bottom: 16px; }
   .error-text { color: var(--price-red); }
+
+  .empty-state { text-align: center; padding: 48px 24px 56px; }
+  .empty-icon {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--gold); margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .empty-icon svg { width: 24px; height: 24px; stroke: var(--warn-text); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 18px; }
+  .post-first-btn { background: var(--orange); color: #fff; border: none; padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
   .listing-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px 20px;
@@ -172,7 +185,7 @@
     return (shopCompliance && shopCompliance.shop_name) || user.shop_name || user.name || "My Shop";
   }
   function myShopBrand() {
-    return `<div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>${t("my_shop")}</div>`;
+    return `<div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div>${t("my_shop")}</div></div>`;
   }
   const TILE_ICONS = {
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -332,19 +345,19 @@
 
     app.innerHTML = `
       <div class="topbar">
-        <div>
-          ${myShopBrand()}
-          <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
-          ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
-        </div>
-        <div class="top-actions">
-          ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
-          <div class="icon-btns">
-            ${shopIcon("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
-            ${shopIcon("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
-            ${shopIcon("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
-            ${shopIcon("share", t("share_shop"), `id="shareShopBtn"`)}
+        <div class="topbar-row">
+          <div>
+            ${myShopBrand()}
+            <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
+            ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
           </div>
+          ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
+        </div>
+        <div class="icon-btns">
+          ${shopIcon("edit", t("edit_shop_profile"), `onclick="window.location.href='/edit-shop-profile.html'"`)}
+          ${shopIcon("insights", t("shop_insights"), `onclick="window.location.href='/seller-insights.html'"`)}
+          ${shopIcon("view", t("view_my_shop"), `onclick="window.location.href='/seller-profile.html?id=${user.id}'"`)}
+          ${shopIcon("share", t("share_shop"), `id="shareShopBtn"`)}
         </div>
       </div>
       ${extraActions ? `<div class="action-extra">${extraActions}</div>` : ""}
@@ -360,9 +373,10 @@
       ${renderSoldTemplatesSection()}
 
       ${listings.length === 0 ? `
-        <div class="center-box">
-          <div class="empty-text">${t("no_listings_yet")}</div>
-          ${canPost ? `<button class="login-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
+        <div class="empty-state">
+          <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+          <div class="empty-title">${t("no_listings_yet")}</div>
+          ${canPost ? `<button class="post-first-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
         </div>` : `
         <div class="listing-grid">${listings.map(renderRow).join("")}</div>`}
     `;
