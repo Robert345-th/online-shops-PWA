@@ -30,26 +30,37 @@
   body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
 
   .topbar {
-    background: var(--card); padding: 16px 16px 14px; border-bottom: 1px solid var(--border);
+    background: var(--card); padding: 16px; border-bottom: 1px solid var(--border);
   }
-  .topbar-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .brand { color: var(--text); font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-  .brand-icon {
-    width: 38px; height: 38px; border-radius: 10px; background: var(--gold); flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
+  .shop-header-row { display: flex; align-items: center; gap: 14px; }
+  .shop-avatar {
+    width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; background: var(--black);
   }
-  .brand-icon svg { width: 19px; height: 19px; stroke: var(--warn-text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .sub-brand { color: var(--subtext); font-size: 12px; margin-top: 2px; }
-  .countdown { color: var(--orange); font-size: 11px; margin-top: 6px; font-weight: 600; }
-  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-weight: 700; font-size: 12px; cursor: pointer; flex-shrink: 0; align-self: flex-start; }
-  .top-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .icon-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .shop-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shop-avatar svg { width: 100%; height: 100%; display: block; }
+  .brand { color: var(--text); font-size: 16px; font-weight: 700; flex: 1; min-width: 0; }
+  .brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub-brand { color: var(--subtext); font-size: 12px; margin-top: 6px; }
+  .verified-badge {
+    display: inline-flex; align-items: center; gap: 4px; background: #E3F5E8; color: #1F7A3D;
+    font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-top: 6px;
+  }
+  body.dark .verified-badge { background: #173B22; color: #7FD79A; }
+  .verified-badge svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .pending-badge {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--warn-bg); color: var(--warn-text);
+    font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-top: 6px;
+  }
+  .countdown { color: var(--subtext); font-size: 12px; margin-top: 6px; }
+  .sell-btn { background: var(--orange); color: #fff; border: none; padding: 9px 16px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer; flex-shrink: 0; }
+  .icon-btns { display: flex; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
   .icon-btn {
-    flex: 1; height: 38px; border-radius: 10px; border: none;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    flex: 1; border: none; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0;
   }
-  .icon-btn svg { width: 17px; height: 17px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn svg { width: 19px; height: 19px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn span { font-size: 11px; color: var(--subtext); text-align: center; line-height: 1.2; }
   .action-extra { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; }
   .sold-section { padding: 0 14px 8px; }
   .sold-section-title { font-size: 11px; font-weight: 800; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
@@ -84,13 +95,8 @@
   .error-text { color: var(--price-red); }
 
   .empty-state { text-align: center; padding: 48px 24px 56px; }
-  .empty-icon {
-    width: 56px; height: 56px; border-radius: 50%; background: var(--gold); margin: 0 auto 14px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .empty-icon svg { width: 24px; height: 24px; stroke: var(--warn-text); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 18px; }
-  .post-first-btn { background: var(--orange); color: #fff; border: none; padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .empty-title { font-size: 15px; color: var(--subtext); margin-bottom: 18px; }
+  .post-first-btn { background: var(--orange); color: #fff; border: none; padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
   .listing-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px 20px;
@@ -185,7 +191,12 @@
     return (shopCompliance && shopCompliance.shop_name) || user.shop_name || user.name || "My Shop";
   }
   function myShopBrand() {
-    return `<div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div>${t("my_shop")}</div></div>`;
+    return `<div class="brand"><div class="brand-name">${t("my_shop")}</div></div>`;
+  }
+  const DEFAULT_SHOP_LOGO = `<svg viewBox="0 0 512 512" role="img" aria-label="ZedMarket"><rect width="512" height="512" rx="108" fill="#111111"/><g fill="none" stroke="#F5C518" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"><path d="M148 188h216l-22 220H170L148 188z"/><path d="M196 188v-36c0-35.346 28.654-64 64-64s64 28.654 64 64v36"/></g><text x="256" y="330" text-anchor="middle" fill="#F5C518" font-family="Arial, Helvetica, sans-serif" font-size="118" font-weight="700">Z</text></svg>`;
+  function shopAvatar() {
+    const url = shopCompliance && shopCompliance.shop_photo_url;
+    return `<div class="shop-avatar">${url ? `<img src="${url}" alt="" />` : DEFAULT_SHOP_LOGO}</div>`;
   }
   const TILE_ICONS = {
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -194,7 +205,7 @@
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
   };
   function shopIcon(icon, label, extra = "") {
-    return `<button type="button" class="icon-btn" aria-label="${label}" ${extra}><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg></button>`;
+    return `<button type="button" class="icon-btn" aria-label="${label}" ${extra}><svg viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[icon]}</svg><span>${label}</span></button>`;
   }
   const ADMIN_BTN = '<button type="button" class="admin-link" onclick="window.location.href=\'/admin.html\'">Admin</button>';
   const app = document.getElementById("app");
@@ -345,10 +356,15 @@
 
     app.innerHTML = `
       <div class="topbar">
-        <div class="topbar-row">
-          <div>
-            ${myShopBrand()}
-            <div class="sub-brand">${shopDisplayName()} ${isVerifiedShop ? `· ${t("verified_shop")}` : isPending ? `· ${t("status_pending")}` : ""}</div>
+        <div class="shop-header-row">
+          ${shopAvatar()}
+          <div class="brand">
+            <div class="brand-name">${shopDisplayName()}</div>
+            ${isVerifiedShop
+              ? `<div class="verified-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>${t("verified_shop")}</div>`
+              : isPending
+                ? `<div class="pending-badge">${t("status_pending")}</div>`
+                : ""}
             ${isVerifiedShop && daysLeft !== null ? `<div class="countdown">${renewLabel(daysLeft)}</div>` : ""}
           </div>
           ${canPost ? `<button class="sell-btn" onclick="window.location.href='/post-listing.html'">${t("sell_btn")}</button>` : ""}
@@ -374,7 +390,6 @@
 
       ${listings.length === 0 ? `
         <div class="empty-state">
-          <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
           <div class="empty-title">${t("no_listings_yet")}</div>
           ${canPost ? `<button class="post-first-btn" onclick="window.location.href='/post-listing.html'">${t("post_first_listing")}</button>` : ""}
         </div>` : `
